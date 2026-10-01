@@ -1,8 +1,19 @@
 # Refresh runbook
 
-The data-lake queries run through the agent's MCP connector, not from a shell — so a
-refresh needs a session (scheduled or interactive), not a plain cron job. Everything
-after the queries is scripted.
+The data-lake queries can run two ways. Interactively, through the agent's MCP connector.
+Unattended, `athena_pull.py` runs the same SQL with boto3, which is what the GitHub Actions
+workflow (`.github/workflows/refresh.yml`, four times a day) uses. Everything after the
+queries is scripted.
+
+### GitHub Actions setup (one time)
+Repo → Settings → Secrets and variables → Actions → add:
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (a read-only user/role on Athena and the `noon2_*`
+databases, plus read/write on the Athena results bucket), `AWS_REGION`, `ATHENA_WORKGROUP`,
+and `ATHENA_OUTPUT` (`s3://bucket/prefix/`, optional if the workgroup defines one).
+`rules_version.txt` holds the business-rules version the SQL was written against; update it
+only after re-reading `get_business_rules`. Each run uploads the built dashboard as a private
+workflow artifact (it contains student names). Publishing to Press / the Claude Artifact is
+not automated from here.
 
 ## The window
 

@@ -1,0 +1,56 @@
+name: Refresh dashboard data
+
+on:
+  schedule:
+    # Riyadh is UTC+3: 06:00, 12:00, 18:00, 23:00 local
+    - cron: "0 3,9,15,20 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # keeps the previous extract so refresh.py's "student total moved >20%" check still has something to compare with
+      - uses: actions/cache@v4
+        with:
+          path: data/real.json
+          key: real-json-${{ github.run_id }}
+          restore-keys: real-json-
+
+      - name: Pull from Athena
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ATHENA_WORKGROUP: ${{ secrets.ATHENA_WORKGROUP }}
+          ATHENA_OUTPUT: ${{ secrets.ATHENA_OUTPUT }}
+        run: python3 athena_pull.py
+
+      - name: Build (refuses to write if the extract looks wrong)
+        run: python3 refresh.py --rules "$(cat rules_version.txt)"
+
+      - run: python3 mkpress4.py
+
+      # Contains real student names: only people with access to this private repo can download it.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-${{ github.run_id }}
+          path: |
+            manager-dashboard.html
+            dist/artifact.html
+            press4/
+          retention-days: 3
