@@ -7,3 +7,5 @@ press_manifest.json
 manager-dashboard.html
 .claude/settings.local.json
 .DS_Store
+__pycache__/
+*.pyc
