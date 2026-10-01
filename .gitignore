@@ -1,0 +1,9 @@
+# Real student names, comments and school data: never commit
+data/
+dist/
+press/
+press4/
+press_manifest.json
+manager-dashboard.html
+.claude/settings.local.json
+.DS_Store
