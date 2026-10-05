@@ -56,6 +56,8 @@ The first version must connect all existing dashboard reports to live Noon data 
 
 Staff must be able to save follow-up notes and statuses, not only view reports. Store these app-owned records separately from the read-only Noon warehouse.
 
+Saved follow-ups use Open → In progress → Resolved, with no approval stage.
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
