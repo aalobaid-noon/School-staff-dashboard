@@ -56,7 +56,7 @@ The first version must connect all existing dashboard reports to live Noon data 
 
 Staff must be able to save follow-up notes and statuses, not only view reports. Store these app-owned records separately from the read-only Noon warehouse.
 
-Saved follow-ups use Open → In progress → Resolved, with no approval stage.
+Saved follow-ups use Open → In progress → Resolved, with no approval stage. Any manager assigned to the school, plus central operations, can update or resolve that school's follow-ups.
 
 ## User preferences
 
