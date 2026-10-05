@@ -54,6 +54,8 @@ The dashboard must support both desktop and phone use.
 
 The first version must connect all existing dashboard reports to live Noon data while preserving their existing calculations.
 
+Staff must be able to save follow-up notes and statuses, not only view reports. Store these app-owned records separately from the read-only Noon warehouse.
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
