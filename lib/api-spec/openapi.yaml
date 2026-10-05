@@ -11,6 +11,18 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /synapse/status:
+    get:
+      operationId: getSynapseStatus
+      tags: [synapse]
+      summary: Check the server-side Citadel connection
+      responses:
+        "200":
+          description: Connection state only; no private school data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynapseStatus"
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +38,19 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    SynapseStatus:
+      type: object
+      required: [configured, connected, message, authStatus]
+      properties:
+        configured:
+          type: boolean
+        connected:
+          type: boolean
+        message:
+          type: string
+        authStatus:
+          type: string
+          enum: [callback_registration_required]
     HealthStatus:
       type: object
       properties:

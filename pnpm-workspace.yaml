@@ -75,6 +75,10 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
+  # Keep the starter's sibling SDK packages on its vendored, tokenless install path.
+  '@noonacademy/citadel-transport': 'file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz'
+  '@noonacademy/synapse-catalog': 'file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz'
+  '@noonacademy/synapse-sdk': 'file:integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz'
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"

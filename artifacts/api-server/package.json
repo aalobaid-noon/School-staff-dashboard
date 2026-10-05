@@ -10,6 +10,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@noonacademy/citadel-transport": "file:../../integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz",
+    "@noonacademy/synapse-catalog": "file:../../integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz",
+    "@noonacademy/synapse-sdk": "file:../../integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "cookie-parser": "^1.4.7",

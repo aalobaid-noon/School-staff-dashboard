@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SynapseConnection } from '@/components/synapse-connection';
 import NotFound from '@/pages/not-found';
 import { AlertCircle, ArrowDown, Check, Copy, Database, FileJson2, FolderOpen, Languages, LockKeyhole } from 'lucide-react';
 import {
@@ -95,6 +96,7 @@ function Home() {
             <span className="card-heading-note">{isArabic ? 'إعداد لمرة واحدة' : 'One-time setup'}</span>
           </div>
           <div className="card-body">
+            <SynapseConnection isArabic={isArabic} />
             <div className="missing-grid">
               <div className="missing-copy">
                 <h2>{isArabic ? 'مصدر التطبيق موجود. البيانات غير متاحة.' : 'The app source is here. The data is not.'}</h2>

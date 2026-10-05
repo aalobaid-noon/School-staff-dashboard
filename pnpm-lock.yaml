@@ -71,6 +71,9 @@ catalogs:
       version: 3.25.76
 
 overrides:
+  '@noonacademy/citadel-transport': file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz
+  '@noonacademy/synapse-catalog': file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz
+  '@noonacademy/synapse-sdk': file:integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz
   esbuild>@esbuild/darwin-arm64: '-'
   esbuild>@esbuild/darwin-x64: '-'
   esbuild>@esbuild/freebsd-arm64: '-'
@@ -171,6 +174,15 @@ importers:
 
   artifacts/api-server:
     dependencies:
+      '@noonacademy/citadel-transport':
+        specifier: file:../../integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz
+        version: file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz
+      '@noonacademy/synapse-catalog':
+        specifier: file:../../integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz
+        version: file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz
+      '@noonacademy/synapse-sdk':
+        specifier: file:../../integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz
+        version: file:integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
@@ -811,6 +823,21 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@noonacademy/citadel-transport@file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz':
+    resolution: {integrity: sha512-2jKMnqLx5p2qzt3pZs3AX2c3ad3lUXiMZnl0o4qLzLoJAVgcBAIL/xTICcCsO+MS96YuqVEsFXxb4gPCXSY4EQ==, tarball: file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz}
+    version: 0.3.0
+    engines: {node: '>=20.0.0'}
+
+  '@noonacademy/synapse-catalog@file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz':
+    resolution: {integrity: sha512-/JZPinjn9GUzTsboZ9pYiX+uVH/8oIqVlVRbw+nxO9m+VPszXZXuFc+K/Zqav4poBs8w2YdTXJx40IcwSu77Wg==, tarball: file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz}
+    version: 0.1.1
+    engines: {node: '>=20.0.0'}
+
+  '@noonacademy/synapse-sdk@file:integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz':
+    resolution: {integrity: sha512-5wQ9fT0OSoT1itxqGwCzbBzxGTIvCYBm6hTNxPuZjrQFv82CJPvbFdj0uprYLfvq0IRsleLAOMEQXhyVt85C/g==, tarball: file:integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz}
+    version: 0.4.0
+    engines: {node: '>=20.0.0'}
 
   '@orval/angular@8.30.0':
     resolution: {integrity: sha512-jivzIagB/4cmsKjO6DeSeiWbxryY5gBGYo+DxpJfvJMrmKAIIEzQPmDePO5nn7whORFG9+9S4orhc+CW9Uaf4A==}
@@ -3303,6 +3330,15 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
+
+  '@noonacademy/citadel-transport@file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz': {}
+
+  '@noonacademy/synapse-catalog@file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz': {}
+
+  '@noonacademy/synapse-sdk@file:integrations/synapse-starter/vendor/noonacademy-synapse-sdk-0.4.0.tgz':
+    dependencies:
+      '@noonacademy/citadel-transport': file:integrations/synapse-starter/vendor/noonacademy-citadel-transport-0.3.0.tgz
+      '@noonacademy/synapse-catalog': file:integrations/synapse-starter/vendor/noonacademy-synapse-catalog-0.1.1.tgz
 
   '@orval/angular@8.30.0(typescript@5.9.3)':
     dependencies:
