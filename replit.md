@@ -50,6 +50,8 @@ The user chose functional Synapse integration into this existing dashboard, incl
 
 Users are school managers and central operations. Each manager sees only their assigned schools; central operations sees all schools. Enforce this access on the server, not only through interface filters.
 
+The dashboard must support both desktop and phone use.
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
