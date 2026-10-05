@@ -126,7 +126,7 @@ function Home() {
                 <div>
                   <div className="step-title">{isArabic ? 'أنشئ ملفات لوحة البيانات' : 'Build the dashboard files'}</div>
                   <div className="step-desc">
-                    {isArabic ? 'شغّل أمر البناء من جذر المستودع.' : 'Run the build command from the repository root.'}
+                    {isArabic ? 'شغّل أمر البناء من مجلد التطبيق.' : 'Run the build command from the dashboard app folder.'}
                   </div>
                 </div>
               </div>
@@ -134,7 +134,8 @@ function Home() {
 
             <div className="command-panel">
               <div>
-                <div className="command-label">{isArabic ? 'الأمر من جذر المستودع' : 'Run from repository root'}</div>
+                <div className="command-label">{isArabic ? 'من مجلد التطبيق' : 'From the dashboard app folder'}</div>
+                <div className="command-label"><bdi dir="ltr">artifacts/school-staff-dashboard</bdi></div>
                 <code className="command-text">python3 source/build.py</code>
               </div>
               <button

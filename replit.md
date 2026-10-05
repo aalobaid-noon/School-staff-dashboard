@@ -4,6 +4,8 @@ An imported Noon school-manager dashboard with the original HTML, Athena refresh
 
 ## Run & Operate
 
+- `pnpm --filter @workspace/school-staff-dashboard run dev` — run the imported app preview through its managed workflow
+- `python3 artifacts/school-staff-dashboard/source/build.py` — build the original dashboard after supplying the private extract
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
