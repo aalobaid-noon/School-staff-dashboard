@@ -9,6 +9,25 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Get reporting totals scoped to the signed-in Noon staff member's assigned schools
+ */
+export const GetDashboardSummaryResponse = zod.object({
+  "available": zod.boolean(),
+  "authRequired": zod.boolean(),
+  "syncedAt": zod.string().nullable(),
+  "windowStart": zod.string().nullable(),
+  "windowEnd": zod.string().nullable(),
+  "metrics": zod.union([zod.null(),zod.object({
+  "schools": zod.number().int(),
+  "enrolledStudents": zod.number().int(),
+  "managers": zod.number().int(),
+  "schoolLeads": zod.number().int(),
+  "facilitators": zod.number().int()
+})])
+})
+
+
+/**
  * @summary Check the server-side Citadel connection
  */
 export const GetSynapseStatusResponse = zod.object({

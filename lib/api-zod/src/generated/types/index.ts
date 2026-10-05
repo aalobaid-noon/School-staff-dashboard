@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './dashboardSummary';
+export * from './dashboardSummaryMetrics';
 export * from './healthStatus';
 export * from './synapseStatus';
 export * from './synapseStatusAuthStatus';

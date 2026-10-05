@@ -5,6 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type DashboardSummaryMetrics = {
+  schools: number;
+  enrolledStudents: number;
+  managers: number;
+  schoolLeads: number;
+  facilitators: number;
+} | null;
+
+export interface DashboardSummary {
+  available: boolean;
+  authRequired: boolean;
+  /** @nullable */
+  syncedAt: string | null;
+  /** @nullable */
+  windowStart: string | null;
+  /** @nullable */
+  windowEnd: string | null;
+  metrics: DashboardSummaryMetrics;
+}
+
 export type SynapseStatusAuthStatus = typeof SynapseStatusAuthStatus[keyof typeof SynapseStatusAuthStatus];
 
 

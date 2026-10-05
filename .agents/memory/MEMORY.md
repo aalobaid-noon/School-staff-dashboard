@@ -1,0 +1,1 @@
+- [Reporting refresh cadence](reporting-refresh.md) — keep frontend polling separate from Citadel warehouse imports; schedule only after verifying freshness and query cost.

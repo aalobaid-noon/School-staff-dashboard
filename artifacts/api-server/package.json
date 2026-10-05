@@ -7,6 +7,8 @@
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
+    "sync:dashboard": "pnpm run build && node ./dist/scripts/sync-dashboard.mjs",
+    "test:dashboard-access": "pnpm run build && node ./dist/scripts/check-dashboard-access.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -11,6 +11,18 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get reporting totals scoped to the signed-in Noon staff member's assigned schools
+      responses:
+        "200":
+          description: Summary or unavailable state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
   /synapse/status:
     get:
       operationId: getSynapseStatus
@@ -38,6 +50,31 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    DashboardSummary:
+      type: object
+      required: [available, authRequired, syncedAt, windowStart, windowEnd, metrics]
+      properties:
+        available:
+          type: boolean
+        authRequired:
+          type: boolean
+        syncedAt:
+          type: [string, "null"]
+        windowStart:
+          type: [string, "null"]
+        windowEnd:
+          type: [string, "null"]
+        metrics:
+          anyOf:
+            - type: "null"
+            - type: object
+              required: [schools, enrolledStudents, managers, schoolLeads, facilitators]
+              properties:
+                schools: { type: integer }
+                enrolledStudents: { type: integer }
+                managers: { type: integer }
+                schoolLeads: { type: integer }
+                facilitators: { type: integer }
     SynapseStatus:
       type: object
       required: [configured, connected, message, authStatus]

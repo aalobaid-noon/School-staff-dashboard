@@ -19,8 +19,8 @@ export function SynapseConnection({ isArabic }: { isArabic: boolean }) {
       <span>
         <strong>{status}</strong>{" "}
         {data?.connected && (isArabic
-          ? "يلزم تسجيل رابط العودة لتفعيل تسجيل الدخول بحساب Noon. لا يتم عرض بيانات الطلاب أو المدارس قبل ذلك."
-          : "Noon sign-in requires a registered callback URL. Student and school records are not exposed while this is being configured.")}
+          ? "لا تُعرض تفاصيل المدارس أو الطلاب إلا بعد تسجيل الدخول بحساب Noon والتحقق من الصلاحيات."
+          : "School and student details are shown only after verified Noon sign-in and access checks.")}
       </span>
     </div>
   );
