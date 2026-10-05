@@ -52,6 +52,8 @@ Users are school managers and central operations. Each manager sees only their a
 
 The dashboard must support both desktop and phone use.
 
+The first version must connect all existing dashboard reports to live Noon data while preserving their existing calculations.
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
