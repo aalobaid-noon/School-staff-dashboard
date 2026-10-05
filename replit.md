@@ -48,6 +48,8 @@ The imported dashboard is Arabic-first with an English toggle and summarizes sch
 
 The user chose functional Synapse integration into this existing dashboard, including Noon connection and sign-in, rather than a source-only import or a separate app.
 
+Users are school managers and central operations. Each manager sees only their assigned schools; central operations sees all schools. Enforce this access on the server, not only through interface filters.
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
