@@ -21,7 +21,7 @@ function config() {
     SESSION_SECRET: sessionSecret } = process.env;
   const redirectUri = process.env.DASHBOARD_OAUTH_REDIRECT_URI ||
     (process.env.NODE_ENV === "development" && process.env.REPLIT_DEV_DOMAIN
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}/api/dashboard/oauth/callback` : "");
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}/oauth/callback` : "");
   if (!appId || !appSecret || !baseUrl || !sessionSecret || !redirectUri) {
     return null;
   }
@@ -79,7 +79,7 @@ function tokens(input: unknown) {
 }
 const sessionCookie = { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/api/dashboard" };
 const csrfCookie = { httpOnly: true, secure: true, sameSite: "lax" as const,
-  path: "/api/dashboard/oauth/callback" };
+  path: "/" };
 
 router.get("/dashboard/login", (req, res): void => {
   const cfg = config();
@@ -88,6 +88,7 @@ router.get("/dashboard/login", (req, res): void => {
     return;
   }
   const state = randomBytes(32).toString("hex");
+  res.clearCookie(STATE, { ...csrfCookie, path: "/api/dashboard/oauth/callback" });
   res.cookie(STATE, state, { ...csrfCookie, maxAge: 10 * 60_000 });
   const url = new URL("/portal/oauth/authorize", cfg.baseUrl);
   url.search = new URLSearchParams({
@@ -99,7 +100,7 @@ router.get("/dashboard/login", (req, res): void => {
   res.redirect(302, url.toString());
 });
 
-router.get("/dashboard/oauth/callback", async (req, res): Promise<void> => {
+export async function dashboardOAuthCallback(req: Request, res: Response): Promise<void> {
   const cfg = config();
   const expected = cookie(req, STATE);
   res.clearCookie(STATE, csrfCookie);
@@ -135,7 +136,9 @@ router.get("/dashboard/oauth/callback", async (req, res): Promise<void> => {
     req.log.warn("Noon token exchange failed; no session was issued");
     res.status(502).send("Noon sign-in is temporarily unavailable. Please try again.");
   }
-});
+}
+
+router.get("/dashboard/oauth/callback", dashboardOAuthCallback);
 
 type Session = {
   email: string;
