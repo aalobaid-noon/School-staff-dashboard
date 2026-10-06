@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { dashboardPostLoginPath, getDashboardScope } from "../routes/dashboard-auth";
 import { dashboardCookies } from "../lib/dashboard-cookies";
+import { checkDashboardSyncRoutes } from "./check-dashboard-sync";
 
 const previewCookies = dashboardCookies(true);
 const productionCookies = dashboardCookies(false);
@@ -41,3 +42,4 @@ const operations = getDashboardScope({ email: "ops@example.invalid", profileId: 
 assert.equal(operations.isOps, true);
 assert.equal(operations.campuses.length, 2);
 console.log("Dashboard cookie policy and access isolation: PASS");
+await checkDashboardSyncRoutes();

@@ -1,9 +1,10 @@
-import { getGetDashboardSummaryQueryKey, useGetDashboardSummary } from "@workspace/api-client-react";
+import { ApiError, getGetDashboardSummaryQueryKey, useGetDashboardSummary } from "@workspace/api-client-react";
 import { Building2, GraduationCap, LockKeyhole, FileText, ShieldCheck, RefreshCw, Users, UserCog, Handshake } from "lucide-react";
 import { NoonSignIn } from "./noon-sign-in";
+import { ReportSyncPanel } from "./report-sync-panel";
 
 export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
-  const { data, isPending, isError, refetch, isFetching } = useGetDashboardSummary({
+  const { data, isPending, isError, error: summaryError, refetch, isFetching } = useGetDashboardSummary({
     query: { queryKey: getGetDashboardSummaryQueryKey(), staleTime: 30_000, refetchInterval: 60_000, retry: 1 },
   });
   const locale = isArabic ? "ar-EG-u-nu-latn" : "en-US";
@@ -24,13 +25,18 @@ export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
   ];
 
   if (isError) {
+    const unassigned = summaryError instanceof ApiError && summaryError.status === 403;
     return (
       <div className="summary-state" role="alert" data-testid="status-summary-error">
-        <strong>{isArabic ? "تعذّر تحميل ملخص التقارير." : "Unable to load the reporting summary."}</strong>
+        <strong>{unassigned
+          ? (isArabic ? "لا توجد مدارس معيّنة لهذا الحساب. تواصل مع العمليات المركزية لتحديث التعيين."
+            : "No schools are assigned to this account. Ask central operations to update the assignment.")
+          : (isArabic ? "تعذّر تحميل ملخص التقارير." : "Unable to load the reporting summary.")}</strong>
         <button className="copy-button" type="button" onClick={() => refetch()} data-testid="button-retry-summary">
           <RefreshCw size={14} />
           {isArabic ? "إعادة المحاولة" : "Retry"}
         </button>
+        <ReportSyncPanel isArabic={isArabic} />
         <NoonSignIn isArabic={isArabic} />
       </div>
     );
@@ -68,13 +74,14 @@ export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
           </div>
         ) : (
           <div className="summary-state" data-testid="status-summary-unavailable">
-            <strong>{isArabic ? "تم تسجيل دخولك. بيانات التقارير لم تتم مزامنتها بعد." : "You are signed in. Reporting data has not been synced yet."}</strong>
+            <strong>{isArabic ? "تم تسجيل دخولك. يلزم استيراد بيانات التقارير إلى هذه البيئة." : "You are signed in. Report data needs to be imported into this environment."}</strong>
             <button className="copy-button" type="button" onClick={() => refetch()} data-testid="button-refresh-readiness">
               <RefreshCw size={14} />
               {isArabic ? "التحقق من توفر البيانات" : "Check data readiness"}
             </button>
           </div>
         )}
+        {!data.authRequired && <ReportSyncPanel isArabic={isArabic} />}
         <div className="privacy-note" data-testid="text-private-data-notice">
           <LockKeyhole size={15} strokeWidth={1.8} />
           <span>{isArabic ? "لا تُعرض أسماء المدارس أو المديرين أو الطلاب لأي زائر غير مسجّل." : "No school, manager or student names are shown to anonymous visitors."}</span>
@@ -85,6 +92,7 @@ export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
 
   return (
     <div data-testid="section-summary">
+      <ReportSyncPanel isArabic={isArabic} />
       <div className="window-line" data-testid="text-date-window">
         <span>{isArabic ? "فترة التقرير" : "Reporting window"}</span>
         <bdi>{`${fmt(data.windowStart)} – ${fmt(data.windowEnd)}`}</bdi>

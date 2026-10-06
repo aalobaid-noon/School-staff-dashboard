@@ -6,23 +6,30 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   DashboardSummary,
+  DashboardSyncAdvance,
+  DashboardSyncRun,
+  DashboardSyncStatus,
   HealthStatus,
   SynapseStatus
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
-import type { ErrorType } from '../custom-fetch';
+import type { ErrorType , BodyType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -124,6 +131,245 @@ export function useGetDashboardSummary<TData = Awaited<ReturnType<typeof getDash
 
 
 
+
+export const getGetDashboardSyncUrl = () => {
+
+
+
+
+  return `/api/dashboard/sync`
+}
+
+/**
+ * @summary Get authenticated, server-locked access and report sync status
+ */
+export const getDashboardSync = async ( options?: Parameters<typeof customFetch>[1]): Promise<DashboardSyncStatus> => {
+
+  return customFetch<DashboardSyncStatus>(getGetDashboardSyncUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDashboardSyncQueryKey = () => {
+    return [
+    `/api/dashboard/sync`
+    ] as const;
+    }
+
+
+export const getGetDashboardSyncQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardSync>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardSync>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDashboardSyncQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboardSync>>> = ({ signal }) => getDashboardSync({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDashboardSync>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDashboardSyncQueryResult = NonNullable<Awaited<ReturnType<typeof getDashboardSync>>>
+export type GetDashboardSyncQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get authenticated, server-locked access and report sync status
+ */
+
+export function useGetDashboardSync<TData = Awaited<ReturnType<typeof getDashboardSync>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardSync>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDashboardSyncQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartDashboardSyncUrl = () => {
+
+
+
+
+  return `/api/dashboard/sync`
+}
+
+/**
+ * @summary Start or resume an explicit approved-operations report import
+ */
+export const startDashboardSync = async ( options?: Parameters<typeof customFetch>[1]): Promise<DashboardSyncRun> => {
+
+  return customFetch<DashboardSyncRun>(getStartDashboardSyncUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStartDashboardSyncMutationKey = () => ['startDashboardSync'] as const;
+
+export const getStartDashboardSyncMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDashboardSync>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startDashboardSync>>, TError,void, TContext> => {
+
+const mutationKey = getStartDashboardSyncMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startDashboardSync>>, void> = () => {
+
+
+          return  startDashboardSync(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartDashboardSyncMutationResult = NonNullable<Awaited<ReturnType<typeof startDashboardSync>>>
+
+    export type StartDashboardSyncMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Start or resume an explicit approved-operations report import
+ */
+export const useStartDashboardSync = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDashboardSync>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startDashboardSync>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getStartDashboardSyncMutationOptions(options));
+    }
+
+export const getAdvanceDashboardSyncUrl = () => {
+
+
+
+
+  return `/api/dashboard/sync/advance`
+}
+
+/**
+ * @summary Complete one private import step, publishing only after all validation succeeds
+ */
+export const advanceDashboardSync = async (dashboardSyncAdvance: DashboardSyncAdvance, options?: Parameters<typeof customFetch>[1]): Promise<DashboardSyncRun> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DashboardSyncRun>(getAdvanceDashboardSyncUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(dashboardSyncAdvance)
+  }
+);}
+
+
+
+
+
+export const getAdvanceDashboardSyncMutationKey = () => ['advanceDashboardSync'] as const;
+
+export const getAdvanceDashboardSyncMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof advanceDashboardSync>>, TError,AdvanceDashboardSyncMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof advanceDashboardSync>>, TError,AdvanceDashboardSyncMutationVariables, TContext> => {
+
+const mutationKey = getAdvanceDashboardSyncMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof advanceDashboardSync>>, AdvanceDashboardSyncMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  advanceDashboardSync(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdvanceDashboardSyncMutationResult = NonNullable<Awaited<ReturnType<typeof advanceDashboardSync>>>
+    export type AdvanceDashboardSyncMutationBody = BodyType<DashboardSyncAdvance>
+    export type AdvanceDashboardSyncMutationError = ErrorType<unknown>
+    export type AdvanceDashboardSyncMutationVariables = {data: BodyType<DashboardSyncAdvance>}
+
+    /**
+ * @summary Complete one private import step, publishing only after all validation succeeds
+ */
+export const useAdvanceDashboardSync = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof advanceDashboardSync>>, TError,AdvanceDashboardSyncMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof advanceDashboardSync>>,
+        TError,
+        AdvanceDashboardSyncMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdvanceDashboardSyncMutationOptions(options));
+    }
 
 export const getGetSynapseStatusUrl = () => {
 

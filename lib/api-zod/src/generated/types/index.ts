@@ -8,6 +8,11 @@
 
 export * from './dashboardSummary';
 export * from './dashboardSummaryMetrics';
+export * from './dashboardSyncAdvance';
+export * from './dashboardSyncRun';
+export * from './dashboardSyncRunState';
+export * from './dashboardSyncStatus';
+export * from './dashboardSyncStatusAccessRole';
 export * from './healthStatus';
 export * from './synapseStatus';
 export * from './synapseStatusAuthStatus';

@@ -5,6 +5,47 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface DashboardSyncAdvance {
+  runId: string;
+}
+
+export type DashboardSyncRunState = typeof DashboardSyncRunState[keyof typeof DashboardSyncRunState];
+
+
+export const DashboardSyncRunState = {
+  idle: 'idle',
+  running: 'running',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export interface DashboardSyncRun {
+  /** @nullable */
+  runId: string | null;
+  state: DashboardSyncRunState;
+  completedSteps: number;
+  totalSteps: number;
+  /** @nullable */
+  error: string | null;
+}
+
+export type DashboardSyncStatusAccessRole = typeof DashboardSyncStatusAccessRole[keyof typeof DashboardSyncStatusAccessRole];
+
+
+export const DashboardSyncStatusAccessRole = {
+  central_operations: 'central_operations',
+  assigned_schools: 'assigned_schools',
+} as const;
+
+export type DashboardSyncStatus = DashboardSyncRun & ({
+  canSync: boolean;
+  accessRole: DashboardSyncStatusAccessRole;
+  roleLocked: boolean;
+  snapshotAvailable: boolean;
+  /** @nullable */
+  syncedAt: string | null;
+});
+
 export type DashboardSummaryMetrics = {
   schools: number;
   enrolledStudents: number;

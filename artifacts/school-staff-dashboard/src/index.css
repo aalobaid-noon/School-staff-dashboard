@@ -265,4 +265,15 @@
 .gate-link { text-decoration: none; padding: 0 18px; width: fit-content; background: #283630; color: #f1f3ea; }
 .gate-link:hover { background: #34463d; }
 .header-signin { flex-shrink: 0; white-space: nowrap; }
+.report-sync-panel { padding: 18px; margin: 16px 0; border: 1px solid #d4dece; border-radius: 12px; background: #f3f6ef; }
+.report-sync-panel p { font-size: 12px; color: #5d685e; line-height: 1.8; margin: 10px 0; }
+.access-lock { display: flex; gap: 8px; align-items: center; color: #315744; font-size: 13px; }
+.report-sync-panel .copy-button { margin: 8px 0; min-height: 40px; }
+.report-sync-panel .copy-button:disabled { cursor: wait; opacity: .65; }
+.report-sync-panel progress { display: block; width: 100%; margin: 12px 0 6px; accent-color: #315744; }
+.report-sync-panel [role="status"] { font-size: 12px; color: #315744; }
+.report-sync-panel [role="alert"] { color: #8b3529; }
+.sync-spinning { animation: sync-spin 1s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sync-spinning { animation: none; } }
 .metric-grid + .privacy-note + .gate-link { margin-top: 14px; }

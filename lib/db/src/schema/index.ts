@@ -19,3 +19,4 @@
 
 export * from "./reporting";
 export * from "./dashboard-session";
+export * from "./dashboard-sync";

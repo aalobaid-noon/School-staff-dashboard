@@ -28,6 +28,60 @@ export const GetDashboardSummaryResponse = zod.object({
 
 
 /**
+ * @summary Get authenticated, server-locked access and report sync status
+ */
+export const GetDashboardSyncResponse = zod.object({
+  "runId": zod.string().nullable(),
+  "state": zod.enum(['idle', 'running', 'succeeded', 'failed']),
+  "completedSteps": zod.number().int(),
+  "totalSteps": zod.number().int(),
+  "error": zod.string().nullable()
+}).and(zod.object({
+  "canSync": zod.boolean(),
+  "accessRole": zod.enum(['central_operations', 'assigned_schools']),
+  "roleLocked": zod.boolean(),
+  "snapshotAvailable": zod.boolean(),
+  "syncedAt": zod.string().nullable()
+}))
+
+
+/**
+ * @summary Start or resume an explicit approved-operations report import
+ */
+export const StartDashboardSyncHeader = zod.object({
+  "X-Dashboard-Sync": zod.enum(['1'])
+})
+
+export const StartDashboardSyncResponse = zod.object({
+  "runId": zod.string().nullable(),
+  "state": zod.enum(['idle', 'running', 'succeeded', 'failed']),
+  "completedSteps": zod.number().int(),
+  "totalSteps": zod.number().int(),
+  "error": zod.string().nullable()
+})
+
+
+/**
+ * @summary Complete one private import step, publishing only after all validation succeeds
+ */
+export const AdvanceDashboardSyncHeader = zod.object({
+  "X-Dashboard-Sync": zod.enum(['1'])
+})
+
+export const AdvanceDashboardSyncBody = zod.object({
+  "runId": zod.string().uuid()
+})
+
+export const AdvanceDashboardSyncResponse = zod.object({
+  "runId": zod.string().nullable(),
+  "state": zod.enum(['idle', 'running', 'succeeded', 'failed']),
+  "completedSteps": zod.number().int(),
+  "totalSteps": zod.number().int(),
+  "error": zod.string().nullable()
+})
+
+
+/**
  * @summary Check the server-side Citadel connection
  */
 export const GetSynapseStatusResponse = zod.object({

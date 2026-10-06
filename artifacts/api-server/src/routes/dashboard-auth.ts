@@ -203,11 +203,15 @@ export async function getDashboardUser(req: Request) {
   return cfg ? currentUser(req, cfg) : null;
 }
 
-export function getDashboardScope(user: { email: string; profileId: number }, document: Record<string, unknown>) {
-  const all = Array.isArray(document.campuses) ? document.campuses : [];
+export function isDashboardOps(user: { email: string }) {
   const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-  const isOps = approved.includes(user.email);
+  return approved.includes(user.email.toLowerCase());
+}
+
+export function getDashboardScope(user: { email: string; profileId: number }, document: Record<string, unknown>) {
+  const all = Array.isArray(document.campuses) ? document.campuses : [];
+  const isOps = isDashboardOps(user);
   return {
     isOps,
     campuses: isOps ? all : all.filter((campus) =>
