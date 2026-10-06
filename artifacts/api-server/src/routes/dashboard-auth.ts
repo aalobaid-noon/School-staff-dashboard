@@ -92,6 +92,8 @@ router.get("/dashboard/login", (req, res): void => {
   const url = new URL("/portal/oauth/authorize", cfg.baseUrl);
   url.search = new URLSearchParams({
     app_id: cfg.appId, redirect_uri: cfg.redirectUri, response_type: "code", state,
+    // Multi-audience Citadel apps must explicitly select the staff login audience.
+    userType: "ADMIN",
   }).toString();
   res.setHeader("Cache-Control", "no-store");
   res.redirect(302, url.toString());

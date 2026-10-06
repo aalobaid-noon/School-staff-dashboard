@@ -1,1 +1,2 @@
 - [Reporting refresh cadence](reporting-refresh.md) — keep frontend polling separate from Citadel warehouse imports; schedule only after verifying freshness and query cost.
+- [Citadel login audience](citadel-login-audience.md) — multi-audience apps need an explicit staff audience; the imported OAuth instructions omit this requirement.
