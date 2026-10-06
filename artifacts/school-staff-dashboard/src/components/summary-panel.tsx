@@ -57,14 +57,14 @@ export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
               {" "}
               <bdi>{isArabic ? "آخر مزامنة" : "Last synced"} {fmt(data.syncedAt, true)}</bdi>
             </p>
-            <a className="copy-button gate-link" href="/api/dashboard/login" target="_blank" rel="noopener noreferrer" data-testid="link-signin-noon">
+            <a className="copy-button gate-link" href="/api/dashboard/login" data-testid="link-signin-noon">
               <LogIn size={15} />
               {isArabic ? "تسجيل الدخول عبر Noon" : "Sign in with Noon"}
             </a>
             <p className="gate-note">
               {isArabic
-                ? "يفتح تسجيل الدخول في تبويب جديد لتجنّب قيود ملفات الارتباط داخل المعاينة."
-                : "Sign-in opens in a new tab to avoid embedded-preview cookie restrictions."}
+                ? "يبقى تسجيل الدخول والعودة إلى التقرير داخل النافذة نفسها."
+                : "Sign-in and the return to your report stay in this window."}
             </p>
           </div>
         ) : (

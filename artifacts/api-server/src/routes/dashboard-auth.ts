@@ -4,10 +4,12 @@ import { fileURLToPath } from "node:url";
 import { buildHeaders } from "@noonacademy/citadel-transport";
 import { pool } from "@workspace/db";
 import { Router, type IRouter, type Request, type Response } from "express";
+import { dashboardCookies } from "../lib/dashboard-cookies";
 
 const router: IRouter = Router();
-const COOKIE = "school_dashboard_session";
-const STATE = "school_dashboard_oauth_state";
+const cookies = dashboardCookies(process.env.NODE_ENV === "development");
+const COOKIE = cookies.sessionName;
+const STATE = cookies.stateName;
 const sessionLifetimeMs = 7 * 24 * 60 * 60 * 1000;
 const templatePath = fileURLToPath(new URL("../../school-staff-dashboard/source/src/app.html", import.meta.url));
 
@@ -77,9 +79,8 @@ function tokens(input: unknown) {
     expiresIn: typeof value.expiresIn === "number" && value.expiresIn > 0 ? value.expiresIn : 60,
   };
 }
-const sessionCookie = { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/api/dashboard" };
-const csrfCookie = { httpOnly: true, secure: true, sameSite: "lax" as const,
-  path: "/" };
+const sessionCookie = cookies.sessionOptions;
+const csrfCookie = cookies.stateOptions;
 
 router.get("/dashboard/login", (req, res): void => {
   const cfg = config();
@@ -261,7 +262,8 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
     const title = "noon · School Manager Dashboard";
     res.setHeader("Content-Security-Policy",
       "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; " +
-      "font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'");
+      "font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; " +
+      "frame-ancestors 'self' https://replit.com https://*.replit.com");
     res.type("html").send(
       `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" ` +
       `content="width=device-width, initial-scale=1"><title>${title}</title></head><body>` +
