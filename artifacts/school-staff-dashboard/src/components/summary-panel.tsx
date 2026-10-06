@@ -1,5 +1,6 @@
 import { getGetDashboardSummaryQueryKey, useGetDashboardSummary } from "@workspace/api-client-react";
-import { Building2, GraduationCap, LockKeyhole, LogIn, FileText, ShieldCheck, RefreshCw, Users, UserCog, Handshake } from "lucide-react";
+import { Building2, GraduationCap, LockKeyhole, FileText, ShieldCheck, RefreshCw, Users, UserCog, Handshake } from "lucide-react";
+import { NoonSignIn } from "./noon-sign-in";
 
 export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
   const { data, isPending, isError, refetch, isFetching } = useGetDashboardSummary({
@@ -30,6 +31,7 @@ export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
           <RefreshCw size={14} />
           {isArabic ? "إعادة المحاولة" : "Retry"}
         </button>
+        <NoonSignIn isArabic={isArabic} />
       </div>
     );
   }
@@ -38,38 +40,39 @@ export function SummaryPanel({ isArabic }: { isArabic: boolean }) {
     return (
       <div className="summary-state" role="status" data-testid="status-summary-loading">
         <strong>{isArabic ? "جارٍ التحقق من حالة الجلسة…" : "Checking session status…"}</strong>
+        <NoonSignIn isArabic={isArabic} />
       </div>
     );
   }
 
   if (!data.available) {
-    const synced = data.authRequired && !!data.syncedAt;
+    const synced = !!data.syncedAt;
     return (
       <div data-testid="section-summary">
-        {synced ? (
+        {data.authRequired ? (
           <div className="gate" data-testid="status-auth-required">
             <ShieldCheck size={22} strokeWidth={1.8} className="heading-icon" aria-hidden="true" />
-            <h2>{isArabic ? "تم حفظ المستخرج والتحقق منه. لوحة التفاصيل محمية." : "The extract is stored and validated. The detailed dashboard is protected."}</h2>
+            <h2>{synced
+              ? (isArabic ? "تم حفظ المستخرج والتحقق منه. لوحة التفاصيل محمية." : "The extract is stored and validated. The detailed dashboard is protected.")
+              : (isArabic ? "سجّل الدخول بحساب Noon للوصول إلى تقارير المدارس." : "Sign in with Noon to access school reporting.")}</h2>
             <p>
               {isArabic
                 ? "لا تُعرض أي أرقام قبل تسجيل الدخول. سجّل الدخول بحساب Noon لعرض بيانات مدارسك فقط."
                 : "No figures are shown before sign-in. Sign in with your Noon account to see data for your own schools only."}
               {" "}
-              <bdi>{isArabic ? "آخر مزامنة" : "Last synced"} {fmt(data.syncedAt, true)}</bdi>
+              {synced
+                ? <bdi>{isArabic ? "آخر مزامنة" : "Last synced"} {fmt(data.syncedAt, true)}</bdi>
+                : <span>{isArabic ? "بيانات التقارير لم تتم مزامنتها بعد، لكن تسجيل الدخول متاح." : "Reporting data has not been synced yet, but sign-in is available."}</span>}
             </p>
-            <a className="copy-button gate-link" href="/api/dashboard/login" data-testid="link-signin-noon">
-              <LogIn size={15} />
-              {isArabic ? "تسجيل الدخول عبر Noon" : "Sign in with Noon"}
-            </a>
-            <p className="gate-note">
-              {isArabic
-                ? "يبقى تسجيل الدخول والعودة إلى التقرير داخل النافذة نفسها."
-                : "Sign-in and the return to your report stay in this window."}
-            </p>
+            <NoonSignIn isArabic={isArabic} />
           </div>
         ) : (
           <div className="summary-state" data-testid="status-summary-unavailable">
-            <strong>{isArabic ? "لم تتم مزامنة البيانات بعد. لا تُعرض أي أرقام." : "Data has not been synced yet. No figures are shown."}</strong>
+            <strong>{isArabic ? "تم تسجيل دخولك. بيانات التقارير لم تتم مزامنتها بعد." : "You are signed in. Reporting data has not been synced yet."}</strong>
+            <button className="copy-button" type="button" onClick={() => refetch()} data-testid="button-refresh-readiness">
+              <RefreshCw size={14} />
+              {isArabic ? "التحقق من توفر البيانات" : "Check data readiness"}
+            </button>
           </div>
         )}
         <div className="privacy-note" data-testid="text-private-data-notice">

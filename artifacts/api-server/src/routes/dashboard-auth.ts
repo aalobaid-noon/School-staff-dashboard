@@ -82,6 +82,10 @@ function tokens(input: unknown) {
 const sessionCookie = cookies.sessionOptions;
 const csrfCookie = cookies.stateOptions;
 
+export function dashboardPostLoginPath(hasSnapshot: boolean) {
+  return hasSnapshot ? "/api/dashboard/report" : "/";
+}
+
 router.get("/dashboard/login", (req, res): void => {
   const cfg = config();
   if (!cfg) {
@@ -123,6 +127,7 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
       return;
     }
     const issued = tokens(obj(exchange.token));
+    const snapshot = await pool.query("SELECT 1 FROM school_report_snapshots LIMIT 1");
     const sessionId = randomBytes(32).toString("hex");
     await pool.query(
       "INSERT INTO dashboard_sessions (session_hash, email, profile_id, refresh_token, access_expires_at, expires_at) " +
@@ -132,7 +137,9 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
     );
     res.cookie(COOKIE, sessionId, { ...sessionCookie, maxAge: sessionLifetimeMs });
     res.setHeader("Cache-Control", "no-store");
-    res.redirect(302, "/api/dashboard/report");
+    // Authentication must work before the first reporting import. The landing
+    // page can show the verified session's readiness state instead of a 503.
+    res.redirect(302, dashboardPostLoginPath(snapshot.rows.length > 0));
   } catch {
     req.log.warn("Noon token exchange failed; no session was issued");
     res.status(502).send("Noon sign-in is temporarily unavailable. Please try again.");

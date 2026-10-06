@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SynapseConnection } from '@/components/synapse-connection';
 import { SummaryPanel } from '@/components/summary-panel';
+import { NoonSignIn } from '@/components/noon-sign-in';
 import NotFound from '@/pages/not-found';
 import { Database, Languages } from 'lucide-react';
 import {
@@ -37,7 +38,7 @@ function Home() {
           </div>
         </div>
         <div className="header-tools">
-          <span className="env-label">{isArabic ? 'مساحة داخلية' : 'Internal workspace'}</span>
+          <NoonSignIn isArabic={isArabic} compact />
           <button
             className="lang-toggle"
             type="button"
@@ -59,17 +60,17 @@ function Home() {
         <section className="intro-row" aria-labelledby="page-title">
           <div className="intro-copy">
             <h1 id="page-title" data-testid="text-page-title">
-              {isArabic ? 'تقارير المدارس جاهزة للعرض الآمن.' : 'School reports, securely available.'}
+              {isArabic ? 'تقارير المدارس عبر دخول Noon الآمن.' : 'School reports, secured with Noon.'}
             </h1>
             <p data-testid="text-page-intro">
               {isArabic
-                ? 'تم حفظ البيانات الحقيقية؛ تظهر نتائج المدارس المصرّح لك بها بعد تسجيل الدخول بحساب Noon.'
-                : 'Real reporting data is stored. Sign in with Noon to see results for your assigned schools.'}
+                ? 'سجّل الدخول بحساب Noon لعرض تقارير المدارس المصرّح لك بها عند توفر بياناتها.'
+                : 'Sign in with Noon to access reports for your assigned schools when reporting data is available.'}
             </p>
           </div>
           <div className="status-chip" data-testid="status-live">
             <span className="status-dot" />
-            {isArabic ? 'بيانات محفوظة' : 'Data synced'}
+            {isArabic ? 'دخول آمن' : 'Secure access'}
           </div>
         </section>
 

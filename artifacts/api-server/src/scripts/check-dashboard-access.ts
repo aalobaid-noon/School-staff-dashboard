@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { getDashboardScope } from "../routes/dashboard-auth";
+import { dashboardPostLoginPath, getDashboardScope } from "../routes/dashboard-auth";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 
 const previewCookies = dashboardCookies(true);
@@ -22,6 +22,8 @@ assert.equal(previewCookies.sessionOptions.path, "/api/dashboard");
 assert.equal(productionCookies.sessionOptions.path, "/api/dashboard");
 assert.notEqual(previewCookies.sessionName, productionCookies.sessionName);
 assert.notEqual(previewCookies.stateName, productionCookies.stateName);
+assert.equal(dashboardPostLoginPath(false), "/");
+assert.equal(dashboardPostLoginPath(true), "/api/dashboard/report");
 
 // Fixtures are synthetic; no source school or person record is read by this check.
 const document = { campuses: [

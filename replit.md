@@ -48,6 +48,7 @@ An imported Noon school-manager dashboard with the original HTML, Athena refresh
 ## Product
 
 The imported dashboard is Arabic-first with an English toggle and summarizes school, lead, facilitator, attendance, exam, trust, and student follow-up metrics. Its live Citadel extract is stored privately in PostgreSQL. The preview shows sync readiness until verified Noon sign-in; authorized staff can then view the original reporting dashboard scoped to their schools.
+The landing-page header always shows a prominent Noon sign-in button, independent of loading, error, data readiness, or session status. Noon sign-in also remains available before the first reporting import and when summary loading fails. Authentication and data readiness are separate: a verified sign-in without a snapshot returns to the landing page with a signed-in/waiting-for-data message. A private Replit deployment adds a separate access gate before Noon sign-in; allowing staff without Replit invitations requires a public login page, while report APIs stay Noon-protected.
 
 The user chose functional Synapse integration into this existing dashboard, including Noon connection and sign-in, rather than a source-only import or a separate app.
 
