@@ -237,7 +237,8 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
       (Array.isArray(document[key]) ? document[key] : []).filter((item: unknown) => ids.has(String(getId(item))));
     const filtered = isOps ? document : {
       ...document,
-      managers: select("managers", (item) => obj(item).id),
+      managers: (Array.isArray(document.managers) ? document.managers : [])
+        .filter((item: unknown) => Number(obj(item).id) === user.profileId),
       campuses: campuses.map((campus) => ({ ...obj(campus), mgr: String(user.profileId) })),
       exams: select("exams", (item) => obj(item).id),
       weekly: (Array.isArray(document.weekly) ? document.weekly : [])
