@@ -86,6 +86,12 @@ export async function checkDashboardAuthRoles() {
         send() {},
       } as unknown as Response;
       await dashboardOAuthCallback(request, response);
+      if (!role) {
+        assert.equal(status, 502);
+        assert.equal(opaqueSession, "");
+        assert.equal(stored, undefined);
+        continue;
+      }
       assert.equal(status, 200);
       assert.equal(redirect, "/");
       assert.equal(opaqueSession.length, 64);
@@ -101,6 +107,13 @@ export async function checkDashboardAuthRoles() {
       const scope = getDashboardScope(sessionUser, { campuses: [{ id: 101, mgr: "7" }, { id: 202, mgr: "8" }] });
       assert.equal(scope.isOps, fullAccess);
       assert.equal(scope.campuses.length, fullAccess ? 2 : 0);
+    }
+    for (const userType of [null, "", "   "]) {
+      stored = { email: "employee@noonacademy.com", profile_id: "999", user_type: userType,
+        refresh_token: "unused", access_expires_at: new Date(0), expires_at: new Date(Date.now() + 3600000) };
+      globalThis.fetch = (async () => { throw new Error("Roleless sessions must not refresh tokens"); }) as typeof fetch;
+      assert.equal(await getDashboardUser({ headers: { cookie: `${cookies.sessionName}=${"a".repeat(64)}` }
+      } as unknown as Request), null);
     }
     console.log("Verified OAuth roles; email grants and browser role forgery denied: PASS");
   } finally {

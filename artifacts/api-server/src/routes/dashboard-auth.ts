@@ -137,13 +137,18 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
       res.status(403).send("This Noon account is not authorized to view school reports.");
       return;
     }
+    const userType = verifiedCitadelUserType(profile);
+    if (!userType) {
+      res.status(502).send("Noon sign-in did not return a profile role. Please try signing in again.");
+      return;
+    }
     const issued = tokens(obj(exchange.token));
     const snapshot = await pool.query("SELECT 1 FROM school_report_snapshots LIMIT 1");
     const sessionId = randomBytes(32).toString("hex");
     await pool.query(
       "INSERT INTO dashboard_sessions (session_hash, email, profile_id, user_type, refresh_token, access_expires_at, expires_at) " +
       "VALUES ($1, $2, $3, $4, $5, $6, $7)",
-      [digest(sessionId), email.toLowerCase(), profileId, verifiedCitadelUserType(profile), encrypt(cfg, issued.refreshToken),
+      [digest(sessionId), email.toLowerCase(), profileId, userType, encrypt(cfg, issued.refreshToken),
         new Date(Date.now() + issued.expiresIn * 1000), new Date(Date.now() + sessionLifetimeMs)],
     );
     res.cookie(COOKIE, sessionId, { ...sessionCookie, maxAge: sessionLifetimeMs });
@@ -179,7 +184,7 @@ async function currentUser(req: Request, cfg: Config): Promise<{ email: string; 
       "FROM dashboard_sessions WHERE session_hash = $1 FOR UPDATE", [hash],
     );
     const stored = result.rows[0];
-    if (!stored || stored.expires_at.getTime() <= Date.now()) {
+    if (!stored || stored.expires_at.getTime() <= Date.now() || !stored.user_type?.trim()) {
       await client.query("ROLLBACK");
       return null;
     }

@@ -51,7 +51,18 @@ export async function checkDashboardSummary() {
       const response = await fetch(url, { headers: {
         Cookie: `${dashboardCookies(process.env.NODE_ENV === "development").sessionName}=${"a".repeat(64)}`,
       } });
-      const body = await response.json() as { metrics: unknown };
+      const body = await response.json() as { metrics: unknown; authRequired?: boolean };
+      if (userType === null) {
+        assert.equal(response.status, 200);
+        assert.equal(body.authRequired, true);
+        assert.equal(body.metrics, null);
+        const report = await fetch(url.replace("/summary", "/report"), { redirect: "manual", headers: {
+          Cookie: `${dashboardCookies(process.env.NODE_ENV === "development").sessionName}=${"a".repeat(64)}`,
+        } });
+        assert.equal(report.status, 302);
+        assert.equal(report.headers.get("location"), "/api/dashboard/login");
+        continue;
+      }
       assert.equal(response.status, expected ? 200 : 403);
       if (expected) assert.deepEqual(body.metrics, expected);
       else assert.equal(body.metrics, undefined);
