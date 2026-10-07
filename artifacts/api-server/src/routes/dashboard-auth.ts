@@ -1,19 +1,22 @@
 import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { buildHeaders } from "@noonacademy/citadel-transport";
 import { pool } from "@workspace/db";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { dashboardCookies } from "../lib/dashboard-cookies";
-import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope";
+import { canHaveGlobalDashboardAccess, filterDashboardReport, getDashboardScope, isDashboardAdmin } from "../lib/dashboard-scope";
 export { getDashboardScope } from "../lib/dashboard-scope";
+export { isDashboardAdmin } from "../lib/dashboard-scope";
 
 const router: IRouter = Router();
 const cookies = dashboardCookies(process.env.NODE_ENV === "development");
 const COOKIE = cookies.sessionName;
 const STATE = cookies.stateName;
 const sessionLifetimeMs = 7 * 24 * 60 * 60 * 1000;
-const templatePath = fileURLToPath(new URL("../../school-staff-dashboard/source/src/app.html", import.meta.url));
+// The API's pnpm package is the working directory for both the server bundle
+// and the dashboard-access check bundle (which live at different depths in dist).
+const templatePath = path.resolve(process.cwd(), "../school-staff-dashboard/source/src/app.html");
 
 function cookie(req: Request, name: string): string | undefined {
   const part = (req.headers.cookie ?? "").split(";").map((piece) => piece.trim())
@@ -212,14 +215,11 @@ export async function getDashboardUser(req: Request) {
   return cfg ? currentUser(req, cfg) : null;
 }
 
-export function isDashboardAdmin(user: { userType?: string | null }) {
-  return user.userType === "ADMIN";
-}
-
 export function isDashboardOps(user: { email: string; userType?: string | null }) {
   const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-  return isDashboardAdmin(user) || (!user.userType && approved.includes(user.email.trim().toLowerCase()));
+  return canHaveGlobalDashboardAccess(user) &&
+    (isDashboardAdmin(user) || (!user.userType && approved.includes(user.email.trim().toLowerCase())));
 }
 
 router.get("/dashboard/report", async (req, res): Promise<void> => {

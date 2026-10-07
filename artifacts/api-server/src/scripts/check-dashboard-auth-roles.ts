@@ -62,7 +62,7 @@ export async function checkDashboardAuthRoles() {
       { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: false },
       { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: false },
-      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: true },
+      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: false },
       { role: undefined, email: "staff.two@noonacademy.com", fullAccess: false },
     ]) {
       upstreamRole = role;

@@ -1,6 +1,26 @@
 export type DashboardUser = { email: string; profileId: number; userType?: string | null };
 type Row = Record<string, any>;
 
+function schoolStaffEmails() {
+  return new Set((process.env.DASHBOARD_SCHOOL_STAFF_EMAILS ?? "")
+    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean));
+}
+
+export function canHaveGlobalDashboardAccess(user: { email: string }) {
+  const staff = schoolStaffEmails();
+  return staff.size >= 2 && [...staff].every((email) => /^[^@\s]+@noonacademy\.com$/.test(email)) &&
+    !staff.has(user.email.trim().toLowerCase());
+}
+
+export function isDashboardAdmin(user: { email: string; userType?: string | null }) {
+  return user.userType === "ADMIN" && canHaveGlobalDashboardAccess(user);
+}
+
+function scopedUserType(user: DashboardUser) {
+  // Staff exceptions always use verified manager assignments, even on ADMIN profiles.
+  return schoolStaffEmails().has(user.email.trim().toLowerCase()) ? "SCHOOL_MANAGER" : user.userType;
+}
+
 function rows(document: Row, key: string): Row[] {
   return Array.isArray(document[key]) ? document[key].filter((value: unknown) =>
     value !== null && typeof value === "object" && !Array.isArray(value)) : [];
@@ -14,17 +34,18 @@ function pick(row: Row, keys: string[]): Row {
 
 export function getDashboardScope(user: DashboardUser, document: Row) {
   const all = rows(document, "campuses");
-  const isOps = user.userType === "ADMIN";
+  const isOps = isDashboardAdmin(user);
+  const userType = scopedUserType(user);
   const related = new Set(
-    user.userType === "SCHOOL_LEAD"
+    userType === "SCHOOL_LEAD"
       ? rows(document, "leads").filter((lead) => Number(lead.lid) === user.profileId).map((lead) => String(lead.cid))
-      : user.userType === "FACILITATOR"
+      : userType === "FACILITATOR"
         ? rows(document, "facilitators").filter((facilitator) => Number(facilitator.fid) === user.profileId)
           .map((facilitator) => String(facilitator.cid)) : [],
   );
   return {
     isOps,
-    campuses: isOps ? all : all.filter((campus) => user.userType === "SCHOOL_MANAGER"
+    campuses: isOps ? all : all.filter((campus) => userType === "SCHOOL_MANAGER"
       ? String(campus.mgr ?? "").split(",").some((id) => id.trim() === String(user.profileId))
       : related.has(String(campus.id))),
   };
@@ -33,8 +54,8 @@ export function getDashboardScope(user: DashboardUser, document: Row) {
 export function filterDashboardReport(user: DashboardUser, document: Row): Row {
   const { isOps, campuses } = getDashboardScope(user, document);
   if (isOps) return document;
-  const personal = user.userType === "FACILITATOR";
-  const manager = user.userType === "SCHOOL_MANAGER";
+  const personal = scopedUserType(user) === "FACILITATOR";
+  const manager = scopedUserType(user) === "SCHOOL_MANAGER";
   const ids = new Set(campuses.map((campus) => String(campus.id)));
   const atCampus = (id: unknown) => ids.has(String(id));
   const facilitators = rows(document, "facilitators").filter((row) => atCampus(row.cid) &&

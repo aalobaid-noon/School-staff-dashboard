@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope";
 
 export function checkDashboardScope() {
+  const oldStaff = process.env.DASHBOARD_SCHOOL_STAFF_EMAILS;
+  process.env.DASHBOARD_SCHOOL_STAFF_EMAILS = "staff.one@noonacademy.com,staff.two@noonacademy.com";
+  try {
   const document = {
     meta: { window_start: "2026-08-23", window_end: "2026-10-07", privateSummary: "hidden-meta" },
     campuses: [{ id: 101, name: "School A", type: "TRACKS", mgr: "7,8", enr: 50, act: 40 },
@@ -69,5 +72,22 @@ export function checkDashboardScope() {
     assert.deepEqual(getDashboardScope(user(role, 999), document).campuses, []);
   }
   assert.equal(JSON.stringify(document), before, "Filtering must not mutate the shared snapshot");
+  for (const email of ["staff.one@noonacademy.com", " STAFF.TWO@NOONACADEMY.COM "]) {
+    for (const userType of ["ADMIN", "SCHOOL_LEAD", "FACILITATOR", null]) {
+      const staff = { email, profileId: 7, userType };
+      assert.equal(getDashboardScope(staff, document).isOps, false);
+      assert.deepEqual(filterDashboardReport(staff, document).campuses.map((row: any) => row.id), [101, 202]);
+      assert.deepEqual(filterDashboardReport({ ...staff, profileId: 999 }, document).students, []);
+    }
+  }
+  for (const invalid of ["", "staff.one@noonacademy.com", "staff.one@noonacademy.com,invalid"]) {
+    process.env.DASHBOARD_SCHOOL_STAFF_EMAILS = invalid;
+    assert.equal(getDashboardScope(user("ADMIN", 999), document).isOps, false);
+    assert.deepEqual(filterDashboardReport(user("ADMIN", 999), document).students, []);
+  }
   console.log("Dashboard role scope, shared campuses, personal totals, dictionary isolation, and unknown-role denial: PASS");
+  } finally {
+    if (oldStaff === undefined) delete process.env.DASHBOARD_SCHOOL_STAFF_EMAILS;
+    else process.env.DASHBOARD_SCHOOL_STAFF_EMAILS = oldStaff;
+  }
 }
