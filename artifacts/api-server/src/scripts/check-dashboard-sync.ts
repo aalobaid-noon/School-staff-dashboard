@@ -49,8 +49,9 @@ export async function checkDashboardSyncRoutes() {
   app.use(createDashboardSyncRouter({
     database,
     authenticate: async (req) => req.get("X-Test-Account") === "ops"
-      ? { email: "ops@example.invalid", profileId: 1 }
-      : req.get("X-Test-Account") === "manager" ? { email: "manager@example.invalid", profileId: 2 } : null,
+      ? { email: "ops@example.invalid", profileId: 1, userType: null }
+      : req.get("X-Test-Account") === "admin" ? { email: "admin@example.invalid", profileId: 3, userType: "ADMIN" }
+      : req.get("X-Test-Account") === "manager" ? { email: "manager@example.invalid", profileId: 2, userType: "SCHOOL_MANAGER" } : null,
     readStep: async () => { readCalls++; if (failRead) throw new Error("private upstream details"); return { privateRow: "fixture" }; },
     buildReport: async () => { if (failValidation) throw new Error("invalid extract"); return { campuses: [{ id: 1 }], meta: {} }; },
   }));
@@ -81,8 +82,16 @@ export async function checkDashboardSyncRoutes() {
     assert.equal(manager.data.canSync, false);
     assert.equal(manager.data.roleLocked, true);
     assert.equal((await call("", "POST", "manager", { role: "central_operations" })).status, 403);
+    assert.equal((await call("", "POST", "manager", { userType: "ADMIN" })).status, 403);
+    const admin = await call("", "GET", "admin");
+    assert.equal(admin.data.canSync, true);
+    assert.equal(admin.data.accessRole, "admin");
+    assert.equal(admin.data.roleLocked, true);
     assert.equal((await call("", "POST", "ops", {}, "https://attacker.example.invalid")).status, 403);
-    let run = (await call("", "POST", "ops")).data;
+    assert.equal((await call("", "POST", "admin", {}, "https://attacker.example.invalid")).status, 403);
+    const adminStart = await call("", "POST", "admin");
+    assert.equal(adminStart.status, 200);
+    let run = adminStart.data;
     assert.equal(readCalls, 0, "Starting/status checks must not read the warehouse");
     assert.equal((await call("/advance", "POST", "ops", { runId: "invalid" })).status, 400);
     run = (await call("/advance", "POST", "ops", { runId: run.runId })).data;

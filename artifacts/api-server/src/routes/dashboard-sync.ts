@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request } from "express";
 import { pool } from "@workspace/db";
-import { getDashboardUser, isDashboardOps } from "./dashboard-auth";
+import { getDashboardUser, isDashboardOps, isDashboardAdmin } from "./dashboard-auth";
 import { assembleReport, fetchReportStep, reportTerm, reportToday, reportTotalSteps } from "../lib/report-import";
 import { AdvanceDashboardSyncBody } from "@workspace/api-zod";
 
@@ -44,7 +44,7 @@ router.get("/dashboard/sync", async (req, res): Promise<void> => {
     );
     res.json({
       ...publicRun(run.rows[0]), canSync,
-      accessRole: canSync ? "central_operations" : "assigned_schools",
+      accessRole: isDashboardAdmin(user) ? "admin" : canSync ? "central_operations" : "assigned_schools",
       roleLocked: true, snapshotAvailable: !!snapshot.rows.length,
       syncedAt: snapshot.rows[0]?.synced_at.toISOString() ?? null,
     });
@@ -62,7 +62,7 @@ router.post(["/dashboard/sync", "/dashboard/sync/advance"], async (req, res): Pr
   try {
     const user = await authenticate(req);
     if (!user) { res.status(401).json({ error: "Sign in with Noon first." }); return; }
-    if (!isDashboardOps(user)) { res.status(403).json({ error: "Only approved central operations can sync report data." }); return; }
+    if (!isDashboardOps(user)) { res.status(403).json({ error: "Only Noon admins or approved central operations can sync report data." }); return; }
     if (!dashboardSyncOriginAllowed(req)) { res.status(403).json({ error: "Start the sync from this dashboard." }); return; }
     const advance = req.path.endsWith("/advance");
     const input = advance ? AdvanceDashboardSyncBody.safeParse(req.body) : null;

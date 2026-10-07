@@ -70,6 +70,12 @@ async function oauthPost(cfg: Config, path: "/api/oauth/token" | "/api/oauth/ref
 function obj(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
+// Only call this with Citadel's server-to-server token-exchange profile.
+// The requested login audience and browser-supplied roles are not role evidence.
+export function verifiedCitadelUserType(profile: unknown): string | null {
+  const value = obj(profile).userType;
+  return typeof value === "string" && value.trim() ? value.trim().toUpperCase() : null;
+}
 function tokens(input: unknown) {
   const value = obj(input);
   if (typeof value.refreshToken !== "string" || !value.refreshToken ||
@@ -130,9 +136,9 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
     const snapshot = await pool.query("SELECT 1 FROM school_report_snapshots LIMIT 1");
     const sessionId = randomBytes(32).toString("hex");
     await pool.query(
-      "INSERT INTO dashboard_sessions (session_hash, email, profile_id, refresh_token, access_expires_at, expires_at) " +
-      "VALUES ($1, $2, $3, $4, $5, $6)",
-      [digest(sessionId), email.toLowerCase(), profileId, encrypt(cfg, issued.refreshToken),
+      "INSERT INTO dashboard_sessions (session_hash, email, profile_id, user_type, refresh_token, access_expires_at, expires_at) " +
+      "VALUES ($1, $2, $3, $4, $5, $6, $7)",
+      [digest(sessionId), email.toLowerCase(), profileId, verifiedCitadelUserType(profile), encrypt(cfg, issued.refreshToken),
         new Date(Date.now() + issued.expiresIn * 1000), new Date(Date.now() + sessionLifetimeMs)],
     );
     res.cookie(COOKIE, sessionId, { ...sessionCookie, maxAge: sessionLifetimeMs });
@@ -151,11 +157,12 @@ router.get("/dashboard/oauth/callback", dashboardOAuthCallback);
 type Session = {
   email: string;
   profile_id: string;
+  user_type: string | null;
   refresh_token: string;
   access_expires_at: Date;
   expires_at: Date;
 };
-async function currentUser(req: Request, cfg: Config): Promise<{ email: string; profileId: number } | null> {
+async function currentUser(req: Request, cfg: Config): Promise<{ email: string; profileId: number; userType: string | null } | null> {
   const secret = cookie(req, COOKIE);
   if (!secret || !/^[a-f0-9]{64}$/.test(secret)) return null;
   const hash = digest(secret);
@@ -163,7 +170,7 @@ async function currentUser(req: Request, cfg: Config): Promise<{ email: string; 
   try {
     await client.query("BEGIN");
     const result = await client.query<Session>(
-      "SELECT email, profile_id, refresh_token, access_expires_at, expires_at " +
+      "SELECT email, profile_id, user_type, refresh_token, access_expires_at, expires_at " +
       "FROM dashboard_sessions WHERE session_hash = $1 FOR UPDATE", [hash],
     );
     const stored = result.rows[0];
@@ -189,7 +196,7 @@ async function currentUser(req: Request, cfg: Config): Promise<{ email: string; 
       }
     }
     await client.query("COMMIT");
-    return { email: stored.email, profileId: Number(stored.profile_id) };
+    return { email: stored.email, profileId: Number(stored.profile_id), userType: stored.user_type };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -203,13 +210,17 @@ export async function getDashboardUser(req: Request) {
   return cfg ? currentUser(req, cfg) : null;
 }
 
-export function isDashboardOps(user: { email: string }) {
-  const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
-    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-  return approved.includes(user.email.toLowerCase());
+export function isDashboardAdmin(user: { userType?: string | null }) {
+  return user.userType === "ADMIN";
 }
 
-export function getDashboardScope(user: { email: string; profileId: number }, document: Record<string, unknown>) {
+export function isDashboardOps(user: { email: string; userType?: string | null }) {
+  const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
+    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+  return isDashboardAdmin(user) || approved.includes(user.email.toLowerCase());
+}
+
+export function getDashboardScope(user: { email: string; profileId: number; userType?: string | null }, document: Record<string, unknown>) {
   const all = Array.isArray(document.campuses) ? document.campuses : [];
   const isOps = isDashboardOps(user);
   return {

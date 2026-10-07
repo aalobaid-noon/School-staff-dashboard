@@ -122,7 +122,7 @@ components:
           required: [canSync, accessRole, roleLocked, snapshotAvailable, syncedAt]
           properties:
             canSync: { type: boolean }
-            accessRole: { type: string, enum: [central_operations, assigned_schools] }
+            accessRole: { type: string, enum: [admin, central_operations, assigned_schools] }
             roleLocked: { type: boolean }
             snapshotAvailable: { type: boolean }
             syncedAt: { type: [string, "null"] }

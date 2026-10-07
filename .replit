@@ -25,7 +25,7 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-DASHBOARD_OPS_EMAILS = "m.hatim@noonacademy.com"
+DASHBOARD_OPS_EMAILS = "m.hatim@noonacademy.com,m.saidi@noonacademy.com"
 
 [userenv.production]
 DASHBOARD_OAUTH_REDIRECT_URI = "https://school-staff-Success.replit.app/oauth/callback"

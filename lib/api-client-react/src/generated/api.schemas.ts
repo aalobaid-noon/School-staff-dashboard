@@ -33,6 +33,7 @@ export type DashboardSyncStatusAccessRole = typeof DashboardSyncStatusAccessRole
 
 
 export const DashboardSyncStatusAccessRole = {
+  admin: 'admin',
   central_operations: 'central_operations',
   assigned_schools: 'assigned_schools',
 } as const;

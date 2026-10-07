@@ -38,7 +38,7 @@ export const GetDashboardSyncResponse = zod.object({
   "error": zod.string().nullable()
 }).and(zod.object({
   "canSync": zod.boolean(),
-  "accessRole": zod.enum(['central_operations', 'assigned_schools']),
+  "accessRole": zod.enum(['admin', 'central_operations', 'assigned_schools']),
   "roleLocked": zod.boolean(),
   "snapshotAvailable": zod.boolean(),
   "syncedAt": zod.string().nullable()

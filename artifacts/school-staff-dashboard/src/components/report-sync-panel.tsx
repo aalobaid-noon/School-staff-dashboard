@@ -66,7 +66,9 @@ export function ReportSyncPanel({ isArabic }: { isArabic: boolean }) {
       data-testid="section-report-sync">
       <div className="access-lock" data-testid="text-locked-role">
         <ShieldCheck size={17} />
-        <strong>{data.accessRole === "central_operations"
+        <strong>{data.accessRole === "admin"
+          ? (isArabic ? "مسؤول النظام · صلاحيات مثبتة" : "Administrator · Access locked")
+          : data.accessRole === "central_operations"
           ? (isArabic ? "العمليات المركزية · صلاحيات مثبتة" : "Central operations · Access locked")
           : (isArabic ? "المدارس المعيّنة لحسابك فقط · صلاحيات مثبتة" : "Assigned schools only · Access locked")}</strong>
       </div>
