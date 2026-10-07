@@ -14,9 +14,14 @@ const template = resolveDashboardTemplate();
 assert(existsSync(template));
 const workspaceRoot = path.resolve(template, "../../../../..");
 const packageRoot = path.join(workspaceRoot, "artifacts/api-server");
+assert(
+  [workspaceRoot, packageRoot].includes(process.cwd()),
+  "Launch the dashboard access checks from the workspace root or API package",
+);
 assert.equal(resolveDashboardTemplate(workspaceRoot), template);
 assert.equal(resolveDashboardTemplate(packageRoot), template);
 assert.throws(() => resolveDashboardTemplate("/nonexistent-dashboard-fixture"), /template was not found/);
+console.log(`Dashboard template lookup: PASS (${process.cwd() === workspaceRoot ? "workspace-root" : "API-package"} launch)`);
 const productionCookies = dashboardCookies(false);
 for (const options of [previewCookies.sessionOptions, previewCookies.stateOptions]) {
   assert.equal(options.sameSite, "none");
@@ -47,3 +52,4 @@ await checkDashboardAuthRoles();
 await checkDashboardSyncRoutes();
 checkDashboardScope();
 await checkDashboardSummary();
+console.log("Synthetic dashboard access checks: PASS");
