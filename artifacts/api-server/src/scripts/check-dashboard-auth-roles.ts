@@ -60,9 +60,9 @@ export async function checkDashboardAuthRoles() {
       { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true },
       { role: "SCHOOL_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
-      { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: true },
-      { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: true },
-      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: false },
+      { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: false },
+      { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: false },
+      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: true },
       { role: undefined, email: "staff.two@noonacademy.com", fullAccess: false },
     ]) {
       upstreamRole = role;
@@ -102,7 +102,7 @@ export async function checkDashboardAuthRoles() {
       assert.equal(scope.isOps, fullAccess);
       assert.equal(scope.campuses.length, fullAccess ? 2 : 0);
     }
-    console.log("Verified OAuth identity/roles; domain admin policy; staff exceptions; browser email/role forgery denied: PASS");
+    console.log("Verified OAuth roles; email grants and browser role forgery denied: PASS");
   } finally {
     globalThis.fetch = originalFetch;
     pool.query = originalQuery;

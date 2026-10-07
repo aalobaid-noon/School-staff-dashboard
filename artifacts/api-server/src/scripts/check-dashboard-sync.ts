@@ -52,8 +52,8 @@ export async function checkDashboardSyncRoutes() {
       ? { email: "ops@example.invalid", profileId: 1, userType: null }
       : req.get("X-Test-Account") === "admin" ? { email: "admin@example.invalid", profileId: 3, userType: "ADMIN" }
       : req.get("X-Test-Account") === "domain" ? { email: "employee@noonacademy.com", profileId: 4, userType: null }
-      : req.get("X-Test-Account") === "staff-one" ? { email: "staff.one@noonacademy.com", profileId: 5, userType: "ADMIN" }
-      : req.get("X-Test-Account") === "staff-two" ? { email: "staff.two@noonacademy.com", profileId: 6, userType: "ADMIN" }
+      : req.get("X-Test-Account") === "staff-one" ? { email: "staff.one@noonacademy.com", profileId: 5, userType: "SCHOOL_LEAD" }
+      : req.get("X-Test-Account") === "staff-two" ? { email: "staff.two@noonacademy.com", profileId: 6, userType: "FACILITATOR" }
       : req.get("X-Test-Account") === "manager" ? { email: "manager@example.invalid", profileId: 2, userType: "SCHOOL_MANAGER" } : null,
     readStep: async () => { readCalls++; if (failRead) throw new Error("private upstream details"); return { privateRow: "fixture" }; },
     buildReport: async () => { if (failValidation) throw new Error("invalid extract"); return { campuses: [{ id: 1 }], meta: {} }; },
@@ -93,8 +93,9 @@ export async function checkDashboardSyncRoutes() {
     assert.equal(admin.data.accessRole, "admin");
     assert.equal(admin.data.roleLocked, true);
     const domainAdmin = await call("", "GET", "domain");
-    assert.equal(domainAdmin.data.accessRole, "admin");
-    assert.equal(domainAdmin.data.canSync, true);
+    assert.equal(domainAdmin.data.accessRole, "assigned_schools");
+    assert.equal(domainAdmin.data.canSync, false);
+    assert.equal((await call("", "POST", "domain")).status, 403);
     for (const account of ["staff-one", "staff-two"]) {
       const staff = await call("", "GET", account);
       assert.equal(staff.data.canSync, false);
@@ -104,7 +105,7 @@ export async function checkDashboardSyncRoutes() {
     }
     assert.equal((await call("", "POST", "ops", {}, "https://attacker.example.invalid")).status, 403);
     assert.equal((await call("", "POST", "admin", {}, "https://attacker.example.invalid")).status, 403);
-    const adminStart = await call("", "POST", "domain");
+    const adminStart = await call("", "POST", "admin");
     assert.equal(adminStart.status, 200);
     let run = adminStart.data;
     assert.equal(readCalls, 0, "Starting/status checks must not read the warehouse");
