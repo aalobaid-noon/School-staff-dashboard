@@ -20,3 +20,11 @@ Reauthorizing the same GitHub App connection did not resolve the write rejection
 **How to apply:** Request credentials only through the secure Secrets flow, use them through a temporary process environment for Git operations, and do not add them to application code or require them for the deployed dashboard.
 
 Reference: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-with-a-github-app-on-behalf-of-a-user
+
+## Dashboard collaboration branch
+
+Use `school-staff-dashboard-updates` for normal dashboard synchronization with GitHub unless the user explicitly requests a different branch. Do not assume the workspace's local `main` should pull GitHub's `main`.
+
+**Why:** The workspace's local `main` tracks a remote `main` with unrelated legacy history. The full Replit dashboard was shared on the updates branch, and collaborator improvements arrive there. Blindly pulling the configured upstream can import the wrong project or fail with unrelated histories.
+
+**How to apply:** Fetch first, compare against the updates branch, and merge without resetting away newer local access rules. Keep GitHub's legacy `main` untouched. Pulling does not authorize pushing the merged local version back to GitHub.
