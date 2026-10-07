@@ -2,3 +2,4 @@
 - [Citadel login diagnosis](citadel-login-audience.md) — compare the app's callback and live audience request to operator settings before assigning a cause.
 - [Embedded sign-in context](embedded-sign-in.md) — test OAuth cookies in an actual cross-site preview frame; a stored cookie may still be absent from callback requests.
 - [API code generation](api-code-generation.md) — named request schemas avoid duplicate generated exports; header helpers need browser iterable types.
+- [GitHub authentication](github-auth.md) — the connector and native Git credentials are separate; public fetch success does not establish push access.
