@@ -17,6 +17,7 @@ export async function checkDashboardAuthRoles() {
     SESSION_SECRET: "synthetic-role-test-session-secret",
     DASHBOARD_OAUTH_REDIRECT_URI: "https://dashboard.example.invalid/oauth/callback",
     DASHBOARD_OPS_EMAILS: "",
+    DASHBOARD_SCHOOL_STAFF_EMAILS: "staff.one@noonacademy.com,staff.two@noonacademy.com",
   };
   const oldEnv = Object.fromEntries(Object.keys(fixtureEnv).map((name) => [name, process.env[name]]));
   Object.assign(process.env, fixtureEnv);
@@ -26,6 +27,7 @@ export async function checkDashboardAuthRoles() {
     refresh_token: string; access_expires_at: Date; expires_at: Date };
   let stored: Stored | undefined;
   let upstreamRole: string | undefined;
+  let upstreamEmail = "";
   const databaseQuery = async (sql: string, values: unknown[] = []) => {
     if (sql.startsWith("SELECT 1 FROM school_report_snapshots")) return { rows: [] };
     if (sql.startsWith("INSERT INTO dashboard_sessions")) {
@@ -50,20 +52,29 @@ export async function checkDashboardAuthRoles() {
     assert.equal(new URL(String(input)).hostname, "citadel.example.invalid");
     return new globalThis.Response(JSON.stringify({
       token: { accessToken: "synthetic-access", refreshToken: "synthetic-refresh", expiresIn: 3600 },
-      profile: { id: 999, userType: upstreamRole, account: { email: "role-fixture@noonacademy.com" } },
+      profile: { id: 999, userType: upstreamRole, account: { email: upstreamEmail } },
     }), { headers: { "Content-Type": "application/json" } });
   }) as typeof fetch;
   try {
-    for (const role of ["ADMIN", "SCHOOL_MANAGER", undefined]) {
+    for (const { role, email, fullAccess } of [
+      { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true },
+      { role: "SCHOOL_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
+      { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
+      { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: true },
+      { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: true },
+      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: false },
+      { role: undefined, email: "staff.two@noonacademy.com", fullAccess: false },
+    ]) {
       upstreamRole = role;
+      upstreamEmail = email;
       stored = undefined;
       let opaqueSession = "";
       let redirect = "";
       let status = 200;
       const request = {
         headers: { cookie: `${cookies.stateName}=${state}`, "x-role": "ADMIN" },
-        query: { state, code: "synthetic-code", userType: "ADMIN" },
-        body: { userType: "ADMIN", role: "admin" },
+        query: { state, code: "synthetic-code", userType: "ADMIN", email: "forged@noonacademy.com" },
+        body: { userType: "ADMIN", role: "admin", email: "forged@noonacademy.com" },
         log: { warn() {} },
       } as unknown as Request;
       const response = {
@@ -82,15 +93,16 @@ export async function checkDashboardAuthRoles() {
       assert.equal((stored as Stored).user_type, role ?? null);
       const sessionUser = await getDashboardUser({
         headers: { cookie: `${cookies.sessionName}=${opaqueSession}`, "x-role": "ADMIN" },
-        query: { userType: "ADMIN" },
+        query: { userType: "ADMIN", email: "forged@noonacademy.com" },
       } as unknown as Request);
       assert(sessionUser);
+      assert.equal(sessionUser.email, email);
       assert.equal(sessionUser.userType, role ?? null);
       const scope = getDashboardScope(sessionUser, { campuses: [{ id: 101, mgr: "7" }, { id: 202, mgr: "8" }] });
-      assert.equal(scope.isOps, role === "ADMIN");
-      assert.equal(scope.campuses.length, role === "ADMIN" ? 2 : 0);
+      assert.equal(scope.isOps, fullAccess);
+      assert.equal(scope.campuses.length, fullAccess ? 2 : 0);
     }
-    console.log("Verified OAuth roles persisted/read; browser role forgery denied; missing roles fail closed: PASS");
+    console.log("Verified OAuth identity/roles; domain admin policy; staff exceptions; browser email/role forgery denied: PASS");
   } finally {
     globalThis.fetch = originalFetch;
     pool.query = originalQuery;

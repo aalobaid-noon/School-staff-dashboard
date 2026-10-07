@@ -210,14 +210,26 @@ export async function getDashboardUser(req: Request) {
   return cfg ? currentUser(req, cfg) : null;
 }
 
-export function isDashboardAdmin(user: { userType?: string | null }) {
-  return user.userType === "ADMIN";
+function canHaveGlobalDashboardAccess(user: { email: string }) {
+  const staff = new Set((process.env.DASHBOARD_SCHOOL_STAFF_EMAILS ?? "")
+    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean));
+  // Never enable broad access without both school-staff exceptions configured.
+  // Exceptions override domain grants, verified ADMIN roles, and ops approval.
+  if (staff.size < 2 || [...staff].some((email) => !/^[^@\s]+@noonacademy\.com$/.test(email))) return false;
+  return !staff.has(user.email.trim().toLowerCase());
+}
+
+export function isDashboardAdmin(user: { email: string; userType?: string | null }) {
+  // Identity comes exclusively from the Citadel-verified server session.
+  return canHaveGlobalDashboardAccess(user) &&
+    (user.userType === "ADMIN" || /^[^@\s]+@noonacademy\.com$/.test(user.email.trim().toLowerCase()));
 }
 
 export function isDashboardOps(user: { email: string; userType?: string | null }) {
   const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-  return isDashboardAdmin(user) || approved.includes(user.email.toLowerCase());
+  return canHaveGlobalDashboardAccess(user) &&
+    (isDashboardAdmin(user) || approved.includes(user.email.trim().toLowerCase()));
 }
 
 export function getDashboardScope(user: { email: string; profileId: number; userType?: string | null }, document: Record<string, unknown>) {

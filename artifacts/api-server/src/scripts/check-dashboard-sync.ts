@@ -51,6 +51,9 @@ export async function checkDashboardSyncRoutes() {
     authenticate: async (req) => req.get("X-Test-Account") === "ops"
       ? { email: "ops@example.invalid", profileId: 1, userType: null }
       : req.get("X-Test-Account") === "admin" ? { email: "admin@example.invalid", profileId: 3, userType: "ADMIN" }
+      : req.get("X-Test-Account") === "domain" ? { email: "employee@noonacademy.com", profileId: 4, userType: null }
+      : req.get("X-Test-Account") === "staff-one" ? { email: "staff.one@noonacademy.com", profileId: 5, userType: "ADMIN" }
+      : req.get("X-Test-Account") === "staff-two" ? { email: "staff.two@noonacademy.com", profileId: 6, userType: "ADMIN" }
       : req.get("X-Test-Account") === "manager" ? { email: "manager@example.invalid", profileId: 2, userType: "SCHOOL_MANAGER" } : null,
     readStep: async () => { readCalls++; if (failRead) throw new Error("private upstream details"); return { privateRow: "fixture" }; },
     buildReport: async () => { if (failValidation) throw new Error("invalid extract"); return { campuses: [{ id: 1 }], meta: {} }; },
@@ -62,7 +65,9 @@ export async function checkDashboardSyncRoutes() {
   const base = `http://127.0.0.1:${address.port}`;
   const oldOps = process.env.DASHBOARD_OPS_EMAILS;
   const oldRedirect = process.env.DASHBOARD_OAUTH_REDIRECT_URI;
-  process.env.DASHBOARD_OPS_EMAILS = "ops@example.invalid";
+  const oldStaff = process.env.DASHBOARD_SCHOOL_STAFF_EMAILS;
+  process.env.DASHBOARD_SCHOOL_STAFF_EMAILS = "staff.one@noonacademy.com,staff.two@noonacademy.com";
+  process.env.DASHBOARD_OPS_EMAILS = "ops@example.invalid,staff.one@noonacademy.com,staff.two@noonacademy.com";
   process.env.DASHBOARD_OAUTH_REDIRECT_URI = "https://dashboard.example.invalid/oauth/callback";
   async function call(path: string, method = "GET", account = "", body?: unknown, origin = "https://dashboard.example.invalid") {
     const response = await fetch(base + "/dashboard/sync" + path, { method,
@@ -87,9 +92,19 @@ export async function checkDashboardSyncRoutes() {
     assert.equal(admin.data.canSync, true);
     assert.equal(admin.data.accessRole, "admin");
     assert.equal(admin.data.roleLocked, true);
+    const domainAdmin = await call("", "GET", "domain");
+    assert.equal(domainAdmin.data.accessRole, "admin");
+    assert.equal(domainAdmin.data.canSync, true);
+    for (const account of ["staff-one", "staff-two"]) {
+      const staff = await call("", "GET", account);
+      assert.equal(staff.data.canSync, false);
+      assert.equal(staff.data.accessRole, "assigned_schools");
+      assert.equal((await call("", "POST", account, { userType: "ADMIN" })).status, 403);
+      assert.equal((await call("/advance", "POST", account, { runId: "invalid", userType: "ADMIN" })).status, 403);
+    }
     assert.equal((await call("", "POST", "ops", {}, "https://attacker.example.invalid")).status, 403);
     assert.equal((await call("", "POST", "admin", {}, "https://attacker.example.invalid")).status, 403);
-    const adminStart = await call("", "POST", "admin");
+    const adminStart = await call("", "POST", "domain");
     assert.equal(adminStart.status, 200);
     let run = adminStart.data;
     assert.equal(readCalls, 0, "Starting/status checks must not read the warehouse");
@@ -133,6 +148,7 @@ export async function checkDashboardSyncRoutes() {
   } finally {
     if (oldOps === undefined) delete process.env.DASHBOARD_OPS_EMAILS; else process.env.DASHBOARD_OPS_EMAILS = oldOps;
     if (oldRedirect === undefined) delete process.env.DASHBOARD_OAUTH_REDIRECT_URI; else process.env.DASHBOARD_OAUTH_REDIRECT_URI = oldRedirect;
+    if (oldStaff === undefined) delete process.env.DASHBOARD_SCHOOL_STAFF_EMAILS; else process.env.DASHBOARD_SCHOOL_STAFF_EMAILS = oldStaff;
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
