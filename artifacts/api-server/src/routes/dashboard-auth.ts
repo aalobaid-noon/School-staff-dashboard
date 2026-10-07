@@ -297,7 +297,8 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
     res.setHeader("Content-Security-Policy",
       "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; " +
       "font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; " +
-      "frame-ancestors 'self' https://replit.com https://*.replit.com");
+      "frame-ancestors 'self' https://replit.com https://*.replit.com " +
+      "https://school.noonacademy.com https://school.staging.noonedu.io");
     res.type("html").send(
       `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" ` +
       `content="width=device-width, initial-scale=1"><title>${title}</title></head><body>` +
