@@ -460,8 +460,6 @@ const PERSIST = ['lang','manager','cmp','trendMetric','fType','viewBy','simTy','
 function save(){ try{ const o={}; PERSIST.forEach(k=>o[k]=state[k]); localStorage.setItem('noonMgrReal', JSON.stringify(o)); }catch(e){} }
 (function(){ try{ const o = JSON.parse(localStorage.getItem('noonMgrReal')||'{}'); PERSIST.forEach(k=>{ if(o[k]!=null) state[k]=o[k]; }); }catch(e){} })();
 
-if (state.manager !== 'ALL' && !M.some(m => String(m.id) === String(state.manager))) state.manager = 'ALL';
-
 /* ---------- scoping ---------- */
 const mgrIds = c => String(c.mgr).split(',').filter(Boolean).map(Number);
 function managerCampuses(mid){
@@ -2097,14 +2095,7 @@ function topbar(){
   const opts = ['<option value="ALL"' + (state.manager === 'ALL' ? ' selected' : '') + '>' + esc(t('allNet')) + '</option>']
     .concat(M.map(m => '<option value="' + m.id + '"' + (String(state.manager) === String(m.id) ? ' selected' : '') + '>'
       + esc(m.name) + ' — ' + managerCampuses(m.id).length + ' ' + esc(t('schools')) + '</option>'));
-  const viewer = DATA.viewer;
-  const roles = {ADMIN:['مسؤول','Admin'], SCHOOL_MANAGER:['مدير مدرسة','School manager'],
-    SCHOOL_LEAD:['قائد مدرسة','School lead'], FACILITATOR:['مشرف','Facilitator']};
-  const identity = viewer ? '<span class="flabel">' + (ar() ? 'الحساب الحالي: ' : 'Signed in: ')
-    + esc(viewer.email) + ' · ' + esc((roles[viewer.userType] || ['', ''])[ar() ? 0 : 1])
-    + '</span><a class="ghost" href="/api/dashboard/login">'
-    + (ar() ? 'تغيير الملف الشخصي' : 'Switch profile') + '</a>' : '';
-  return identity + '<span class="flabel">' + esc(t('manager')) + '</span>'
+  return '<span class="flabel">' + esc(t('manager')) + '</span>'
     + '<select class="msel" onchange="setManager(this.value)">' + opts.join('') + '</select>'
     + '<span class="live"><i></i>' + (ar() ? 'بيانات حيّة · ' : 'live data · ') + bd(META.pulled_at) + '</span>'
     + '<button class="ghost" style="margin-inline-start:auto" onclick="toggleLang()">' + (ar() ? 'EN' : 'ع') + '</button>';
@@ -2233,11 +2224,7 @@ function render(){
   renderBar();
   document.getElementById('crumb').innerHTML = crumb();
   const views = {exec:viewExec, schools:viewSchools, leads:viewLeads, exams:viewExams, facs:viewFacs, action:viewAction};
-  const personalNotice = DATA.viewer?.userType === 'FACILITATOR'
-    ? '<div class="card"><div class="secsub">' + (ar()
-      ? 'تعرض هذه الصفحة بيانات طلابك فقط. إجماليات اختبارات المدرسة والمؤشرات الأسبوعية للمدير غير متاحة في هذا العرض. استخدم تغيير الملف الشخصي لعرض بيانات حساب آخر تملكه.'
-      : 'This page shows only your students. School exam totals and manager weekly trends are unavailable in this view. Use Switch profile to view another account you own.') + '</div></div>' : '';
-  document.getElementById('app').innerHTML = personalNotice + (views[state.tab] || viewExec)();
+  document.getElementById('app').innerHTML = (views[state.tab] || viewExec)();
   renderDrill();
   tipHide();
 }

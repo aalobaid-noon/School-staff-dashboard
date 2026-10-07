@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
 import { pool } from "@workspace/db";
-import { getDashboardUser } from "./dashboard-auth";
-import { filterDashboardReport } from "../lib/dashboard-scope";
+import { getDashboardScope, getDashboardUser } from "./dashboard-auth";
 
 const router: IRouter = Router();
 
@@ -32,12 +31,12 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     }
     const { document, synced_at } = result.rows[0];
     if (!document || typeof document !== "object") throw new Error("Invalid reporting document");
-    const data = filterDashboardReport(user, document as Record<string, unknown>);
+    const data = document as Record<string, unknown>;
     if (!Array.isArray(data.campuses) || !Array.isArray(data.leads) || !Array.isArray(data.facilitators) ||
         !Array.isArray(data.managers) || !data.meta || typeof data.meta !== "object") {
       throw new Error("Incomplete reporting document");
     }
-    const scoped = data.campuses;
+    const { isOps, campuses: scoped } = getDashboardScope(user, data);
     if (!scoped.length) {
       res.status(403).json({ error: "No schools are assigned to this Noon account." });
       return;
@@ -58,7 +57,8 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
       metrics: {
         schools: campuses.length,
         enrolledStudents: campuses.reduce((total, campus) => total + campus.enr, 0),
-        managers: data.managers.length,
+        managers: isOps ? data.managers.length : (data.managers as Array<{ id: number }>)
+          .filter((manager) => Number(manager.id) === user.profileId).length,
         schoolLeads: new Set(leads.map((lead) => lead.lid)).size,
         facilitators: new Set(facilitators.map((fac) => fac.fid)).size,
       },

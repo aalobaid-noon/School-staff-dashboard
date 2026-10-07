@@ -1,4 +1,4 @@
--- facilitators per campus: one JSON row. Append after 00_common.sql
+-- facilitators (>=5 students) per campus: one JSON row. Append after 00_common.sql
 -- Placeholder accounts are excluded here, not just hidden: attributing a school's numbers
 -- to a person who does not work there is the one error this layer must never make.
 , fs AS (SELECT DISTINCT facilitator_id, campus_id, user_id FROM d
@@ -33,3 +33,4 @@ LEFT JOIN aa a  ON a.facilitator_id = b.facilitator_id AND a.campus_id = b.campu
 LEFT JOIN ee e  ON e.facilitator_id = b.facilitator_id AND e.campus_id = b.campus_id
 LEFT JOIN cc    ON cc.facilitator_id = b.facilitator_id AND cc.campus_id = b.campus_id
 LEFT JOIN tt t  ON t.facilitator_id = b.facilitator_id AND t.campus_id = b.campus_id
+WHERE b.n >= 5
