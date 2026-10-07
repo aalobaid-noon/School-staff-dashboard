@@ -5,6 +5,8 @@ import { buildHeaders } from "@noonacademy/citadel-transport";
 import { pool } from "@workspace/db";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { dashboardCookies } from "../lib/dashboard-cookies";
+import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope";
+export { getDashboardScope } from "../lib/dashboard-scope";
 
 const router: IRouter = Router();
 const cookies = dashboardCookies(process.env.NODE_ENV === "development");
@@ -210,36 +212,14 @@ export async function getDashboardUser(req: Request) {
   return cfg ? currentUser(req, cfg) : null;
 }
 
-function canHaveGlobalDashboardAccess(user: { email: string }) {
-  const staff = new Set((process.env.DASHBOARD_SCHOOL_STAFF_EMAILS ?? "")
-    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean));
-  // Never enable broad access without both school-staff exceptions configured.
-  // Exceptions override domain grants, verified ADMIN roles, and ops approval.
-  if (staff.size < 2 || [...staff].some((email) => !/^[^@\s]+@noonacademy\.com$/.test(email))) return false;
-  return !staff.has(user.email.trim().toLowerCase());
-}
-
-export function isDashboardAdmin(user: { email: string; userType?: string | null }) {
-  // Identity comes exclusively from the Citadel-verified server session.
-  return canHaveGlobalDashboardAccess(user) &&
-    (user.userType === "ADMIN" || /^[^@\s]+@noonacademy\.com$/.test(user.email.trim().toLowerCase()));
+export function isDashboardAdmin(user: { userType?: string | null }) {
+  return user.userType === "ADMIN";
 }
 
 export function isDashboardOps(user: { email: string; userType?: string | null }) {
   const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-  return canHaveGlobalDashboardAccess(user) &&
-    (isDashboardAdmin(user) || approved.includes(user.email.trim().toLowerCase()));
-}
-
-export function getDashboardScope(user: { email: string; profileId: number; userType?: string | null }, document: Record<string, unknown>) {
-  const all = Array.isArray(document.campuses) ? document.campuses : [];
-  const isOps = isDashboardOps(user);
-  return {
-    isOps,
-    campuses: isOps ? all : all.filter((campus) =>
-      String(obj(campus).mgr ?? "").split(",").includes(String(user.profileId))),
-  };
+  return isDashboardAdmin(user) || (!user.userType && approved.includes(user.email.trim().toLowerCase()));
 }
 
 router.get("/dashboard/report", async (req, res): Promise<void> => {
@@ -265,34 +245,18 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
       return;
     }
     const document = obj(snapshot.rows[0].document);
-    const { isOps, campuses } = getDashboardScope(user, document);
+    const { campuses } = getDashboardScope(user, document);
     if (!campuses.length) {
-      res.status(403).send("Your Noon account does not have access to these schools.");
+      res.status(403).type("html").send(
+        '<p>No report data is assigned to this profile. <a href="/api/dashboard/login">Sign in again</a> ' +
+        'to choose another profile, or ask your school administrator to check your assignments.</p>',
+      );
       return;
     }
-    const ids = new Set(campuses.map((campus) => String(obj(campus).id)));
-    const select = (key: string, getId: (item: unknown) => unknown) =>
-      (Array.isArray(document[key]) ? document[key] : []).filter((item: unknown) => ids.has(String(getId(item))));
-    const filtered = isOps ? document : {
-      ...document,
-      managers: (Array.isArray(document.managers) ? document.managers : [])
-        .filter((item: unknown) => Number(obj(item).id) === user.profileId),
-      campuses: campuses.map((campus) => ({ ...obj(campus), mgr: String(user.profileId) })),
-      exams: select("exams", (item) => obj(item).id),
-      weekly: (Array.isArray(document.weekly) ? document.weekly : [])
-        .filter((item: unknown) => Number(obj(item).mid) === user.profileId),
-      facilitators: select("facilitators", (item) => obj(item).cid),
-      leads: select("leads", (item) => obj(item).cid),
-      bygrade: select("bygrade", (item) => Array.isArray(item) ? item[0] : undefined),
-      students: select("students", (item) => Array.isArray(item) ? item[1] : undefined),
-      comments: select("comments", (item) => Array.isArray(item) ? item[0] : undefined),
-      orphanCohorts: select("orphanCohorts", (item) => obj(item).c),
-      // Global comparison data spans unassigned schools; managers may not view it.
-      simgrades: [],
-    };
+    const filtered = filterDashboardReport(user, document);
     const original = await readFile(templatePath, "utf8");
     if (!original.includes("/*__DATA__*/")) throw new Error("Dashboard template is incomplete");
-    const payload = "const DATA = " + JSON.stringify(filtered).replace(/</g, "\\u003c") + ";";
+    const payload = "const DATA = " + JSON.stringify({ ...filtered, viewer: { email: user.email, userType: user.userType } }).replace(/</g, "\\u003c") + ";";
     const title = "noon · School Manager Dashboard";
     res.setHeader("Content-Security-Policy",
       "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; " +
