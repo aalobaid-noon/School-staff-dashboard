@@ -62,8 +62,10 @@ export async function checkDashboardAuthRoles() {
       { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: false },
       { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: false },
-      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: false },
+      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: true },
       { role: undefined, email: "staff.two@noonacademy.com", fullAccess: false },
+      { role: "STUDENT", email: "role-fixture@noon.edu.sa", fullAccess: false },
+      { role: "TEACHER", email: "role-fixture@noon.edu.sa", fullAccess: false },
     ]) {
       upstreamRole = role;
       upstreamEmail = email;
@@ -83,11 +85,12 @@ export async function checkDashboardAuthRoles() {
         setHeader() {},
         redirect(_status: number, path: string) { redirect = path; },
         status(code: number) { status = code; return this; },
+        type() { return this; },
         send() {},
       } as unknown as Response;
       await dashboardOAuthCallback(request, response);
-      if (!role) {
-        assert.equal(status, 502);
+      if (!role || role === "STUDENT" || role === "TEACHER") {
+        assert.equal(status, 403);
         assert.equal(opaqueSession, "");
         assert.equal(stored, undefined);
         continue;
@@ -108,12 +111,10 @@ export async function checkDashboardAuthRoles() {
       assert.equal(scope.isOps, fullAccess);
       assert.equal(scope.campuses.length, fullAccess ? 2 : 0);
     }
-    for (const userType of [null, "", "   "]) {
-      stored = { email: "employee@noonacademy.com", profile_id: "999", user_type: userType,
-        refresh_token: "unused", access_expires_at: new Date(0), expires_at: new Date(Date.now() + 3600000) };
-      globalThis.fetch = (async () => { throw new Error("Roleless sessions must not refresh tokens"); }) as typeof fetch;
-      assert.equal(await getDashboardUser({ headers: { cookie: `${cookies.sessionName}=${"a".repeat(64)}` }
-      } as unknown as Request), null);
+    for (const role of [null, "", "   ", "STUDENT", "TEACHER"]) {
+      stored = { email: "role-fixture@noon.edu.sa", profile_id: "999", user_type: role,
+        refresh_token: "must-not-refresh", access_expires_at: new Date(0), expires_at: new Date(Date.now() + 60000) };
+      assert.equal(await getDashboardUser({ headers: { cookie: `${cookies.sessionName}=${"a".repeat(64)}` } } as Request), null);
     }
     console.log("Verified OAuth roles; email grants and browser role forgery denied: PASS");
   } finally {

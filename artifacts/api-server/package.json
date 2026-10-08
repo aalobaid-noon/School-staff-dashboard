@@ -8,7 +8,8 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "sync:dashboard": "pnpm run build && node ./dist/scripts/sync-dashboard.mjs",
-    "test:dashboard-access": "pnpm run build && node ./dist/scripts/check-dashboard-access.mjs",
+    "test:dashboard-access": "pnpm run build && pnpm run test:dashboard-access:built",
+    "test:dashboard-access:built": "node ./dist/scripts/check-dashboard-access.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

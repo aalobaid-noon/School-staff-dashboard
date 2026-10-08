@@ -1,12 +1,27 @@
 import { checkDashboardSummary } from "./check-dashboard-summary";
 import { checkDashboardScope } from "./check-dashboard-scope";
 import assert from "node:assert/strict";
+import path from "node:path";
+import { existsSync } from "node:fs";
+import { resolveDashboardTemplate } from "../lib/dashboard-template";
 import { dashboardPostLoginPath, verifiedCitadelUserType } from "../routes/dashboard-auth";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 import { checkDashboardSyncRoutes } from "./check-dashboard-sync";
 import { checkDashboardAuthRoles } from "./check-dashboard-auth-roles";
 
 const previewCookies = dashboardCookies(true);
+const template = resolveDashboardTemplate();
+assert(existsSync(template));
+const workspaceRoot = path.resolve(template, "../../../../..");
+const packageRoot = path.join(workspaceRoot, "artifacts/api-server");
+assert(
+  [workspaceRoot, packageRoot].includes(process.cwd()),
+  "Launch the dashboard access checks from the workspace root or API package",
+);
+assert.equal(resolveDashboardTemplate(workspaceRoot), template);
+assert.equal(resolveDashboardTemplate(packageRoot), template);
+assert.throws(() => resolveDashboardTemplate("/nonexistent-dashboard-fixture"), /template was not found/);
+console.log(`Dashboard template lookup: PASS (${process.cwd() === workspaceRoot ? "workspace-root" : "API-package"} launch)`);
 const productionCookies = dashboardCookies(false);
 for (const options of [previewCookies.sessionOptions, previewCookies.stateOptions]) {
   assert.equal(options.sameSite, "none");
@@ -37,3 +52,4 @@ await checkDashboardAuthRoles();
 await checkDashboardSyncRoutes();
 checkDashboardScope();
 await checkDashboardSummary();
+console.log("Synthetic dashboard access checks: PASS");

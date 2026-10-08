@@ -1,22 +1,19 @@
 import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { buildHeaders } from "@noonacademy/citadel-transport";
 import { pool } from "@workspace/db";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { dashboardCookies } from "../lib/dashboard-cookies";
-import { canHaveGlobalDashboardAccess, filterDashboardReport, getDashboardScope, isDashboardAdmin } from "../lib/dashboard-scope";
+import { resolveDashboardTemplate } from "../lib/dashboard-template";
+import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope";
 export { getDashboardScope } from "../lib/dashboard-scope";
-export { isDashboardAdmin } from "../lib/dashboard-scope";
 
 const router: IRouter = Router();
 const cookies = dashboardCookies(process.env.NODE_ENV === "development");
 const COOKIE = cookies.sessionName;
 const STATE = cookies.stateName;
 const sessionLifetimeMs = 7 * 24 * 60 * 60 * 1000;
-// The API's pnpm package is the working directory for both the server bundle
-// and the dashboard-access check bundle (which live at different depths in dist).
-const templatePath = path.resolve(process.cwd(), "../school-staff-dashboard/source/src/app.html");
+const templatePath = resolveDashboardTemplate();
 
 function cookie(req: Request, name: string): string | undefined {
   const part = (req.headers.cookie ?? "").split(";").map((piece) => piece.trim())
@@ -81,6 +78,16 @@ export function verifiedCitadelUserType(profile: unknown): string | null {
   const value = obj(profile).userType;
   return typeof value === "string" && value.trim() ? value.trim().toUpperCase() : null;
 }
+const staffRoles = ["ADMIN", "SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR"] as const;
+function isStaffRole(role: string | null | undefined): boolean {
+  return staffRoles.some((allowed) => allowed === role);
+}
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+}
+function signInMessage(message: string): string {
+  return `<p>${escapeHtml(message)}</p><p><a href="/api/dashboard/login">Switch profile</a> and choose Admin, School manager, School lead, or Facilitator.</p>`;
+}
 function tokens(input: unknown) {
   const value = obj(input);
   if (typeof value.refreshToken !== "string" || !value.refreshToken ||
@@ -103,6 +110,18 @@ router.get("/dashboard/login", (req, res): void => {
     res.status(503).send("Noon sign-in is not configured for this environment.");
     return;
   }
+  res.setHeader("Cache-Control", "no-store");
+  res.clearCookie(COOKIE, sessionCookie);
+  const role = typeof req.query.userType === "string" ? req.query.userType : undefined;
+  if (!role || !isStaffRole(role)) {
+    res.status(role ? 400 : 200).type("html").send(
+      '<h1>Choose your school report profile</h1><p>Select a role you hold, then choose the matching profile in Citadel. This does not change your permissions.</p>' +
+      '<form method="get" action="/api/dashboard/login"><label>Profile role <select name="userType">' +
+      staffRoles.map((value) => `<option value="${value}">${value.replaceAll("_", " ")}</option>`).join("") +
+      '</select></label><button type="submit">Continue to sign in</button></form>',
+    );
+    return;
+  }
   const state = randomBytes(32).toString("hex");
   res.clearCookie(STATE, { ...csrfCookie, path: "/api/dashboard/oauth/callback" });
   res.cookie(STATE, state, { ...csrfCookie, maxAge: 10 * 60_000 });
@@ -110,13 +129,15 @@ router.get("/dashboard/login", (req, res): void => {
   url.search = new URLSearchParams({
     app_id: cfg.appId, redirect_uri: cfg.redirectUri, response_type: "code", state,
     // Multi-audience Citadel apps must explicitly select the staff login audience.
-    userType: "ADMIN",
+    userType: role,
   }).toString();
   res.setHeader("Cache-Control", "no-store");
   res.redirect(302, url.toString());
 });
 
 export async function dashboardOAuthCallback(req: Request, res: Response): Promise<void> {
+  res.setHeader("Cache-Control", "no-store");
+  res.clearCookie(COOKIE, sessionCookie);
   const cfg = config();
   const expected = cookie(req, STATE);
   res.clearCookie(STATE, csrfCookie);
@@ -138,8 +159,10 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
       return;
     }
     const userType = verifiedCitadelUserType(profile);
-    if (!userType) {
-      res.status(502).send("Noon sign-in did not return a profile role. Please try signing in again.");
+    if (!isStaffRole(userType)) {
+      res.status(403).type("html").send(signInMessage(userType
+        ? `Citadel signed you in as ${userType}. This profile cannot open school reports.`
+        : "Citadel did not return a profile role. Please sign in again."));
       return;
     }
     const issued = tokens(obj(exchange.token));
@@ -184,7 +207,7 @@ async function currentUser(req: Request, cfg: Config): Promise<{ email: string; 
       "FROM dashboard_sessions WHERE session_hash = $1 FOR UPDATE", [hash],
     );
     const stored = result.rows[0];
-    if (!stored || stored.expires_at.getTime() <= Date.now() || !stored.user_type?.trim()) {
+    if (!stored || stored.expires_at.getTime() <= Date.now() || !isStaffRole(stored.user_type)) {
       await client.query("ROLLBACK");
       return null;
     }
@@ -220,11 +243,14 @@ export async function getDashboardUser(req: Request) {
   return cfg ? currentUser(req, cfg) : null;
 }
 
+export function isDashboardAdmin(user: { userType?: string | null }) {
+  return user.userType === "ADMIN";
+}
+
 export function isDashboardOps(user: { email: string; userType?: string | null }) {
   const approved = (process.env.DASHBOARD_OPS_EMAILS ?? "")
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-  return canHaveGlobalDashboardAccess(user) &&
-    (isDashboardAdmin(user) || (!user.userType && approved.includes(user.email.trim().toLowerCase())));
+  return isDashboardAdmin(user) || (!user.userType && approved.includes(user.email.trim().toLowerCase()));
 }
 
 router.get("/dashboard/report", async (req, res): Promise<void> => {
@@ -253,8 +279,7 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
     const { campuses } = getDashboardScope(user, document);
     if (!campuses.length) {
       res.status(403).type("html").send(
-        '<p>No report data is assigned to this profile. <a href="/api/dashboard/login">Sign in again</a> ' +
-        'to choose another profile, or ask your school administrator to check your assignments.</p>',
+        signInMessage(`Signed in as ${user.email} (${user.userType}). No schools are assigned to this profile in the latest report. Ask your school administrator to check your assignments, or switch profile.`),
       );
       return;
     }
