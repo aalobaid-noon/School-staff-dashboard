@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import { pool } from "@workspace/db";
 import dashboardRouter from "../routes/dashboard";
+import dashboardAuthRouter from "../routes/dashboard-auth";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 
 export async function checkDashboardSummary() {
@@ -26,6 +27,7 @@ export async function checkDashboardSummary() {
   const app = express();
   app.use((req, _res, next) => { req.log = { error() {} } as unknown as typeof req.log; next(); });
   app.use(dashboardRouter);
+  app.use(dashboardAuthRouter);
   const server = app.listen(0, "127.0.0.1");
   await new Promise<void>((resolve) => server.once("listening", resolve));
   try {
@@ -44,7 +46,12 @@ export async function checkDashboardSummary() {
         Cookie: `${dashboardCookies(process.env.NODE_ENV === "development").sessionName}=${"a".repeat(64)}`,
       } });
       const body = await response.json() as { metrics: unknown };
-      assert.equal(response.status, expected ? 200 : 403);
+      assert.equal(response.status, 200);
+      if (!expected) {
+        assert.equal((body as { authRequired?: boolean }).authRequired, true);
+        assert.equal(body.metrics, null);
+        continue;
+      }
       if (expected) assert.deepEqual(body.metrics, expected);
       else assert.equal(body.metrics, undefined);
     }
@@ -52,6 +59,16 @@ export async function checkDashboardSummary() {
     const body = await anonymous.json() as { authRequired: boolean; metrics: unknown };
     assert.equal(body.authRequired, true);
     assert.equal(body.metrics, null);
+    const login = await fetch(url.replace("/summary", "/login"));
+    assert.equal(login.status, 200);
+    assert((await login.text()).includes("Choose your school report profile"));
+    assert(login.headers.get("set-cookie")?.includes("Expires="));
+    for (const role of ["ADMIN", "SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR"]) {
+      const redirect = await fetch(url.replace("/summary", "/login") + `?userType=${role}`, { redirect: "manual" });
+      assert.equal(redirect.status, 302);
+      assert.equal(new URL(redirect.headers.get("location")!).searchParams.get("userType"), role);
+    }
+    assert.equal((await fetch(url.replace("/summary", "/login?userType=STUDENT"))).status, 400);
     console.log("Summary HTTP endpoint enforces all four role scopes and denies unknown roles: PASS");
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
