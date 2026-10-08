@@ -18,7 +18,13 @@ updates branch. This merge does not change access policy or publish the app.
 The root Python scripts, SQL queries, `src/app.html`, original `README.md`, and
 `.github/workflows/refresh.yml` remain in place. That scheduled workflow still
 uses the root scripts and existing GitHub secrets; no new credentials are added.
-Its runtime and private warehouse refresh are not exercised by dashboard CI.
+The only workflow change is a job-level guard requiring a private repository.
+The existing export step includes real student data and assumed the repository
+was private, but the repository was public when this merge was prepared.
+Consequently, scheduled and manual legacy refreshes will be skipped while the
+repository remains public. This does not disable the authenticated Replit app's
+sync endpoints. Its runtime and private warehouse refresh are not exercised by
+dashboard CI.
 
 Copies under `artifacts/school-staff-dashboard/source` support the current app
 and should not be mistaken for GitHub's active root refresh workflow.
