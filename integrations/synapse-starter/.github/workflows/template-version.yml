@@ -1,0 +1,26 @@
+# Release discipline for the TEMPLATE repo (see RELEASING.md): a PR that changes any
+# synapse-owned path (.synapse/ownership.json) must bump TEMPLATE_VERSION and append an
+# UPGRADES.md entry. This runs ONLY here — the `if:` guard keeps it inert in clones that end
+# up on GitHub, and clones on Replit never run Actions at all. Deliberately NOT part of
+# `npm run verify`, which clones run before every deploy.
+name: template-version
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    if: github.repository == 'noonAcademy/synapse-starter'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the check diffs against the PR base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Runtime deps only — tsx is all the script needs, and the vendored tarballs install
+      # without a token.
+      - run: npm install --omit=dev
+      - run: npx tsx scripts/check-template-version.ts "origin/${{ github.base_ref }}"

@@ -1,0 +1,174 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get reporting totals scoped to the signed-in Noon staff member's assigned schools
+      responses:
+        "200":
+          description: Summary or unavailable state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /dashboard/sync:
+    get:
+      operationId: getDashboardSync
+      tags: [dashboard]
+      summary: Get authenticated, server-locked access and report sync status
+      responses:
+        "200":
+          description: Private sync status only, never raw extracts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSyncStatus"
+    post:
+      operationId: startDashboardSync
+      tags: [dashboard]
+      summary: Start or resume an explicit approved-operations report import
+      parameters:
+        - in: header
+          name: X-Dashboard-Sync
+          required: true
+          schema: { type: string, enum: ["1"] }
+      responses:
+        "200":
+          description: Started or resumed import
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSyncRun"
+  /dashboard/sync/advance:
+    post:
+      operationId: advanceDashboardSync
+      tags: [dashboard]
+      summary: Complete one private import step, publishing only after all validation succeeds
+      parameters:
+        - in: header
+          name: X-Dashboard-Sync
+          required: true
+          schema: { type: string, enum: ["1"] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardSyncAdvance"
+      responses:
+        "200":
+          description: Updated progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSyncRun"
+  /synapse/status:
+    get:
+      operationId: getSynapseStatus
+      tags: [synapse]
+      summary: Check the server-side Citadel connection
+      responses:
+        "200":
+          description: Connection state only; no private school data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynapseStatus"
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  schemas:
+    DashboardSyncAdvance:
+      type: object
+      required: [runId]
+      properties:
+        runId: { type: string, format: uuid }
+    DashboardSyncRun:
+      type: object
+      required: [runId, state, completedSteps, totalSteps, error]
+      properties:
+        runId: { type: [string, "null"] }
+        state: { type: string, enum: [idle, running, succeeded, failed] }
+        completedSteps: { type: integer }
+        totalSteps: { type: integer }
+        error: { type: [string, "null"] }
+    DashboardSyncStatus:
+      allOf:
+        - $ref: "#/components/schemas/DashboardSyncRun"
+        - type: object
+          required: [canSync, accessRole, roleLocked, snapshotAvailable, syncedAt]
+          properties:
+            canSync: { type: boolean }
+            accessRole: { type: string, enum: [admin, central_operations, assigned_schools] }
+            roleLocked: { type: boolean }
+            snapshotAvailable: { type: boolean }
+            syncedAt: { type: [string, "null"] }
+    DashboardSummary:
+      type: object
+      required: [available, authRequired, syncedAt, windowStart, windowEnd, metrics]
+      properties:
+        available:
+          type: boolean
+        authRequired:
+          type: boolean
+        syncedAt:
+          type: [string, "null"]
+        windowStart:
+          type: [string, "null"]
+        windowEnd:
+          type: [string, "null"]
+        metrics:
+          anyOf:
+            - type: "null"
+            - type: object
+              required: [schools, enrolledStudents, managers, schoolLeads, facilitators]
+              properties:
+                schools: { type: integer }
+                enrolledStudents: { type: integer }
+                managers: { type: integer }
+                schoolLeads: { type: integer }
+                facilitators: { type: integer }
+    SynapseStatus:
+      type: object
+      required: [configured, connected, message, authStatus]
+      properties:
+        configured:
+          type: boolean
+        connected:
+          type: boolean
+        message:
+          type: string
+        authStatus:
+          type: string
+          enum: [callback_registration_required]
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "School Staff Dashboard"
+description = "Imported Noon school manager dashboard, with the original dashboard source, Athena refresh scripts, SQL queries, and documentation. Live metrics require the private data extract that is intentionally not in the public GitHub repository."
+version = "1.0.0"
+id = "artifacts/school-staff-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23653
+
+[services.development]
+run = "pnpm --filter @workspace/school-staff-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/school-staff-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/school-staff-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23653"
+BASE_PATH = "/"

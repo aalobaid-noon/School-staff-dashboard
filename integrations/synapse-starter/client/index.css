@@ -1,0 +1,3 @@
+@import "tailwindcss";
+/* The shipped app's design tokens (client/app/**). The console does not use them. */
+@import "./app/theme.css";
