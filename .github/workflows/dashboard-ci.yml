@@ -1,0 +1,83 @@
+name: Dashboard CI
+
+# No path filters: this check should report on every pull request, including
+# changes to shared libraries, the lockfile, and vendored SDK packages.
+on:
+  pull_request:
+  push:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dashboard-checks:
+    name: Dashboard checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out changes
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check workspace types
+        run: pnpm run typecheck
+
+      - name: Build API and synthetic tests
+        run: pnpm --filter @workspace/api-server run build
+
+      - name: Build staff dashboard
+        env:
+          NODE_ENV: production
+          PORT: "5173"
+          BASE_PATH: /
+        run: pnpm --filter @workspace/school-staff-dashboard run build
+
+      - name: Build component preview
+        env:
+          NODE_ENV: production
+          PORT: "5174"
+          BASE_PATH: /__mockup/
+        run: pnpm --filter @workspace/mockup-sandbox run build
+
+      # The DB module requires a URL at import time. No database service is
+      # started: tests replace SQL/warehouse/OAuth calls with synthetic fixtures.
+      # A reserved .invalid host makes accidental real DB access fail closed.
+      - name: Check dashboard access from workspace root
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://fixture:fixture@database.example.invalid:5432/dashboard_fixture?connect_timeout=1
+        run: node artifacts/api-server/dist/scripts/check-dashboard-access.mjs
+
+      - name: Check dashboard access from API package
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://fixture:fixture@database.example.invalid:5432/dashboard_fixture?connect_timeout=1
+        working-directory: artifacts/api-server
+        run: pnpm run test:dashboard-access:built
+
+      - name: Report failed checks
+        if: failure()
+        run: |
+          echo "::error title=Dashboard CI failed::A dashboard type check, build, or synthetic access check failed. See the failed step above."
+          echo "Dashboard checks failed. See the failed step's log before merging or publishing." >> "$GITHUB_STEP_SUMMARY"

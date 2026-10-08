@@ -1,0 +1,158 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   theme.css — the shipped app's ENTIRE look, as Tailwind v4 design tokens.
+
+   Restyling the app = editing this file. Nothing else. App components
+   (client/app/**) consume these tokens through the semantic utilities Tailwind
+   generates from them — `bg-surface`, `text-ink`, `rounded-card`, `p-card`,
+   `space-y-stack`, `font-app` — and never hardcode colors, radii, fonts, or
+   density (see AGENTS.md → Conventions). The workspace console
+   (client/console/, client/ui.tsx) keeps its own fixed styling and is NOT
+   affected by this file.
+
+   To switch presets: replace the values inside the single active @theme block
+   below with one of the commented preset blocks ("bold", "warm"), or tweak
+   individual tokens (e.g. just --color-primary for a brand color).
+
+   RTL: direction is not a token — CSS can't set it. For an Arabic-first app,
+   set `dir="rtl" lang="ar"` on <html> in client/index.html; app components use
+   logical properties (text-start, end-0, rounded-e-*) so they flip cleanly.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ACTIVE PRESET: "calm" — quiet neutrals, one dark primary, generous spacing.
+   The starter's default; matches a plain, professional internal tool. */
+@theme {
+  /* Color */
+  --color-primary: #0f172a; /* main actions (buttons, active nav) */
+  --color-primary-strong: #334155; /* hover/pressed state of primary */
+  --color-on-primary: #ffffff; /* text/icons on a primary background */
+  --color-surface: #f8fafc; /* page background */
+  --color-card: #ffffff; /* raised blocks (cards, header) */
+  --color-line: #e2e8f0; /* borders and dividers */
+  --color-ink: #0f172a; /* headings and primary text */
+  --color-ink-muted: #64748b; /* secondary text */
+  --color-ink-faint: #94a3b8; /* timestamps, hints, footer */
+  --color-accent: #4f46e5; /* links, highlights, "act here" */
+  --color-danger: #b91c1c; /* error text */
+  --color-danger-surface: #fef2f2; /* error background */
+  --color-success: #047857; /* positive status */
+  --color-warning: #b45309; /* caveats (e.g. truncated data) */
+
+  /* Chart series — the categorical palette <ChartBlock> assigns to series in order.
+     Separate from the semantic colors above ON PURPOSE: --color-danger means "something is
+     wrong", so painting a course type red because it happens to be third in the list tells the
+     reader a lie. These carry no meaning beyond "a different series".
+     Ordered most-distinguishable-first, so the common 2- and 3-series charts stay legible for
+     the ~8% of male readers with red-green color vision deficiency. */
+  --color-chart-1: #4f46e5; /* indigo */
+  --color-chart-2: #d97706; /* amber */
+  --color-chart-3: #0d9488; /* teal */
+  --color-chart-4: #be185d; /* pink */
+  --color-chart-5: #0369a1; /* blue */
+  --color-chart-6: #65a30d; /* lime */
+
+  /* Radius */
+  --radius-card: 1rem; /* cards and large containers */
+  --radius-control: 0.5rem; /* buttons, inputs, pills, table frames */
+
+  /* Type */
+  --font-app: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --text-title: 1.5rem; /* page headings */
+  --text-title--line-height: 2rem;
+  --text-body: 0.875rem; /* base body size */
+  --text-body--line-height: 1.25rem;
+  --text-caption: 0.75rem; /* fine print */
+  --text-caption--line-height: 1rem;
+
+  /* Density */
+  --spacing-gutter: 1rem; /* page edge padding */
+  --spacing-stack: 1.5rem; /* vertical rhythm between blocks */
+  --spacing-card: 1.25rem; /* padding inside cards */
+}
+
+/* Preset: "bold" — saturated primary, tight corners, compact density.
+   For apps that should feel energetic and dense (dashboards, competitions).
+
+@theme {
+  --color-primary: #6d28d9;
+  --color-primary-strong: #5b21b6;
+  --color-on-primary: #ffffff;
+  --color-surface: #ffffff;
+  --color-card: #faf9ff;
+  --color-line: #ddd6fe;
+  --color-ink: #111827;
+  --color-ink-muted: #4b5563;
+  --color-ink-faint: #9ca3af;
+  --color-accent: #db2777;
+  --color-danger: #be123c;
+  --color-danger-surface: #fff1f2;
+  --color-success: #047857;
+  --color-warning: #b45309;
+
+  --color-chart-1: #7c3aed;
+  --color-chart-2: #db2777;
+  --color-chart-3: #0891b2;
+  --color-chart-4: #ea580c;
+  --color-chart-5: #2563eb;
+  --color-chart-6: #16a34a;
+
+  --radius-card: 0.5rem;
+  --radius-control: 0.25rem;
+
+  --font-app:
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --text-title: 1.875rem;
+  --text-title--line-height: 2.25rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+
+  --spacing-gutter: 0.75rem;
+  --spacing-stack: 1rem;
+  --spacing-card: 1rem;
+}
+*/
+
+/* Preset: "warm" — earthy palette, round corners, roomy density.
+   For friendly, human-facing apps (teacher tools, community pages).
+
+@theme {
+  --color-primary: #9a3412;
+  --color-primary-strong: #7c2d12;
+  --color-on-primary: #ffffff;
+  --color-surface: #faf6f1;
+  --color-card: #fffdf9;
+  --color-line: #e7d8c9;
+  --color-ink: #1c1917;
+  --color-ink-muted: #57534e;
+  --color-ink-faint: #a8a29e;
+  --color-accent: #b45309;
+  --color-danger: #b91c1c;
+  --color-danger-surface: #fef2f2;
+  --color-success: #15803d;
+  --color-warning: #a16207;
+
+  --color-chart-1: #b45309;
+  --color-chart-2: #0f766e;
+  --color-chart-3: #9f1239;
+  --color-chart-4: #4d7c0f;
+  --color-chart-5: #7c2d12;
+  --color-chart-6: #1d4ed8;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+
+  --font-app:
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --text-title: 1.5rem;
+  --text-title--line-height: 2rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.125rem;
+
+  --spacing-gutter: 1.25rem;
+  --spacing-stack: 2rem;
+  --spacing-card: 1.5rem;
+}
+*/

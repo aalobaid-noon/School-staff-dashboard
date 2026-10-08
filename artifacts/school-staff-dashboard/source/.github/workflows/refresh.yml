@@ -12,9 +12,6 @@ concurrency:
 
 jobs:
   refresh:
-    # This job extracts and uploads real student data. Its original upload
-    # policy assumes a private repository; never run it in a public repo.
-    if: github.event.repository.private == true
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

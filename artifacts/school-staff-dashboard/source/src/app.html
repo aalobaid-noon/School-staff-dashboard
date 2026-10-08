@@ -1,0 +1,2245 @@
+<title>لوحة مدير المدارس · noon</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap");
+  :root{
+    color-scheme:light;
+    --bg:#f1ebdd; --panel:#faf6ec; --panel2:#f3ecdb; --line:#d9cfba;
+    --txt:#26282e; --mut:#7c766b;
+    --brick:#bc5a37; --brick-d:#914126; --brick-t:#9e4527; --onprimary:#f1ebdd;
+    --green:#22a45d; --amber:#ddba62; --red:#dc3545; --blue:#5c7e96;
+    --green-t:#17803f; --amber-t:#8f6d10; --red-t:#c02334; --blue-t:#3f6b87;
+    --c1:#bc5a37; --c2:#2b6fa8; --c3:#b0851a; --c4:#8a4fb0; --c5:#0f8f4d;
+    --shadow:0 12px 30px rgb(38 40 46 / 12%);
+    --font:"IBM Plex Sans Arabic", system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  :focus-visible{outline:2px solid var(--brick-d);outline-offset:2px;border-radius:6px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  body{font-family:var(--font);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;
+    background-image:radial-gradient(circle at 8% 0%, rgb(239 217 160 / 30%), transparent 30rem),
+      radial-gradient(circle at 96% 100%, rgb(183 206 221 / 28%), transparent 34rem);
+    background-attachment:fixed;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1340px;margin:0 auto;padding:22px 26px 70px}
+  @media(min-width:761px){#root{zoom:1.2}}
+  bdi{unicode-bidi:isolate}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:4px;flex-wrap:wrap}
+  .htitle{font-size:15px;font-weight:700}
+  .sub{color:var(--mut);font-size:13px}
+  .hstat{color:var(--mut);font-size:12.5px;text-align:end;line-height:1.7}
+  .live{display:inline-flex;align-items:center;gap:6px;background:rgb(34 164 93 / 13%);color:var(--green-t);
+    border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+  .live i{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block}
+  .topbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:18px 0 12px}
+  .ghost{background:var(--panel);border:1px solid var(--line);color:var(--mut);padding:8px 13px;border-radius:9px;
+    cursor:pointer;font-size:13px;font-weight:600;font-family:inherit}
+  .ghost:hover{color:var(--txt);border-color:var(--brick-d)}
+  select.msel{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:10px;
+    padding:9px 12px;font-size:13.5px;font-weight:700;font-family:inherit;max-width:340px}
+  .filterbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px}
+  .flabel{color:var(--mut);font-size:12px;font-weight:600}
+  .ms{position:relative}
+  .mstrig{background:var(--panel);border:1px solid var(--line);color:var(--mut);padding:8px 13px;border-radius:9px;
+    cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;font-family:inherit;max-width:280px}
+  .mstrig.has{color:var(--brick-t);border-color:var(--brick-d)}
+  .mstrig bdi{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mspanel{position:absolute;z-index:40;top:112%;inset-inline-start:0;min-width:280px;max-width:380px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:8px}
+  .mssearch{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:7px;
+    padding:7px 9px;font-size:13px;margin-bottom:6px;font-family:inherit}
+  .msrows{max-height:280px;overflow:auto}
+  .msrow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+  .msrow:hover{background:var(--panel)}
+  .msrow.on{color:var(--brick-t);font-weight:600}
+  .msrow .ck{width:14px;display:inline-block;color:var(--brick-t);font-weight:800;flex:0 0 auto}
+  .msclear{padding:7px 8px;color:var(--mut);font-size:12px;cursor:pointer;border-top:1px solid var(--line);margin-top:4px}
+  .msclear:hover{color:var(--red-t)}
+  .seg{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:4px}
+  .seg button{background:transparent;border:none;color:var(--mut);padding:7px 13px;border-radius:8px;
+    cursor:pointer;font-size:12.5px;font-weight:600;font-family:inherit;white-space:nowrap}
+  .seg button.on{background:var(--brick);color:var(--onprimary)}
+  .crumb{color:var(--mut);font-size:12.5px;margin:6px 0 16px}
+  .layout{display:flex;gap:20px;align-items:flex-start}
+  .sidebar{flex:0 0 212px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;position:sticky;top:18px}
+  .sidebar button{display:flex;align-items:center;gap:9px;width:100%;text-align:start;background:transparent;border:none;
+    color:var(--mut);padding:11px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:4px;font-family:inherit}
+  .sidebar button.active{background:var(--brick);color:var(--onprimary)}
+  .sidebar button:not(.active):hover{background:var(--panel2);color:var(--txt)}
+  .sidebar .sblabel{font-size:10px;letter-spacing:.6px;color:var(--mut);padding:4px 12px 8px;text-transform:uppercase}
+  .sidebar .sbic{flex:0 0 18px;text-align:center;font-size:14px;line-height:1}
+  .sidebar .cnt{margin-inline-start:auto;font-size:11px;font-weight:700;background:var(--bg);border:1px solid var(--line);
+    border-radius:20px;padding:1px 8px;color:var(--mut)}
+  .sidebar button.active .cnt{background:rgb(241 235 221 / 22%);border-color:transparent;color:var(--onprimary)}
+  .main{flex:1;min-width:0}
+  .sectitle{font-size:17px;font-weight:800;margin:26px 0 2px}
+  .secsub{color:var(--mut);font-size:12.5px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+  .card h3{font-size:14px;margin-bottom:4px}
+  .card .desc{color:var(--mut);font-size:12px;margin-bottom:14px}
+  .note{background:var(--panel2);border:1px solid var(--line);border-inline-start:4px solid var(--green);
+    border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--mut);line-height:1.75;margin-bottom:16px}
+  .note b{color:var(--txt)}
+  .note summary{cursor:pointer;font-weight:700;color:var(--txt);font-size:13px;list-style:none}
+  .note summary::-webkit-details-marker{display:none}
+  .note summary::before{content:"▾ ";color:var(--green-t)}
+  .note[open] summary::before{content:"▴ "}
+  .note ul{margin:8px 18px 0}
+  .note li{margin-bottom:5px}
+  .note code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px}
+  .execwrap{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+  .execline{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+    border-radius:11px;padding:11px 14px;font-size:13.5px;line-height:1.7}
+  .execline .ic{flex:0 0 auto;font-size:15px;line-height:1.4}
+  .execline.warn{border-inline-start:4px solid var(--red)}
+  .execline.good{border-inline-start:4px solid var(--green)}
+  .execline.info{border-inline-start:4px solid var(--blue)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+  .kpis.sm{grid-template-columns:repeat(auto-fit,minmax(155px,1fr))}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .kpi.hero{border-color:#cbbfa4}
+  .kpi .lbl{color:var(--mut);font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:27px;font-weight:800;margin-top:5px;line-height:1.15;font-variant-numeric:tabular-nums}
+  .kpis.sm .kpi .val{font-size:21px}
+  .kpi .note2{font-size:11px;color:var(--mut);margin-top:2px}
+  .kpi .spark{margin-top:8px;height:28px}
+  .delta{font-size:12px;font-weight:700;margin-top:6px;display:inline-flex;align-items:center;gap:4px;
+    border-radius:20px;padding:2px 9px;font-variant-numeric:tabular-nums}
+  .delta.up{background:rgb(34 164 93 / 14%);color:var(--green-t)}
+  .delta.down{background:rgb(220 53 69 / 13%);color:var(--red-t)}
+  .delta.flat{background:rgb(124 118 107 / 13%);color:var(--mut)}
+  .delta.na{background:transparent;color:var(--mut);padding-inline:0;font-weight:500;font-size:11px}
+  .tscroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:start;padding:9px 9px;font-size:12.8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--mut);font-weight:700;font-size:10.5px;letter-spacing:.4px;cursor:pointer;user-select:none;text-transform:uppercase}
+  th:hover{color:var(--txt)}
+  th.sorted{color:var(--brick-t)}
+  td.num,th.num{text-align:end;font-variant-numeric:tabular-nums}
+  tbody tr:hover{background:var(--panel2)}
+  tbody tr.tot{background:var(--panel2);font-weight:700}
+  tbody tr.tot td{border-top:2px solid var(--line)}
+  .namecell{font-weight:700;font-size:13px;white-space:normal;min-width:190px;max-width:300px}
+  .namecell small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  .bar{height:5px;border-radius:4px;background:var(--line);overflow:hidden;min-width:54px;width:100%;margin-top:3px}
+  .bar>i{display:block;height:100%;border-radius:4px}
+  .rankcell{font-weight:800;font-size:13px;color:var(--mut)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+  .p-green{background:rgb(34 164 93 / 14%);color:var(--green-t)}
+  .p-amber{background:rgb(221 186 98 / 26%);color:var(--amber-t)}
+  .p-red{background:rgb(220 53 69 / 13%);color:var(--red-t)}
+  .p-blue{background:rgb(92 126 150 / 16%);color:var(--blue-t)}
+  .p-grey{background:rgb(124 118 107 / 13%);color:var(--mut)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .moverow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .moverow:last-child{border-bottom:none}
+  .moverow .nm{font-weight:600}
+  .moverow .sc{color:var(--mut);font-size:11.5px}
+  .moverow .vv{margin-inline-start:auto;font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .facets{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
+  .facet{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .facet .fh{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .facet .fn{font-size:12.5px;font-weight:700}
+  .facet .fv{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+  .facet .fd{font-size:11px;font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:9px;padding:6px 12px;
+    cursor:pointer;font-size:12.5px;font-weight:600;font-family:inherit}
+  .chip:hover{color:var(--txt);border-color:var(--brick-d)}
+  .chip.on{background:var(--brick);color:var(--onprimary);border-color:var(--brick)}
+  .examcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+  .examcard .eh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+  .examcard .en{font-size:14.5px;font-weight:800}
+  .examcard .ed{color:var(--mut);font-size:11.5px;margin-bottom:12px;min-height:34px;line-height:1.55}
+  .erow{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .erow .el{font-size:11.5px;color:var(--mut);flex:0 0 100px}
+  .erow .etrack{flex:1;height:12px;background:var(--bg);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+  .erow .etrack>i{display:block;height:100%;border-radius:7px}
+  .erow .ev{font-size:12.5px;font-weight:700;flex:0 0 46px;text-align:end;font-variant-numeric:tabular-nums}
+  .esplit{border-top:1px solid var(--line);margin-top:11px;padding-top:10px;font-size:11.5px;color:var(--mut);line-height:1.65}
+  .nfgap{background:var(--panel);border:1px solid var(--line);border-inline-start:4px solid var(--red);
+         border-radius:12px;padding:14px 17px;margin-top:16px;font-size:12.5px;line-height:1.75;color:var(--mut)}
+  .nfgap .nfh{font-size:14px;font-weight:800;color:var(--txt);margin-bottom:4px}
+  .nfgap b{color:var(--red-t)}
+  .nfgap .ok{color:var(--green-t)}
+  .nfcmp{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 4px}
+  .nfcmp span{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+              padding:6px 11px;font-size:11.5px;color:var(--txt)}
+  .nfcmp span i{font-style:normal;color:var(--mut);font-variant-numeric:tabular-nums}
+  .srow{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--panel)}
+  .srow.urgent{border-inline-start:4px solid var(--red)}
+  .srow.high{border-inline-start:4px solid var(--amber)}
+  .srow.watch{border-inline-start:4px solid var(--blue)}
+  .srow.win{border-inline-start:4px solid var(--green);background:linear-gradient(90deg,rgb(34 164 93 / 4%),transparent 40%)}
+  .dtag.good b{color:var(--green-t)}
+  .srow-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .srow-name{font-size:14px;font-weight:700}
+  .srow-meta{color:var(--mut);font-size:11.5px}
+  .srow-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .dtag{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--line);
+    border-radius:8px;padding:3px 9px;font-size:11.5px;font-variant-numeric:tabular-nums}
+  .dtag b{color:var(--red-t)}
+  .dtag.warn b{color:var(--amber-t)}
+  .srow-act{font-size:12.5px;margin-top:9px;padding-inline-start:9px;border-inline-start:3px solid var(--line);line-height:1.65}
+  .empty{text-align:center;color:var(--mut);font-size:13px;padding:36px 10px}
+  .empty .big{font-size:30px;display:block;margin-bottom:8px}
+  .kpi.clk{cursor:pointer;transition:border-color .12s,transform .12s}
+  .kpi.clk:hover{border-color:var(--brick-d);transform:translateY(-1px)}
+  .kpi .drill{font-size:10.5px;color:var(--brick-t);font-weight:700;margin-top:6px;display:flex;align-items:center;gap:4px}
+  .lnk{color:var(--brick-t);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .lnk:hover{color:var(--brick-d)}
+  .ov{position:fixed;inset:0;background:rgb(38 40 46 / 55%);z-index:150;display:flex;align-items:center;
+    justify-content:center;padding:24px}
+  .mdl{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    width:min(1080px,100%);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+  .mdl-h{padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+  .mdl-h h3{font-size:17px;font-weight:800;display:flex;align-items:center;gap:9px}
+  .mdl-h .why{color:var(--mut);font-size:12.5px;margin-top:5px;line-height:1.65}
+  .mdl-x{margin-inline-start:auto;background:transparent;border:none;color:var(--mut);font-size:20px;
+    cursor:pointer;line-height:1;font-family:inherit}
+  .mdl-x:hover{color:var(--red-t)}
+  .mdl-tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:11px 20px;border-bottom:1px solid var(--line);
+    background:var(--panel2)}
+  .mdl-tools input{flex:1;min-width:170px;background:var(--panel);border:1px solid var(--line);color:var(--txt);
+    border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit}
+  .mdl-b{overflow:auto;padding:0 20px 16px}
+  .conc{display:flex;flex-wrap:wrap;gap:7px;padding:12px 0 4px;align-items:center}
+  .conclbl{font-size:11.5px;color:var(--mut)}
+  .concchip{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:4px 11px;
+    font-size:11.5px;font-family:inherit;color:var(--txt);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .concchip:hover{border-color:var(--brick-d)}
+  .concchip.on{background:var(--brick);border-color:var(--brick);color:var(--onprimary)}
+  .concchip b{color:var(--brick-t);font-weight:800}
+  .concchip.on b,.concchip.on .cpct{color:var(--onprimary)}
+  .cpct{color:var(--mut)}
+  .cmrow{border-bottom:1px solid var(--line);padding:11px 0}
+  .cmrow:last-child{border-bottom:none}
+  .cmhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+  .cmq{font-size:10.5px;color:var(--mut);background:var(--panel2);border:1px solid var(--line);
+    border-radius:20px;padding:1px 8px}
+  .cmmeta{font-size:11.5px;color:var(--mut);margin-inline-start:auto;text-align:end}
+  .cmtxt{font-size:13.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word;
+    padding-inline-start:9px;border-inline-start:3px solid var(--line)}
+  .mdl table th{position:sticky;top:0;background:var(--panel);z-index:2}
+  .gapdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-inline-end:5px}
+  #tip{position:fixed;z-index:200;pointer-events:none;background:#26282e;color:#f1ebdd;border-radius:8px;
+    padding:7px 10px;font-size:11.5px;line-height:1.6;box-shadow:var(--shadow);display:none;max-width:240px;font-family:var(--font)}
+  .legend{display:flex;gap:14px;color:var(--mut);font-size:11px;margin-top:10px;flex-wrap:wrap;align-items:center}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+  @media(max-width:760px){
+    .layout{flex-direction:column}
+    .sidebar{position:static;width:100%;display:flex;gap:6px;flex-wrap:wrap}
+    .sidebar .sblabel{display:none}
+    .sidebar button{width:auto}
+    .wrap{padding:16px 14px 60px}
+  }
+</style>
+
+<div id="root" dir="rtl">
+<div class="wrap">
+  <header>
+    <div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <svg width="106" height="40" viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg" aria-label="noon">
+          <path d="M16 80 V44 a18 18 0 0 1 36 0 V80" fill="none" stroke="var(--txt)" stroke-width="13" stroke-linecap="round"/>
+          <circle cx="86" cy="62" r="18" fill="none" stroke="var(--txt)" stroke-width="13"/>
+          <circle cx="142" cy="58" r="27" fill="var(--green)"/>
+          <path d="M130 60 q12 15 24 0" fill="none" stroke="#0f1419" stroke-width="5.5" stroke-linecap="round"/>
+          <path d="M178 80 V44 a18 18 0 0 1 36 0 V80" fill="none" stroke="var(--txt)" stroke-width="13" stroke-linecap="round"/>
+        </svg>
+        <span class="htitle" id="h-title"></span>
+      </div>
+      <div class="sub" id="h-sub"></div>
+    </div>
+    <div class="hstat" id="h-stat"></div>
+  </header>
+  <div class="topbar" id="topbar"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="filterbar" id="filterbar"></div>
+      <div class="crumb" id="crumb"></div>
+      <div id="app"></div>
+      <div id="drill"></div>
+    </main>
+  </div>
+</div>
+</div>
+<div id="tip"></div>
+
+<script>
+/*__DATA__*/
+</script>
+
+<script>
+/* ==========================================================================
+   noon · School Manager Dashboard — built on live Athena data
+   Every figure comes from DATA (data/real.json), pulled from the Noon data
+   lake. No simulated values.
+   ========================================================================== */
+
+const M  = DATA.managers;
+const C  = DATA.campuses;
+const EX = DATA.exams;
+const WK = DATA.weekly;
+const FA = DATA.facilitators;
+const LD = DATA.leads || [];
+const GR = DATA.grades || [], CO = DATA.cohorts || [], ST = DATA.students || [];
+const ORPH = DATA.orphanCohorts || [];
+/* comment row = [campusId, facilitatorId, cohortIdx, week, qFlag, rateIdx, text] */
+const CM = DATA.comments || [];
+const C_CID=0, C_FID=1, C_CO=2, C_WK=3, C_Q=4, C_R=5, C_TXT=6;
+const RATE = [
+  {ar:'سيئ جدًا', en:'Very bad', col:'var(--red)',   cls:'p-red'},
+  {ar:'سيئ',      en:'Bad',      col:'var(--red)',   cls:'p-red'},
+  {ar:'مقبول',    en:'OK',       col:'var(--amber)', cls:'p-amber'},
+  {ar:'جيد',      en:'Good',     col:'var(--blue)',  cls:'p-blue'},
+  {ar:'ممتاز',    en:'Excellent',col:'var(--green)', cls:'p-green'}
+];
+function commentsInScope(){
+  const cids = new Set(scopedCampuses().map(c => c.id));
+  let list = CM.filter(r => cids.has(r[C_CID]));
+  if(state.fFac.length) list = list.filter(r => state.fFac.includes(String(r[C_FID])));
+  return list;
+}
+const FNAME = {}; FA.forEach(f => { FNAME[f.fid] = f.fname; });
+/* facilitator id 0 = the class points at a placeholder account, so nobody real owns it.
+   Showing the raw id here would read as a person; this says plainly that there isn't one. */
+Object.defineProperty(FNAME, 0, {get: () => ar() ? 'غير مُسند' : 'unassigned'});
+/* student row = [name, campusId, gradeIdx, cohortIdx, facilitatorId, flags] */
+const S_NAME=0, S_CID=1, S_GR=2, S_CO=3, S_FID=4, S_X=5;
+const META = DATA.meta;
+
+const CBY  = Object.fromEntries(C.map(c => [c.id, c]));
+const MNAME = Object.fromEntries(M.map(m => [m.id, m.name]));
+
+/* ==========================================================================
+   EXAMS — six separate diagnostics, and NOT every student sits every one.
+   A student is eligible for an exam when the exam is scheduled on their cohort,
+   or they are enrolled in the matching programme, or they already sat it.
+   Every rate below is over ELIGIBLE students only (n_<k>), never the whole roster:
+   a middle school has no Qudrat, ESL or Tahsili by design, so it is not "missing" them.
+   Raw campus row: <k>n eligible · <k>o % opened · <k>c % completed · <k>s avg score.
+   ========================================================================== */
+const EXM = [
+  {k:'q', o:'qo', c:'qc', s:'qs', col:'var(--c1)', ic:'🩺', nq:110,
+   ar:'قدرات', en:'Qudrat', olbl:['دخلوا قدرات','Opened Qudrat'],
+   dar:'اختبار قدرات التشخيصي 2026 — 110 أسئلة. لطلاب الثانوية المسجّلين في برنامج القدرات أو المجدول لهم الاختبار.',
+   den:'Qudrat Diagnostics 2026 — 110 questions. For high-school students enrolled in the Qudrat programme or scheduled for the exam.',
+   rar:'هو خط الأساس الذي يُقاس عليه نمو الطالب في القدرات هذا العام',
+   ren:'it is the baseline every later Qudrat growth measure is compared against'},
+  {k:'e', o:'eo', c:'ec', s:'es', col:'var(--c2)', ic:'🔤', nq:22,
+   ar:'ESL', en:'ESL', olbl:['دخلوا ESL','Opened ESL'],
+   dar:'ESL Diagnostic — أغسطس 2026، 22 سؤالًا. لطلاب برنامج ESL أو المجدول لهم الاختبار. الفجوة بين الدخول والإكمال إشارة الانسحاب.',
+   den:'ESL Diagnostic, August 2026 — 22 questions. For students in the ESL programme or scheduled for it. The gap between opening and completing is the abandon signal.',
+   rar:'هو خط الأساس لقياس تقدّم الطالب في الإنجليزية',
+   ren:'it is the baseline for measuring the student\'s English progress'},
+  {k:'t', o:'to', c:'tc', s:'ts', col:'var(--c5)', ic:'📐', nq:110,
+   ar:'تحصيلي', en:'Tahsili', olbl:['دخلوا تحصيلي','Opened Tahsili'],
+   dar:'Tahsili Diagnostics 2026 — 110 أسئلة. لطلاب برنامج التحصيلي أو المجدول لهم الاختبار، وليس لكل الثانوية.',
+   den:'Tahsili Diagnostics 2026 — 110 questions. For students in the Tahsili programme or scheduled for it — not the whole high school.',
+   rar:'هو خط الأساس لقياس جاهزية الطالب للتحصيلي',
+   ren:'it is the baseline for measuring the student\'s Tahsili readiness'},
+  {k:'s', o:'so', c:'sc', s:'ss', col:'var(--c3)', ic:'🔬', nq:30,
+   ar:'نافس — العلوم', en:'NAFES Science', olbl:['دخلوا نافس العلوم','Opened NAFES Science'],
+   dar:'NAFES Diagnostic — Science — 30 سؤالًا. للمسجّلين في نافس (مادة العلوم) أو المجدول لهم الاختبار.',
+   den:'NAFES Diagnostic — Science — 30 questions. For students enrolled in NAFES (Science) or scheduled for it.',
+   rar:'هو القراءة التشخيصية الوحيدة للطالب في العلوم هذا العام',
+   ren:'it is the student\'s only science diagnostic reading this year'},
+  {k:'m', o:'mo', c:'mc', s:'ms', col:'var(--c4)', ic:'🧮', nq:35,
+   ar:'نافس — الرياضيات والعربية', en:'NAFES Math + Arabic', olbl:['دخلوا نافس الرياضيات والعربية','Opened NAFES Math + Arabic'],
+   dar:'NAFES Diagnostic — Math + Arabic — 35 سؤالًا، مادتان في اختبار واحد. للمسجّلين في نافس (الرياضيات والعربية) أو المجدول لهم الاختبار.',
+   den:'NAFES Diagnostic — Math + Arabic — 35 questions, two subjects in one sitting. For students enrolled in NAFES (Math, Arabic) or scheduled for it.',
+   rar:'هو القراءة التشخيصية للطالب في الرياضيات واللغة العربية معًا',
+   ren:'it is the student\'s diagnostic reading in Math and Arabic together'},
+  {k:'p', o:'po', c:'pc', s:'ps', col:'var(--blue)', ic:'📘', nq:45,
+   ar:'تشخيصي ثالث متوسط', en:'Grade-9 diagnostic', olbl:['دخلوا تشخيصي ثالث متوسط','Opened Grade-9 diagnostic'],
+   dar:'«امتحان تشخيصي: ثالث متوسط 2026: الفصل الدراسي الأول» — 45 سؤالًا. يُعيَّن بجدولته على فصول ثالث متوسط، بلا برنامج تسجيل.',
+   den:'"Diagnostic exam: third intermediate 2026, first term" — 45 questions. Assigned by scheduling it on third-intermediate classes; there is no enrolment programme.',
+   rar:'هو القراءة التشخيصية لطلاب ثالث متوسط في الفصل الأول',
+   ren:'it is the first-term diagnostic reading for third-intermediate students'}
+];
+const EXK = Object.fromEntries(EXM.map(e => [e.k, e]));
+const EXW = META.exam_windows || {};
+const TODAY = META.pulled_at;
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dfmt(iso){
+  if(!iso) return '';
+  const p = iso.split('-'), m = Number(p[1]) - 1, d = Number(p[2]);
+  return ar() ? d + ' ' + MONTHS_AR[m] : MONTHS_EN[m] + ' ' + d;
+}
+/* window state at network level: closed = the last sitting date has passed */
+function winOf(e){
+  const w = EXW[e.k] || {}, to = w.to;
+  if(!to) return {to:null, closed:false, left:null};
+  const left = daysBetween(TODAY, to);
+  return {to, from:w.from, closed:left < 0, left};
+}
+function winText(e){
+  const w = winOf(e);
+  if(!w.to) return '';
+  if(w.closed) return ar() ? 'أُغلقت نافذته في ' + dfmt(w.to) : 'window closed on ' + dfmt(w.to);
+  if(w.left === 0) return ar() ? 'تنتهي نافذته اليوم' : 'window closes today';
+  if(w.left === 1) return ar() ? 'تنتهي نافذته غدًا' : 'window closes tomorrow';
+  return ar() ? 'نافذته مفتوحة حتى ' + dfmt(w.to) : 'window open until ' + dfmt(w.to);
+}
+/* Arabic number agreement for "school": 1 مدرسة واحدة, 2 مدرستان/مدرستين, 3-10 مدارس, else مدرسة */
+const schAr = (n, subj) => bd(n) + ' ' + (n === 1 ? 'مدرسة واحدة' : n === 2 ? (subj ? 'مدرستان' : 'مدرستين') : n >= 3 && n <= 10 ? 'مدارس' : 'مدرسة');
+const exName  = e => ar() ? 'اختبار ' + e.ar : e.en + ' exam';
+const exShort = e => ar() ? e.ar : e.en;
+
+/* per-campus, per-exam: {n eligible, o opened %, c completed %, s score %} */
+const EXR = {};
+EX.forEach(r => {
+  EXR[r.id] = {};
+  EXM.forEach(e => { EXR[r.id][e.k] = {n:r[e.k+'n'] || 0, o:r[e.o], c:r[e.c], s:r[e.s]}; });
+});
+const NOX = {n:0, o:null, c:null, s:null};
+const xr = (cid, k) => (EXR[cid] && EXR[cid][k]) || NOX;
+/* assigned students split by school grade: BG[campusId][exam] = [{g, n, o, c, s}] (whole students) */
+const BG = {};
+(DATA.bygrade || []).forEach(r => {
+  ((BG[r[0]] = BG[r[0]] || {})[r[2]] = BG[r[0]][r[2]] || []).push({g:r[1], n:r[3], o:r[4], c:r[5], s:r[6]});
+});
+const GR_EN = {'اولى ثانوي':'1st secondary', 'ثاني ثانوي':'2nd secondary', 'ثالث ثانوي':'3rd secondary', 'ثالث متوسط':'3rd intermediate'};
+const gradeLbl = gi => { const g = GR[gi] || '—'; return ar() ? g : (GR_EN[g] || g); };
+const gradeRank = gi => {
+  const g = GR[gi] || '';
+  return (/متوسط/.test(g) ? 0 : 10) + (/ثالث/.test(g) ? 3 : /ثاني/.test(g) ? 2 : /ا?ولى|اول/.test(g) ? 1 : 4);
+};
+/* one exam across the schools in `list`, summed per grade (score = completers-weighted) */
+function gradeSplit(list, k){
+  const m = {};
+  list.forEach(c => ((BG[c.id] || {})[k] || []).forEach(r => {
+    const x = m[r.g] = m[r.g] || {g:r.g, n:0, o:0, c:0, sc:0, sw:0};
+    x.n += r.n; x.o += r.o; x.c += r.c;
+    if(r.s != null && r.c > 0){ x.sc += r.s * r.c; x.sw += r.c; }
+  }));
+  return Object.values(m).map(x => Object.assign(x, {s: x.sw ? x.sc / x.sw : null})).sort((a, b) => gradeRank(a.g) - gradeRank(b.g));
+}
+/* campuses in this list that the exam is actually assigned to */
+const eligCampuses = (list, k) => list.filter(c => xr(c.id, k).n > 0);
+/* students who opened / did not open, in whole students */
+const openedN   = (c, k) => { const x = xr(c.id, k); return Math.round(x.n * (x.o || 0) / 100); };
+const unopenedN = (c, k) => xr(c.id, k).n - openedN(c, k);
+
+const LNAME = Object.fromEntries(LD.map(l => [l.lid, l.name]));
+
+/* hierarchy: manager → lead → facilitator → student.
+   Lead↔campus is many-to-many, exactly like manager↔campus. */
+const leadCampusIds = lid => LD.filter(l => String(l.lid) === String(lid)).map(l => l.cid);
+const leadsOfCampus = cid => LD.filter(l => l.cid === cid);
+
+/* ---------- helpers ---------- */
+const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
+const uniq  = a => [...new Set(a)];
+const bd    = v => '<bdi>' + v + '</bdi>';
+const esc   = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pc    = v => v == null ? '—' : Math.round(v) + '%';
+const pc1   = v => v == null ? '—' : v.toFixed(1) + '%';
+const num   = v => v == null ? '—' : Math.round(v).toLocaleString('en-US');
+const groupBy = (arr, f) => arr.reduce((m,x) => { const k = f(x); (m[k] = m[k] || []).push(x); return m; }, {});
+
+/* weighted mean — the only correct way to roll a rate up a hierarchy */
+function wmean(rows, vk, wk){
+  let s = 0, w = 0;
+  for(const r of rows){ const v = r[vk], ww = r[wk]; if(v != null && ww > 0){ s += v*ww; w += ww; } }
+  return w ? s/w : null;
+}
+function wsum(rows, k){ return rows.reduce((a,r) => a + (r[k] || 0), 0); }
+
+/* ---------- state ---------- */
+let state = {
+  lang:'ar', manager:'ALL', tab:'exec', cmp:'week',
+  viewBy:'people', fType:'ALL', fLead:[], fCampus:[], fFac:[], openMS:null, msSearch:'',
+  drill:null, cmRate:'neg', cmWeek:null, sortC:{k:'enr',d:-1}, sortF:{k:'n',d:-1}, trendMetric:'att', actExpand:false,
+  simTy:'DIAGNOSTIC', simP:'all', simPr:'ALL', simHide:false
+};
+const PERSIST = ['lang','manager','cmp','trendMetric','fType','viewBy','simTy','simP','simPr','simHide'];
+function save(){ try{ const o={}; PERSIST.forEach(k=>o[k]=state[k]); localStorage.setItem('noonMgrReal', JSON.stringify(o)); }catch(e){} }
+(function(){ try{ const o = JSON.parse(localStorage.getItem('noonMgrReal')||'{}'); PERSIST.forEach(k=>{ if(o[k]!=null) state[k]=o[k]; }); }catch(e){} })();
+
+if (state.manager !== 'ALL' && !M.some(m => String(m.id) === String(state.manager))) state.manager = 'ALL';
+
+/* ---------- scoping ---------- */
+const mgrIds = c => String(c.mgr).split(',').filter(Boolean).map(Number);
+function managerCampuses(mid){
+  return mid === 'ALL' ? C.slice() : C.filter(c => mgrIds(c).includes(Number(mid)));
+}
+const typeOk = c => state.fType === 'ALL' || c.type === state.fType;
+function scopedCampuses(){
+  let list = managerCampuses(state.manager).filter(typeOk);
+  if(state.fLead.length){
+    const ids = new Set(state.fLead.flatMap(lid => leadCampusIds(lid)));
+    list = list.filter(c => ids.has(c.id));
+  }
+  if(state.fCampus.length) list = list.filter(c => state.fCampus.includes(String(c.id)));
+  if(state.fFac.length){
+    const cids = new Set(FA.filter(f => state.fFac.includes(String(f.fid))).map(f => f.cid));
+    list = list.filter(c => cids.has(c.id));
+  }
+  return list;
+}
+function scopedFacs(){
+  const cids = new Set(scopedCampuses().map(c => c.id));
+  let list = FA.filter(f => cids.has(f.cid));
+  if(state.fFac.length) list = list.filter(f => state.fFac.includes(String(f.fid)));
+  return list;
+}
+
+/* ---------- aggregation over a set of campuses ---------- */
+function agg(list){
+  const out = {
+    campuses: list.length,
+    facs:     uniq(scopedFacs().filter(f => list.some(c => c.id === f.cid)).map(f => f.fid)).length,
+    enr:      wsum(list, 'enr'),
+    act:      wsum(list, 'act'),
+    never:    wsum(list, 'never'),
+    att:      wmean(list, 'att', 'act'),
+    etc:      wmean(list, 'etc', 'enr'),
+    etq:      wmean(list, 'etq', 'enr'),
+    /* per-STUDENT correctness among the students who actually closed a ticket:
+       every closer counts once, however many tickets they answered */
+    etqs:     wmean(list, 'etqs', 'etn'),
+    etn:      wsum(list, 'etn'),
+    tr:       wmean(list, 'tr',  'tn'),
+    tn:       wsum(list, 'tn')
+  };
+  /* one block per exam, weighted by ELIGIBLE students only:
+     n_<k> eligible · sch_<k> schools it is assigned to · <k>o/<k>c opened/completed % · <k>s score */
+  EXM.forEach(e => {
+    const rs = list.map(c => xr(c.id, e.k)).filter(r => r.n > 0);
+    let s = 0, w = 0;
+    for(const r of rs){ const wt = r.n * ((r.c || 0) / 100); if(r.s != null && wt > 0){ s += r.s * wt; w += wt; } }
+    out['n_' + e.k]   = wsum(rs, 'n');
+    out['sch_' + e.k] = rs.length;
+    out[e.o] = wmean(rs, 'o', 'n');
+    out[e.c] = wmean(rs, 'c', 'n');
+    out[e.s] = w ? s / w : null;
+  });
+  return out;
+}
+
+/* ---------- weekly (manager grain — the only grain with a time series) ---------- */
+function weeklyFor(mid, wk){
+  const rows = mid === 'ALL' ? WK.filter(w => w.wk === wk)
+                             : WK.filter(w => w.wk === wk && w.mid === Number(mid));
+  if(!rows.length) return null;
+  return {
+    act: wsum(rows,'act'),
+    att: wmean(rows,'att','act'),
+    etq: wmean(rows,'etq','act'),
+    etqs: wmean(rows,'etqs','etn'),
+    etn: wsum(rows,'etn'),
+    tr:  wmean(rows,'tr','tn'),
+    tn:  wsum(rows,'tn')
+  };
+}
+/* Derived from the data so a refresh can roll the window forward on its own.
+   WEEKS is every week the extract actually carries; CUR_WK is the latest complete
+   one, and the "start of term" baseline is the earliest. */
+const WEEKS  = [...new Set(WK.map(w => w.wk))].sort((a,b) => a-b);
+const CUR_WK = WEEKS.length ? WEEKS[WEEKS.length-1] : 1;
+const FST_WK = WEEKS.length ? WEEKS[0] : 1;
+function baseWk(){ return state.cmp === 'week' ? (WEEKS[WEEKS.indexOf(CUR_WK)-1] ?? FST_WK) : FST_WK; }
+/* deltas are only trustworthy when no campus/facilitator filter narrows the scope,
+   because the weekly series is stored at manager grain */
+function deltasLive(){ return state.fType === 'ALL' && !state.fCampus.length && !state.fFac.length && !state.fLead.length; }
+
+/* ---------- student-level gaps ---------- */
+const GAP = {
+  never: {bit:1, col:'var(--red)', ic:'🚫',
+    ar:'لم يحضروا أي حصة', en:'Never attended a session'}
+};
+EXM.forEach(e => {
+  GAP[e.k] = {bit:{q:2, e:4, t:8, s:32, m:64, p:128}[e.k], col:e.col, ic:e.ic,
+    ar:'لم يدخلوا اختبار ' + e.ar, en:'Have not opened ' + e.en, ex:e};
+});
+function gapWhy(k){
+  if(k === 'never') return ar()
+    ? 'طلاب مسجّلون لم يدخلوا ولا حصة واحدة منذ بداية العام. غالبًا مشكلة تسجيل أو وصول للمنصة، لا غياب عادي — تحقّق من الحساب قبل الاتصال بولي الأمر.'
+    : 'Enrolled students who have not entered a single session this year. Usually an enrolment or platform-access problem rather than ordinary absence — check the account before calling home.';
+  const e = EXK[k], w = winOf(e);
+  return ar()
+    ? 'طلاب مُعيَّن لهم ' + exName(e) + ' — بجدولته على فصلهم أو بتسجيلهم في برنامجه — ولم يفتحوه. من لم يُعيَّن له هذا الاختبار غير مذكور هنا. '
+      + (w.to ? (w.closed ? 'أُغلقت نافذته في ' + dfmt(w.to) + ' فقد فاتهم فعلًا، ويحتاجون جلسة تعويضية أو تمديدًا. '
+                          : 'نافذته مفتوحة حتى ' + dfmt(w.to) + ' — ما زال الوقت متاحًا لإدخالهم. ') : '')
+      + e.rar + '.'
+    : 'Students who are assigned the ' + e.en + ' exam — scheduled on their class or enrolled in its programme — and have not opened it. Students it is not assigned to are not listed. '
+      + (w.to ? (w.closed ? 'Its window closed on ' + dfmt(w.to) + ', so they have genuinely missed it and need a make-up sitting or an extension. '
+                          : 'Its window is open until ' + dfmt(w.to) + ' — there is still time to get them in. ') : '')
+      + e.ren.charAt(0).toUpperCase() + e.ren.slice(1) + '.';
+}
+/* the denominator for a gap: eligible students for an exam, the roster for attendance */
+const gapDen = (k, cid) => k === 'never' ? (CBY[cid] || {}).enr : xr(cid, k).n;
+function studentsInScope(){
+  const cids = new Set(scopedCampuses().map(c => c.id));
+  let list = ST.filter(r => cids.has(r[S_CID]));
+  if(state.fFac.length) list = list.filter(r => state.fFac.includes(String(r[S_FID])));
+  return list;
+}
+const gapCount = k => studentsInScope().filter(r => r[S_X] & GAP[k].bit).length;
+
+/* ---------- i18n ---------- */
+const D = {
+  title:['لوحة مدير المدارس','School Manager Dashboard'],
+  sub:['من يحتاج تدخلًا الآن، في أي مدرسة، ولماذا — بيانات حيّة من مستودع بيانات نون.',
+       'Who needs intervention now, in which school, and why — live from the Noon data lake.'],
+  manager:['المدير','Manager'], allNet:['الدكتور منصور العصيمي','Dr. Mansour Al-Osaimi'],
+  drillOpen:['اضغط لعرض الأسماء','Click to see the names'],
+  openComments:['اضغط لقراءة تعليقاتهم','Click to read their comments'],
+  cmTitle:['ما كتبه الطلاب في استبيان الثقة','What students wrote in the trust survey'],
+  cmWhy:['تعليقات مكتوبة بخط الطالب نفسه مع تقييمه. معروضة بلا أسماء — الاستبيان أسبوعي ومتكرر، وربط الاسم بالشكوى يُفقده صدقه. المدرسة والفصل والمشرف ظاهرة، وهي ما تحتاجه للتصرف.',
+         'Students\' own words alongside their rating. Shown without names — the survey is weekly and recurring, and attaching a name to a complaint kills its honesty. School, class and facilitator are shown, which is what you act on.'],
+  cmWeek:['الأسبوع','Week'], cmAll:['كل التقييمات','All ratings'],
+  cmQx:['عن التجربة','On the experience'], cmQa:['عن الأنشطة','On the activities'],
+  cmNone:['لا توجد تعليقات في هذا النطاق','No comments in this scope'],
+  searchCm:['ابحث في نص التعليقات…','Search the comment text…'],
+  student:['الطالب','Student'], grade:['المرحلة','Grade'], cohort:['الفصل','Class'],
+  searchStu:['ابحث باسم الطالب أو الفصل أو المدرسة…','Search by student, class or school…'],
+  concIn:['أعلى تركّز:','Heaviest in:'],
+  showingOf:['يعرض','showing'], ofTotal:['من','of'],
+  moreRows:['عرض 200 إضافية','Show 200 more'],
+  copyList:['نسخ القائمة','Copy list'], copied:['تم النسخ ✓','Copied ✓'],
+  noMatch:['لا نتيجة مطابقة للبحث','Nothing matches that search'],
+  viewBy:['العرض','View'], byPeople:['حسب الأشخاص','By people'], bySchool:['حسب المدرسة','By school'],
+  bySchoolSub:['نفس التذاكر مجمّعة على المدرسة بدل الشخص — كل مدرسة صف واحد، ومديرها وقائدها بجانب اسمها.',
+               'The same tickets grouped by school instead of person — one row per school, with its manager and lead beside the name.'],
+  ctype:['النوع','Type'], tAll:['الكل','All'], tTracks:['تراكس','Tracks'], tUffuq:['أفق','Ufuq'],
+  lead:['قائد المدرسة','School lead'], leads:['قائد','leads'],
+  tLeads:['القادة','School leads'],
+  leadsTitle:['قادة المدارس تحت هذا المدير','School leads under this manager'],
+  leadsSub:['الطبقة بين المدير والمشرف. القائد يقود مدرسة أو أكثر، وقد تشترك مدرستان في قائد واحد.',
+            'The layer between manager and facilitator. A lead runs one or more schools, and two schools can share a lead.'],
+  noLead:['بلا قائد','No lead assigned'],
+  etqs:['صحة التذاكر لكل طالب','Per-student ticket correctness'],
+  etn:['الطلاب المغلقون للتذاكر','Students who closed tickets'],
+  school:['المدرسة','School'], schools:['مدرسة','schools'], facilitator:['المشرف','Facilitator'],
+  facs:['مشرف','facilitators'], students:['طالب','students'], clear:['مسح الفلاتر','Clear filters'],
+  search:['بحث…','Search…'], selected:['محددة','selected'],
+  compare:['المقارنة مع:','Compare with:'], lastWeek:['الأسبوع الماضي','Last week'],
+  semStart:['بداية الفصل','Start of term'],
+  tExec:['نظرة تنفيذية','Executive'], tSchools:['المدارس','Schools'], tExams:['الاختبارات','Exams'],
+  tFacs:['المشرفون','Facilitators'], tAction:['يحتاج متابعة','Needs follow-up'],
+  headline:['المؤشرات الأساسية','Headline metrics'],
+  headlineSub:['المقاييس الخمسة التي يُحاسب عليها المدير.','The five metrics the manager is accountable for.'],
+  rest:['بقية المؤشرات','Remaining metrics'],
+  enrolled:['الطلاب المسجلون','Enrolled students'],
+  active:['حضروا فعليًا','Attended at least once'],
+  never:['لم يحضروا أبدًا','Never attended'],
+  diag:['متوسط نتيجة قدرات','Avg Qudrat score'],
+  att:['متوسط الحضور','Avg attendance'],
+  etq:['صحة تذاكر الخروج','Exit-ticket correctness'],
+  etc:['إغلاق تذاكر الخروج','Exit-ticket closure'],
+  trust:['متوسط الثقة','Avg trust'],
+  campuses:['المدارس','Campuses'], facsK:['المشرفون','Facilitators'],
+  examsTitle:['الاختبارات — كل اختبار على حدة','Exams — one by one'],
+  examsSub:['ليس كل طالب يجلس كل اختبار: لكل اختبار طلابه المُعيَّنون له (بجدولته على الفصل أو بتسجيل الطالب في برنامجه). كل نسبة هنا من المُعيَّنين لذلك الاختبار وحده.',
+            'Not every student sits every exam: each exam has its own assigned students (scheduled on their class, or enrolled in its programme). Every rate here is over the students assigned to that one exam.'],
+  exOverview:['الاختبارات الستة في نظرة','The six exams at a glance'],
+  exWindow:['النافذة','Window'], exAssigned:['المُعيَّنون','Assigned'], exSchools:['المدارس','Schools'],
+  exOpenedC:['دخلوا','Opened'], exDoneC:['أكملوا','Completed'], exScoreC:['المتوسط','Avg score'], exUnopenedC:['لم يدخلوا','Not opened'],
+  examAvg:['متوسط نتيجة المكملين','Avg score of completers'],
+  examOpened:['دخلوا الاختبار','Opened the exam'],
+  examDone:['أكملوا الاختبار','Completed'],
+  perSchool:['المدارس المُعيَّن لها هذا الاختبار','Schools assigned this exam'],
+  exByGrade:['المُعيَّنون حسب الصف الدراسي','Assigned students by grade'],
+  exByGradeSub:['كل خانة = عدد الطلاب المُعيَّن لهم ذلك الاختبار في ذلك الصف، وتحته نسبة من دخل. الخانة الفارغة = الاختبار غير مُعيَّن لذلك الصف.',
+                'Each cell is the number of students assigned that exam in that grade, with the share who opened it underneath. A dash means the exam is not assigned to that grade.'],
+  exGrade:['الصف','Grade'], exTotal:['المجموع','Total'],
+  simTitle:['الاختبارات التشخيصية والمحاكيات حسب الصف','Diagnostics and simulators by grade'],
+  simSub:['أي صف حلّ الاختبار وكم طالبًا في كل صف، لكل برنامج. هذا القسم على مستوى نون كلها (كل الطلاب)، لا يتغيّر باختيار المدير.',
+          'Which grades sat each programme\'s exams, and how many students per grade. This section covers all of Noon (every student) and does not change with the manager picked.'],
+  schoolsTitle:['مقارنة المدارس','School-by-school comparison'],
+  schoolsSub:['كل مدرسة يقودها هذا المدير في صف واحد. اضغط أي عمود لإعادة الترتيب.',
+              'Every school this manager leads, one per row. Click any column to re-sort.'],
+  facsTitle:['المشرفون تحت هذا المدير','Facilitators under this manager'],
+  facsSub:['نفس المقاييس على مستوى المشرف — لتحديد أين يقع الفرق داخل المدرسة نفسها. (5 طلاب فأكثر)',
+           'The same metrics at facilitator level — to locate the gap inside a single school. (5+ students)'],
+  actionTitle:['مدارس ومشرفون يحتاجون متابعة','Schools and facilitators needing follow-up'],
+  actionSub:['مرتّبة حسب شدّة الفجوة مقابل بقية الشبكة، مع سبب واضح وإجراء مقترح.',
+             'Ranked by how far they sit below the rest of the network, with a clear reason and a suggested action.'],
+  trendTitle:['اتجاه الأسابيع','Weekly trend'],
+  trendSub:['الأسبوع الأول من الفصل أسبوع تهيئة ولا يحتوي حصصًا تقريبًا، فالمقارنة الافتراضية مع الأسبوع السابق.',
+            'The first week of term is orientation with almost no sessions, so the default comparison is the previous week.'],
+  total:['الإجمالي','Total'], rank:['المرتبة','Rank'], pts:['نقطة','pts'],
+  week:['أسبوع','Week'], noData:['لا توجد بيانات ضمن هذه الفلاتر.','No data matches these filters.'],
+  allGood:['لا توجد فجوات تستدعي المتابعة في هذا النطاق','No gaps requiring follow-up in this scope'],
+  showAll:['عرض الكل','Show all'], showLess:['عرض أقل','Show less'],
+  noSurvey:['لا تغطية استبيان','No survey coverage'],
+  reason:['السبب','Reason'], action:['الإجراء المقترح','Suggested action'],
+  deltaNA:['الفرق غير متاح مع الفلترة','Delta unavailable when filtered'],
+  provT:['مصدر البيانات وتعريفات المقاييس','Data source and metric definitions']
+};
+const t = k => D[k] ? D[k][state.lang === 'ar' ? 0 : 1] : k;
+const ar = () => state.lang === 'ar';
+
+/* ---------- metric registry ---------- */
+const MET = {
+  enr:  {ic:'👥', fmt:num,  lbl:'enrolled', hero:true},
+  qs:   {ic:'🩺', fmt:pc,   lbl:'diag',     hero:true},
+  att:  {ic:'📅', fmt:pc,   lbl:'att',      hero:true, wkKey:'att'},
+  etq:  {ic:'🎫', fmt:pc,   lbl:'etq',      hero:true, wkKey:'etq'},
+  tr:   {ic:'🤝', fmt:pc,   lbl:'trust',    hero:true, wkKey:'tr'},
+  act:  {ic:'✅', fmt:num,  lbl:'active'},
+  never:{ic:'🚫', fmt:num,  lbl:'never', invert:true},
+  etc:  {ic:'📮', fmt:pc,   lbl:'etc'},
+  etqs: {ic:'🎯', fmt:pc,   lbl:'etqs', wkKey:'etqs'},
+  etn:  {ic:'📨', fmt:num,  lbl:'etn'},
+  campuses:{ic:'🏫', fmt:num, lbl:'campuses'},
+  facs: {ic:'🎓', fmt:num,  lbl:'facsK'}
+};
+EXM.forEach(e => { D['open_' + e.k] = e.olbl; MET[e.o] = {ic:e.ic, fmt:pc, lbl:'open_' + e.k, ex:e}; });
+
+/* ---------- drill-down ---------- */
+function openDrill(k){ state.drill = {k, q:'', n:200, cid:null}; render(); }
+function closeDrill(){ state.drill = null; render(); }
+function drillSearch(v){ state.drill.q = v; state.drill.n = state.drill.k === 'cm' ? 150 : 200; renderDrill();
+  const i = document.querySelector('.mdl-tools input'); if(i){ i.focus(); i.setSelectionRange(v.length, v.length); } }
+function setDrillCampus(id){ const v = id === 'all' ? null : Number(id);
+  state.drill.cid = (state.drill.cid === v) ? null : v; state.drill.n = 200; renderDrill(); }
+function drillMore(){ state.drill.n += state.drill.k === 'cm' ? 150 : 200; renderDrill(); }
+function copyDrill(){
+  const rows = drillRows();
+  const head = [t('student'), t('school'), t('grade'), t('cohort'), t('lead'), t('facilitator')].join('\t');
+  const body = rows.map(r => [r[S_NAME], (CBY[r[S_CID]]||{}).name || r[S_CID], GR[r[S_GR]], CO[r[S_CO]],
+    leadsOfCampus(r[S_CID]).map(l => l.name).join(' / ') || '—', FNAME[r[S_FID]] || r[S_FID]].join('\t')).join('\n');
+  try{ navigator.clipboard.writeText(head + '\n' + body);
+       const b = document.getElementById('copybtn'); if(b) b.textContent = t('copied'); }catch(e){}
+}
+function drillRows(){
+  const g = GAP[state.drill.k];
+  let rows = studentsInScope().filter(r => r[S_X] & g.bit);
+  if(state.drill.cid != null) rows = rows.filter(r => r[S_CID] === state.drill.cid);
+  const q = state.drill.q.trim().toLowerCase();
+  if(q) rows = rows.filter(r =>
+    (r[S_NAME]||'').toLowerCase().includes(q) ||
+    ((CBY[r[S_CID]]||{}).name || '').toLowerCase().includes(q) ||
+    (CO[r[S_CO]]||'').toLowerCase().includes(q) ||
+    (FNAME[r[S_FID]] || '').toLowerCase().includes(q) ||
+    (GR[r[S_GR]]||'').toLowerCase().includes(q));
+  return rows;
+}
+function drillHTML(){
+  if(!state.drill) return '';
+  const g = GAP[state.drill.k], rows = drillRows(), all = studentsInScope().filter(r => r[S_X] & g.bit);
+  /* where the problem concentrates — the point of the list, not just the names */
+  const bySchool = Object.entries(groupBy(all, r => r[S_CID]))
+    .map(([cid, rs]) => ({cid:Number(cid), name:(CBY[cid]||{}).name || cid, n:rs.length,
+                          pct: (CBY[cid] && CBY[cid].enr) ? 100*rs.length/CBY[cid].enr : null}))
+    .sort((a,b) => b.n - a.n);
+  const topSch = bySchool.slice(0, 6), restSch = bySchool.slice(6);
+  const shown = rows.slice(0, state.drill.n);
+  const body = shown.map(r => {
+    const c = CBY[r[S_CID]] || {}, lds = leadsOfCampus(r[S_CID]);
+    return '<tr><td class="namecell" style="min-width:150px">' + bd(esc(r[S_NAME])) + '</td>'
+      + '<td>' + bd(esc(c.name || r[S_CID])) + '</td>'
+      + '<td>' + bd(esc(GR[r[S_GR]] || '—')) + '</td>'
+      + '<td>' + bd(esc(CO[r[S_CO]] || '—')) + '</td>'
+      + '<td>' + (lds.length ? lds.map(l => bd(esc(l.name))).join('، ')
+                             : '<span style="color:var(--red-t)">' + esc(t('noLead')) + '</span>') + '</td>'
+      + '<td>' + bd(esc(FNAME[r[S_FID]] || r[S_FID])) + '</td></tr>';
+  }).join('');
+  return '<div class="ov" onclick="if(event.target===this)closeDrill()"><div class="mdl">'
+    + '<div class="mdl-h"><h3><span class="gapdot" style="background:' + g.col + '"></span>' + g.ic + ' '
+      + esc(ar() ? g.ar : g.en) + ' — ' + bd(num(all.length)) + ' ' + esc(t('students'))
+      + '<button class="mdl-x" onclick="closeDrill()">✕</button></h3>'
+    + '<div class="why">' + esc(ar() ? g.whyAr : g.whyEn) + '</div>'
+    + (bySchool.length > 1 ? '<div class="conc">'
+        + '<span class="conclbl">' + esc(t('concIn')) + '</span>'
+        + '<button class="concchip ' + (state.drill.cid == null ? 'on' : '') + '" onclick="setDrillCampus(\'all\')">'
+          + esc(t('cmAll').replace(ar()?'التقييمات':'ratings', ar()?'المدارس':'schools')) + ' <b>' + bd(all.length) + '</b></button>'
+        + topSch.map(x => '<button class="concchip ' + (state.drill.cid === x.cid ? 'on' : '') + '"'
+            + ' onclick="setDrillCampus(' + x.cid + ')">' + bd(esc(x.name)) + ' <b>' + bd(x.n) + '</b>'
+            + (x.pct != null ? ' <span class="cpct">(' + bd(pc(x.pct)) + ')</span>' : '') + '</button>').join('')
+        + (restSch.length ? '<span class="conclbl">' + (ar() ? '+' + bd(restSch.length) + ' مدرسة أخرى — ابحث بالاسم'
+                                                             : '+' + bd(restSch.length) + ' more — search by name') + '</span>' : '')
+        + '</div>' : '')
+    + '</div>'
+    + '<div class="mdl-tools"><input placeholder="' + esc(t('searchStu')) + '" value="' + esc(state.drill.q) + '" oninput="drillSearch(this.value)" autofocus>'
+      + '<span class="flabel">' + esc(t('showingOf')) + ' ' + bd(shown.length) + ' ' + esc(t('ofTotal')) + ' ' + bd(rows.length) + '</span>'
+      + '<button class="ghost" id="copybtn" onclick="copyDrill()">⧉ ' + esc(t('copyList')) + '</button></div>'
+    + '<div class="mdl-b">' + (rows.length
+        ? '<table><thead><tr><th>' + esc(t('student')) + '</th><th>' + esc(t('school')) + '</th><th>' + esc(t('grade'))
+          + '</th><th>' + esc(t('cohort')) + '</th><th>' + esc(t('lead')) + '</th><th>' + esc(t('facilitator'))
+          + '</th></tr></thead><tbody>' + body + '</tbody></table>'
+          + (rows.length > shown.length ? '<div style="padding:12px 0"><button class="ghost" onclick="drillMore()">▼ ' + esc(t('moreRows')) + '</button></div>' : '')
+        : '<div class="empty">' + esc(t('noMatch')) + '</div>')
+    + '</div></div></div>';
+}
+function renderDrill(){ document.getElementById('drill').innerHTML = state.drill && state.drill.k === 'cm' ? commentsHTML() : drillHTML(); }
+
+/* ---------- trust survey comments ---------- */
+function openComments(){
+  const wks = [...new Set(commentsInScope().map(r => r[C_WK]))].sort((a,b) => b-a);
+  state.drill = {k:'cm', q:'', n:150, cid:null};
+  state.cmWeek = wks[0] ?? null;
+  render();
+}
+function setCmRate(v){ state.cmRate = v; state.drill.n = 150; renderDrill(); }
+function setCmWeek(v){ state.cmWeek = Number(v); state.drill.n = 150; renderDrill(); }
+function cmRows(){
+  let rows = commentsInScope();
+  if(state.cmWeek != null) rows = rows.filter(r => r[C_WK] === state.cmWeek);
+  if(state.cmRate === 'neg') rows = rows.filter(r => r[C_R] <= 2);
+  else if(state.cmRate !== 'all') rows = rows.filter(r => r[C_R] === Number(state.cmRate));
+  const q = state.drill.q.trim().toLowerCase();
+  if(q) rows = rows.filter(r => (r[C_TXT]||'').toLowerCase().includes(q)
+      || ((CBY[r[C_CID]]||{}).name || '').toLowerCase().includes(q)
+      || (CO[r[C_CO]]||'').toLowerCase().includes(q)
+      || (FNAME[r[C_FID]] || '').toLowerCase().includes(q));
+  return rows;
+}
+function commentsHTML(){
+  const all = commentsInScope().filter(r => state.cmWeek == null || r[C_WK] === state.cmWeek);
+  const rows = cmRows(), shown = rows.slice(0, state.drill.n);
+  const wks = [...new Set(commentsInScope().map(r => r[C_WK]))].sort((a,b) => b-a);
+  const cnt = i => all.filter(r => r[C_R] === i).length;
+  const neg = all.filter(r => r[C_R] <= 2).length;
+
+  const chip = (v, label, n, col) => '<button class="chip ' + (String(state.cmRate) === String(v) ? 'on' : '') + '"'
+    + ' onclick="setCmRate(\'' + v + '\')">' + (col ? '<span class="gapdot" style="background:' + col + '"></span>' : '')
+    + esc(label) + ' <span style="opacity:.7">' + bd(n) + '</span></button>';
+
+  const body = shown.map(r => {
+    const R = RATE[r[C_R]], c = CBY[r[C_CID]] || {};
+    return '<div class="cmrow"><div class="cmhead">'
+      + '<span class="pill ' + R.cls + '">' + esc(ar() ? R.ar : R.en) + '</span>'
+      + '<span class="cmq">' + esc(r[C_Q] ? t('cmQa') : t('cmQx')) + '</span>'
+      + '<span class="cmmeta">' + bd(esc(c.name || r[C_CID])) + ' · ' + bd(esc(CO[r[C_CO]] || '—'))
+      + ' · ' + bd(esc(FNAME[r[C_FID]] || r[C_FID])) + '</span></div>'
+      + '<div class="cmtxt" dir="auto">' + esc(r[C_TXT]) + '</div></div>';
+  }).join('');
+
+  return '<div class="ov" onclick="if(event.target===this)closeDrill()"><div class="mdl">'
+    + '<div class="mdl-h"><h3><span class="gapdot" style="background:var(--c5)"></span>🤝 ' + esc(t('cmTitle'))
+      + ' — ' + bd(num(all.length)) + '<button class="mdl-x" onclick="closeDrill()">✕</button></h3>'
+    + '<div class="why">' + esc(t('cmWhy')) + '</div></div>'
+    + '<div class="mdl-tools">'
+      + (wks.length > 1 ? '<select class="msel" style="padding:7px 10px;font-size:12.5px" onchange="setCmWeek(this.value)">'
+          + wks.map(w => '<option value="' + w + '"' + (w === state.cmWeek ? ' selected' : '') + '>'
+            + esc(t('cmWeek')) + ' ' + w + '</option>').join('') + '</select>' : '')
+      + chip('neg', ar() ? 'يحتاج انتباه' : 'Needs attention', neg, 'var(--red)')
+      + chip('all', t('cmAll'), all.length, null)
+      + [4,3,2,1,0].map(i => chip(i, ar() ? RATE[i].ar : RATE[i].en, cnt(i), RATE[i].col)).join('')
+    + '</div>'
+    + '<div class="mdl-tools" style="border-top:none">'
+      + '<input placeholder="' + esc(t('searchCm')) + '" value="' + esc(state.drill.q) + '" oninput="drillSearch(this.value)">'
+      + '<span class="flabel">' + esc(t('showingOf')) + ' ' + bd(shown.length) + ' ' + esc(t('ofTotal')) + ' ' + bd(rows.length) + '</span>'
+    + '</div>'
+    + '<div class="mdl-b">' + (rows.length ? body
+        + (rows.length > shown.length ? '<div style="padding:12px 0"><button class="ghost" onclick="drillMore()">▼ ' + esc(t('moreRows')) + '</button></div>' : '')
+        : '<div class="empty">' + esc(t('cmNone')) + '</div>')
+    + '</div></div></div>';
+}
+
+/* ---------- UI atoms ---------- */
+/* The headline value is the average over the whole window; the delta is the
+   latest week against the comparison week. Two different measures, so the chip says which
+   weeks it compares instead of letting the reader assume it moves the big number. */
+function deltaChip(k, cur, base){
+  if(!deltasLive()) return '<div class="delta na">' + esc(t('deltaNA')) + '</div>';
+  if(cur == null || base == null) return '';
+  const raw = cur - base, inv = !!(MET[k] && MET[k].invert);
+  const near = Math.abs(raw) < 0.15;
+  const good = inv ? raw < 0 : raw > 0;
+  const cls = near ? 'flat' : (good ? 'up' : 'down');
+  const txt = (raw >= 0 ? '+' : '−') + Math.abs(raw).toFixed(1) + ' ' + t('pts');
+  const span = ar() ? ('أ' + CUR_WK + ' ↔ أ' + baseWk()) : ('W' + CUR_WK + '↔W' + baseWk());
+  return '<span class="delta ' + cls + '">' + (near ? '' : (raw > 0 ? '▲' : '▼')) + ' ' + bd(txt)
+    + ' <span style="opacity:.72;font-weight:600">· ' + bd(span) + '</span></span>'
+    + '<div class="note2" style="margin-top:3px">' + (ar() ? 'قيمة الأسبوع ' : 'week ') + bd(CUR_WK) + ': '
+    + bd(pc1(cur)) + '</div>';
+}
+function spark(vals, color){
+  const v = vals.filter(x => x != null);
+  if(v.length < 2) return '';
+  const W = 120, H = 28, p = 2;
+  const lo = Math.min(...v), hi = Math.max(...v), rg = (hi - lo) || 1;
+  const X = i => p + i * (W - 2*p) / (v.length - 1);
+  const Y = x => H - p - ((x - lo) / rg) * (H - 2*p);
+  const d = v.map((x,i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x).toFixed(1)).join(' ');
+  const col = color || 'var(--c1)';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="none" style="display:block;overflow:visible" aria-hidden="true">'
+    + '<path d="' + d + ' L' + X(v.length-1).toFixed(1) + ' ' + H + ' L' + X(0).toFixed(1) + ' ' + H + ' Z" fill="' + col + '" opacity=".10"/>'
+    + '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+    + '<circle cx="' + X(v.length-1).toFixed(1) + '" cy="' + Y(v[v.length-1]).toFixed(1) + '" r="2.6" fill="' + col + '" stroke="var(--panel)" stroke-width="1.5"/></svg>';
+}
+function trendChart(vals, color, fmt){
+  const W = 240, H = 74, px = 4, pt = 8, pb = 8;
+  const v = vals.map(x => x == null ? 0 : x);
+  const lo = Math.min(...v), hi = Math.max(...v), rg = (hi - lo) || 1;
+  const X = i => px + i * (W - 2*px) / (v.length - 1);
+  const Y = x => H - pb - ((x - lo) / rg) * (H - pt - pb);
+  const d = v.map((x,i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x).toFixed(1)).join(' ');
+  let hits = '';
+  v.forEach((x,i) => {
+    const w = (W - 2*px) / (v.length - 1);
+    hits += '<rect x="' + (X(i)-w/2).toFixed(1) + '" y="0" width="' + w.toFixed(1) + '" height="' + H + '" fill="transparent"'
+         +  ' onmousemove="tipShow(event,\'' + esc(t('week')) + ' ' + (i+1) + ' · ' + esc(fmt(vals[i])) + '\')" onmouseleave="tipHide()"></rect>';
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" style="display:block;overflow:visible">'
+    + '<path d="' + d + ' L' + X(v.length-1).toFixed(1) + ' ' + H + ' L' + X(0).toFixed(1) + ' ' + H + ' Z" fill="' + color + '" opacity=".10"/>'
+    + '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+    + '<circle cx="' + X(v.length-1).toFixed(1) + '" cy="' + Y(v[v.length-1]).toFixed(1) + '" r="3.2" fill="' + color + '" stroke="var(--panel2)" stroke-width="2"/>'
+    + hits + '</svg>';
+}
+function tipShow(e, txt){
+  const el = document.getElementById('tip');
+  el.innerHTML = txt; el.style.display = 'block';
+  const r = el.getBoundingClientRect();
+  let x = e.clientX + 12, y = e.clientY - r.height - 10;
+  if(x + r.width > innerWidth - 8) x = e.clientX - r.width - 12;
+  if(y < 8) y = e.clientY + 16;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+}
+function tipHide(){ const el = document.getElementById('tip'); if(el) el.style.display = 'none'; }
+function bar(v, col){ return v == null ? '' : '<div class="bar"><i style="width:' + clamp(v,0,100) + '%;background:' + (col||'var(--brick)') + '"></i></div>'; }
+function attColor(v){ return v == null ? 'var(--mut)' : v >= 70 ? 'var(--green)' : v >= 55 ? 'var(--brick)' : v >= 45 ? 'var(--amber)' : 'var(--red)'; }
+
+/* ==========================================================================
+   THRESHOLDS — read off the real distribution of the 66 campuses
+   attendance p10=39.9 p25=50.7 med=60.8 · exit-ticket correctness p10=48 med=62.5
+   trust med=89 (only 39/66 campuses have any respondent) · never-attended p90=17.9
+   ========================================================================== */
+const TH = { att:45, etq:52, trust:78, neverPct:15, xc:50, xo:70 };
+
+function issuesOf(row, kind){
+  const out = [];
+  const n = kind === 'campus' ? row.enr : row.n;
+  if(row.att != null && row.att < TH.att)
+    out.push({sev:(TH.att-row.att)/TH.att*2.2, k:'att', txt:(ar()?'الحضور ':'Attendance ') + pc1(row.att), act:'att'});
+  if(row.etq != null && row.etq < TH.etq)
+    out.push({sev:(TH.etq-row.etq)/TH.etq*1.6, k:'etq', txt:(ar()?'صحة تذاكر الخروج ':'Exit-ticket correctness ') + pc1(row.etq), act:'etq'});
+  if(row.tn > 0 && row.tr != null && row.tr < TH.trust)
+    out.push({sev:(TH.trust-row.tr)/TH.trust*1.4, k:'tr', txt:(ar()?'الثقة ':'Trust ') + pc1(row.tr) + ' (' + bd(row.tn) + (ar()?' مستجيب)':' responses)'), act:'tr'});
+  if(kind === 'campus'){
+    const nv = n ? 100*row.never/n : 0;
+    if(nv > TH.neverPct)
+      out.push({sev:nv/TH.neverPct*1.5, k:'never', txt:bd(row.never) + (ar()?' طالبًا لم يحضروا أبدًا (':' students never attended (') + pc1(nv) + ')', act:'never'});
+    /* one ticket per exam the school is actually assigned — never a generic "the diagnostic" */
+    EXM.forEach(e => {
+      const x = xr(row.id, e.k);
+      if(!(x.n > 0)) return;
+      const w = winOf(e), base = {ex:e, n:x.n, o:x.o, c:x.c};
+      if(x.o === 0)
+        out.push(Object.assign(base, {sev:w.closed ? 2.0 : (w.left != null && w.left <= 1 ? 1.9 : 1.5), k:'nostart',
+          txt:esc(exName(e)) + (ar() ? ' — لم يدخله أي من ' : ' — none of the ') + bd(num(x.n)) + (ar() ? ' مُعيَّنًا' : ' assigned students opened it'),
+          act:'nostart'}));
+      else if(w.closed && x.o < TH.xo)
+        out.push(Object.assign(base, {sev:0.4 + (TH.xo - x.o)/TH.xo*1.6, k:'lowopen',
+          txt:esc(exName(e)) + ' — ' + (ar() ? 'دخله ' : 'opened by ') + pc1(x.o) + (ar() ? ' فقط بعد إغلاقه' : ' only, window closed'),
+          act:'lowopen'}));
+      else if(x.o > 0 && x.c != null && x.c < TH.xc && (w.closed || x.o - x.c >= 25))
+        out.push(Object.assign(base, {sev:(TH.xc - x.c)/TH.xc*1.3, k:'lowdone',
+          txt:esc(exName(e)) + ' — ' + (ar() ? 'إكماله ' : 'completion ') + pc1(x.c),
+          act:'lowdone'}));
+    });
+    if(row.tn === 0)
+      out.push({sev:0.9, k:'survey', txt:t('noSurvey'), act:'survey'});
+  }
+  return out;
+}
+const ACT = {
+  att:    ['الحضور هو المؤشر الأول — اطلب من قائد المدرسة كشف غياب أسبوعي، وابدأ باتصالات أولياء الأمور هذا الأسبوع.',
+           'Attendance is the leading indicator — ask the school lead for a weekly absence list and start guardian calls this week.'],
+  etq:    ['انخفاض صحة التذكرة فجوة مفهوم لا فجوة جهد — راجع مع المشرف مفاهيم آخر حصتين قبل الانتقال للفصل التالي.',
+           'Low ticket correctness is a concept gap, not an effort gap — review the last two sessions with the facilitator before moving on.'],
+  tr:     ['انخفاض الثقة يسبق الانسحاب بأسابيع — اعقد جلسة استماع قصيرة مع عيّنة من الطلاب هذا الأسبوع.',
+           'A trust dip precedes disengagement by weeks — run a short listening session with a sample of students this week.'],
+  never:  ['هؤلاء طلاب مسجلون لم يدخلوا أي حصة منذ بداية العام — تحقق من التسجيل والوصول للمنصة قبل افتراض الغياب.',
+           'These are enrolled students who have not entered a single session this year — verify enrolment and platform access before assuming absence.'],
+  survey: ['لا يوجد أي استجابة لاستبيان الثقة — فعّل الاستبيان الأسبوعي، فبدونه لا يمكن رصد تدهور التجربة مبكرًا.',
+           'No trust-survey responses at all — switch on the weekly survey; without it an experience decline cannot be caught early.']
+};
+
+/* the window sentence that goes into every exam action */
+function winClause(e){
+  const w = winOf(e);
+  if(!w.to) return '';
+  if(w.closed) return ar() ? 'أُغلقت نافذته في ' + dfmt(w.to) + '، فيلزم طلب تمديد أو جلسة تعويضية' : 'its window closed on ' + dfmt(w.to) + ', so ask for an extension or a make-up sitting';
+  if(w.left === 0) return ar() ? 'تنتهي نافذته اليوم — رتّب الجلسة قبل نهاية اليوم' : 'its window closes today — get the sitting done before the day ends';
+  if(w.left === 1) return ar() ? 'تنتهي نافذته غدًا — رتّب الجلسة اليوم' : 'its window closes tomorrow — arrange the sitting today';
+  return ar() ? 'نافذته مفتوحة حتى ' + dfmt(w.to) : 'its window is open until ' + dfmt(w.to);
+}
+/* the action text for one ticket: a static ACT entry, or an exam-specific sentence naming the school */
+function actText(i, school){
+  if(ACT[i.act]) return ACT[i.act][ar() ? 0 : 1];
+  const e = i.ex, nm = exName(e), n = num(i.n), un = num(Math.round(i.n * (1 - (i.o || 0)/100)));
+  if(i.act === 'nostart') return ar()
+    ? 'في ' + school + ': ' + nm + ' مُعيَّن لـ' + n + ' طالبًا ولم يفتحه أي منهم — ' + winClause(e) + '. ' + e.rar + '. اطلب من قائد المدرسة تحديد موعد جلسة لهذا الاختبار وحده.'
+    : 'At ' + school + ': the ' + e.en + ' exam is assigned to ' + n + ' students and none has opened it — ' + winClause(e) + '. ' + e.ren.charAt(0).toUpperCase() + e.ren.slice(1) + '. Ask the school lead to fix a date for this exam alone.';
+  if(i.act === 'lowopen') return ar()
+    ? 'في ' + school + ': ' + un + ' من ' + n + ' طالبًا مُعيَّنًا لم يفتحوا ' + nm + ' — ' + winClause(e) + '.'
+    : 'At ' + school + ': ' + un + ' of the ' + n + ' students assigned the ' + e.en + ' exam have not opened it — ' + winClause(e) + '.';
+  return ar()
+    ? 'في ' + school + ': ' + pc(i.o) + ' دخلوا ' + nm + ' لكن ' + pc(i.c) + ' فقط أكملوه — طلاب يتركونه في منتصفه. راجع مع المشرفين أنه يُنجَز في جلسة واحدة متصلة'
+      + (winOf(e).closed ? '، و' + winClause(e) : '') + '.'
+    : 'At ' + school + ': ' + pc(i.o) + ' opened the ' + e.en + ' exam but only ' + pc(i.c) + ' finished it — students are leaving it half-done. Check with facilitators that it is sat in one continuous session'
+      + (winOf(e).closed ? '; ' + winClause(e) : '') + '.';
+}
+
+/* ==========================================================================
+   THREE LAYERS OF ACCOUNTABILITY
+   One block per person the manager can actually call: manager → lead → facilitator.
+   Each layer only carries problems that person can fix at their level — a manager
+   cannot mark a single class's exit tickets, and a facilitator cannot schedule an
+   exam for the whole school.
+   ========================================================================== */
+const LAYER = {
+  mgr:  {ic:'🏢', ar:'مدراء بحاجة إلى متابعة',   en:'Managers needing follow-up',
+         sar:'الطبقة الأولى — محفظة كاملة. حديثك معه عن الجدولة والتغطية، لا عن فصل بعينه.',
+         sen:'Layer one — a whole portfolio. The conversation is about scheduling and coverage, not one class.'},
+  lead: {ic:'🎖️', ar:'قادة مدارس بحاجة إلى متابعة', en:'School leads needing follow-up',
+         sar:'الطبقة الثانية — مدرسة أو أكثر. حديثك معه عن تشغيل مدرسته: كل اختبار على حدة، الحضور، الاستبيان.',
+         sen:'Layer two — one or more schools. The conversation is about running the school: each exam on its own, attendance, the survey.'},
+  fac:  {ic:'🎓', ar:'مشرفون بحاجة إلى متابعة',  en:'Facilitators needing follow-up',
+         sar:'الطبقة الثالثة — فصول بعينها. حديثك معه عن طلابه بالاسم.',
+         sen:'Layer three — specific classes. The conversation is about his students by name.'}
+};
+
+/* what each level can do — every line names the school, class or person */
+const J = a => nameList(a, 3);
+const FIX = {
+  mgr: {
+    noexam:  i => ar() ? 'في ' + J(i.names) + ' ' + exName(i.ex) + ' مُعيَّن ولم يفتحه أي طالب — ' + winClause(i.ex) + '. ' + i.ex.rar + '.'
+                       : 'At ' + J(i.names) + ' the ' + i.ex.en + ' exam is assigned and no student has opened it — ' + winClause(i.ex) + '. ' + i.ex.ren.charAt(0).toUpperCase() + i.ex.ren.slice(1) + '.',
+    lowopen: i => ar() ? exName(i.ex) + ': اجعل ' + J(i.names) + ' أولوية اجتماع القادة — ' + winClause(i.ex) + '.'
+                       : 'For the ' + i.ex.en + ' exam, make ' + J(i.names) + ' the leads-meeting priority — ' + winClause(i.ex) + '.',
+    nolead:  i => ar() ? 'عيّن قائدًا لـ' + J(i.names) + ' — لا أحد يملك تشغيلها اليوم.'
+                       : 'Assign a lead to ' + J(i.names) + ' — nobody owns running them today.',
+    orphan:  i => ar() ? 'أعد إسناد فصول ' + J(i.names) + ' — المشرف المسجَّل عليها ملفه محذوف والطلاب بلا مسؤول فعلي.'
+                       : 'Reassign the classes of ' + J(i.names) + ' — the registered facilitator profile is deleted and these students have no real owner.',
+    never:   i => ar() ? 'اطلب من قائد ' + J(i.names) + ' كشفًا بأسباب عدم الدخول: تسجيل، أم جهاز، أم انسحاب فعلي؟'
+                       : 'Ask the lead of ' + J(i.names) + ' for a reason list: enrolment, device, or an actual withdrawal?',
+    att:     i => ar() ? 'أضعف حضور عندك في ' + J(i.names) + ' — اجعلها البند الأول في اجتماع القادة.'
+                       : 'Your weakest attendance is at ' + J(i.names) + ' — make it the first item in your leads meeting.',
+    survey:  i => ar() ? 'فعّل استبيان الثقة في ' + J(i.names) + ' — تديرها اليوم بلا أي إشارة إنذار مبكر.'
+                       : 'Switch on the trust survey at ' + J(i.names) + ' — you are running them with no early warning at all.'
+  },
+  lead: {
+    noexam:  i => ar() ? 'في ' + J(i.names) + ' ' + exName(i.ex) + ' مُعيَّن ولم يفتحه أي طالب — ' + winClause(i.ex) + '. حدّد موعدًا لهذا الاختبار وأبلغ المشرفين.'
+                       : 'At ' + J(i.names) + ' the ' + i.ex.en + ' exam is assigned and no student has opened it — ' + winClause(i.ex) + '. Set a date for this exam and tell the facilitators.',
+    never:   i => ar() ? 'في ' + J(i.names) + ' طلاب مسجّلون بلا حصة واحدة — تحقّق من الحسابات والأجهزة قبل افتراض الغياب.'
+                       : 'At ' + J(i.names) + ' there are enrolled students with zero sessions — check accounts and devices before assuming absence.',
+    att:     i => ar() ? 'الحضور منخفض في ' + J(i.names) + ' — راجع الجدول وأوقات الحصص مع مشرفيها قبل مخاطبة أولياء الأمور.'
+                       : 'Attendance is low at ' + J(i.names) + ' — review the timetable with its facilitators before contacting guardians.',
+    etq:     i => ar() ? 'صحة تذاكر الخروج منخفضة في ' + J(i.names) + ' — راجع مفاهيم آخر أسبوع قبل الانتقال للوحدة التالية.'
+                       : 'Exit-ticket correctness is low at ' + J(i.names) + " — review last week's concepts before moving on.",
+    survey:  i => ar() ? 'لا استجابة واحدة لاستبيان الثقة في ' + J(i.names) + ' — ذكّر المشرفين بفتحه نهاية كل أسبوع.'
+                       : 'Not one trust-survey response at ' + J(i.names) + ' — remind facilitators to open it each week.',
+    missed:  i => ar() ? 'رتّب جلسة تعويضية لـ' + exName(i.ex) + ' في ' + J(i.names) + ' — هؤلاء مُعيَّن لهم الاختبار وأجرته مدرستهم فعلًا وتخلّفوا عنه؛ ' + winClause(i.ex) + '.'
+                       : 'Arrange a make-up sitting for the ' + i.ex.en + ' exam at ' + J(i.names) + ' — it is assigned to these students and their school did run it; ' + winClause(i.ex) + '.'
+  },
+  fac: {
+    att:     i => ar() ? 'حضور ' + J(i.names) + ' تحت الحد — ابدأ باتصالات أولياء الأمور هذا الأسبوع وثبّت سببًا لكل غائب.'
+                       : 'Attendance in ' + J(i.names) + ' is under the floor — start guardian calls this week and log a reason per absentee.',
+    etq:     i => ar() ? 'طلاب ' + J(i.names) + ' يغلقون التذاكر بإجابات خاطئة — فجوة مفهوم لا التزام؛ أعد شرح آخر درسين.'
+                       : 'Students in ' + J(i.names) + ' close tickets with wrong answers — a concept gap, not compliance; reteach the last two lessons.',
+    trust:   i => ar() ? 'ثقة طلاب ' + J(i.names) + ' منخفضة — اجلس جلسة استماع قصيرة، الانخفاض يسبق الانسحاب بأسابيع.'
+                       : 'Trust in ' + J(i.names) + ' is low — run a short listening session; a dip precedes disengagement by weeks.',
+    never:   i => ar() ? 'في ' + J(i.names) + ' طلاب لم يحضروا ولا حصة — تواصل معهم مباشرة، أسماؤهم خلف الوسم.'
+                       : 'In ' + J(i.names) + ' there are students who never attended — contact them directly, their names are behind the tag.',
+    missed:  i => ar() ? 'أعد جدولة طلاب ' + J(i.names) + ' لـ' + exName(i.ex) + ' — ' + winClause(i.ex) + '.'
+                       : 'Reschedule the students of ' + J(i.names) + ' for the ' + i.ex.en + ' exam — ' + winClause(i.ex) + '.'
+  }
+};
+
+function studentsOf(pred){ return studentsInScope().filter(pred); }
+
+/* ==========================================================================
+   WHAT IS GOING RIGHT
+   Cut-offs are the top decile of the real distribution, not round numbers:
+   campus attendance p90=85.7 · exit correctness p90=73.3 · trust p90=95
+   · per-exam completion ≥95% over ≥20 assigned students | facilitator attendance p90=74.3 · correctness p90=74.4
+   A gain only counts when the baseline week actually ran sessions — otherwise a school
+   that was dark last week shows a fake +77 point "improvement".
+   ========================================================================== */
+const TOP = {att:85, etq:73, qc:95, trust:95, fAtt:74, fEtq:74, fTrust:97, gain:5, minAct:20, minTn:5, minEx:20};
+
+/* the weakest peer on the same metric, so a win comes with somewhere to send it */
+function weakestOn(list, key, floor){
+  const c = list.filter(x => x[key] != null && x[key] < floor).sort((a,b) => a[key] - b[key])[0];
+  return c ? c.name + ' ' + pc(c[key]) : null;
+}
+function gainOf(mid){
+  const c = weeklyFor(mid, CUR_WK), b = weeklyFor(mid, baseWk());
+  if(!c || !b || c.att == null || b.att == null) return null;
+  if((b.act || 0) < TOP.minAct) return null;        // baseline week was dark — not a real gain
+  return c.att - b.att;
+}
+
+/* one win per exam whose ASSIGNED students nearly all finished it — never a blended "the diagnostic" */
+function examWins(a, sev){
+  const w = [];
+  EXM.forEach(e => {
+    if(a['n_' + e.k] >= TOP.minEx && a[e.c] != null && a[e.c] >= TOP.qc)
+      w.push({k:'xc', ex:e, sev, txt:esc(exName(e)) + ' — ' + (ar() ? 'أكمله ' : 'completed by ') + pc1(a[e.c]) + (ar() ? ' من ' : ' of ') + bd(num(a['n_' + e.k])) + (ar() ? ' مُعيَّنًا' : ' assigned')});
+  });
+  return w;
+}
+function layerWins(kind){
+  const list = scopedCampuses(), out = [];
+
+  if(kind === 'mgr'){
+    const ids = state.manager === 'ALL' ? M.map(m => m.id) : [Number(state.manager)];
+    ids.forEach(mid => {
+      const cs = list.filter(c => mgrIds(c).includes(Number(mid)));
+      if(!cs.length) return;
+      const a = agg(cs), w = [];
+      const g = deltasLive() ? gainOf(mid) : null;
+      if(g != null && g >= TOP.gain) w.push({k:'gain', sev:g/TOP.gain,
+        txt:(ar()?'الحضور صعد ':'Attendance up ') + bd('+' + g.toFixed(1)) + (ar()?' نقطة هذا الأسبوع':' pts this week')});
+      if(a.att != null && a.att >= 70) w.push({k:'att', sev:1.5, txt:(ar()?'حضور المحفظة ':'Portfolio attendance ') + pc1(a.att)});
+      EXM.forEach(e => {
+        const el = eligCampuses(cs, e.k);
+        if(el.length >= 3 && el.every(c => xr(c.id, e.k).o >= 80)) w.push({k:'exam', ex:e, sev:1.6,
+          txt:esc(exName(e)) + ' — ' + (ar() ? 'كل مدارسه الـ' : 'all ') + bd(el.length) + (ar() ? ' فتحه ٨٠٪ من مُعيَّنيها فأكثر' : ' schools opened it at 80%+ of assigned')});
+      });
+      examWins(a, 1.4).forEach(x => w.push(x));
+      if(w.length) out.push({name:MNAME[mid], lvl:'mgr',
+        sub:cs.length + ' ' + t('schools') + ' · ' + num(a.enr) + ' ' + t('students'),
+        w, sev:w.reduce((x,i) => x + i.sev, 0)});
+    });
+  }
+
+  if(kind === 'lead'){
+    const inScope = new Set(list.map(c => c.id)), by = {};
+    LD.filter(l => inScope.has(l.cid)).forEach(l => { (by[l.lid] = by[l.lid] || []).push(l.cid); });
+    Object.entries(by).forEach(([lid, cids]) => {
+      const cs = cids.map(id => CBY[id]).filter(Boolean);
+      const a = agg(cs), w = [];
+      const best = cs.slice().sort((x,y) => (y.att||0) - (x.att||0))[0];
+      if(a.att != null && a.att >= TOP.att) w.push({k:'att', sev:2.0,
+        txt:(ar()?'الحضور ':'Attendance ') + pc1(a.att) + (cs.length > 1 && best ? ' · ' + bd(esc(best.name)) : '')});
+      examWins(a, 1.8).forEach(x => w.push(x));
+      if(a.tn >= TOP.minTn && a.tr != null && a.tr >= TOP.trust) w.push({k:'trust', sev:1.6,
+        txt:(ar()?'الثقة ':'Trust ') + pc1(a.tr) + ' (' + bd(a.tn) + ')'});
+      if(a.etq != null && a.etq >= TOP.etq) w.push({k:'etq', sev:1.4, txt:(ar()?'صحة التذاكر ':'Ticket correctness ') + pc1(a.etq)});
+      if(a.enr >= 50 && a.never === 0) w.push({k:'never', sev:1.5,
+        txt:(ar()?'لا طالب واحد بلا حضور من ':'not one absent student out of ') + bd(num(a.enr))});
+      if(w.length) out.push({name:LNAME[lid], lvl:'lead',
+        sub:cs.slice(0,2).map(c => c.name).join('، ') + (cs.length > 2 ? ' +' + (cs.length-2) : '') + ' · ' + num(a.enr) + ' ' + t('students'),
+        w, sev:w.reduce((x,i) => x + i.sev, 0)});
+    });
+  }
+
+  if(kind === 'fac'){
+    scopedFacs().forEach(f => {
+      const w = [], school = (CBY[f.cid]||{}).name || '';
+      const mine = studentsOf(r => r[S_FID] === f.fid && r[S_CID] === f.cid);
+      if(f.att  != null && f.att  >= TOP.fAtt)  w.push({k:'att', sev:2.0, txt:(ar()?'الحضور ':'Attendance ') + pc1(f.att)});
+      if(f.etqs != null && f.etqs >= TOP.fEtq)  w.push({k:'etq', sev:1.6, txt:(ar()?'صحة التذاكر لكل طالب ':'Per-student correctness ') + pc1(f.etqs)});
+      if(f.tn >= TOP.minTn && f.tr != null && f.tr >= TOP.fTrust) w.push({k:'trust', sev:1.5,
+        txt:(ar()?'الثقة ':'Trust ') + pc1(f.tr) + ' (' + bd(f.tn) + ')'});
+      /* zero absence is only remarkable in a big class — 71 of 115 facilitators cleared
+         the old n>=20 bar on this alone, which made the praise meaningless */
+      if(f.n >= 40 && !mine.filter(r => r[S_X] & 1).length) w.push({k:'never', sev:0.8,
+        txt:(ar()?'كل طلابه الـ':'all ') + bd(f.n) + (ar()?' حضروا':' of his students attended')});
+      if(w.length) out.push({name:f.fname, lvl:'fac', sub:school + ' · ' + f.n + ' ' + t('students'),
+        w, sev:w.reduce((x,i) => x + i.sev, 0)});
+    });
+  }
+  return out.filter(x => x.sev >= 1.5).sort((a,b) => b.sev - a.sev);
+}
+
+/* praise is only useful if it says what to copy and where to send it */
+const PRAISE = {
+  mgr: {
+    gain: () => [ 'أكبر قفزة حضور في الشبكة هذا الأسبوع — اسأله ما الذي تغيّر بالضبط وعمّمه على بقية المدراء.',
+                  'The biggest attendance jump in the network this week — ask what changed and spread it to the other managers.' ],
+    att:  () => [ 'محفظة كاملة فوق الحد — اجعله يعرض طريقته في اجتماع المدراء القادم.',
+                  'A whole portfolio above the bar — have him present his method at the next managers meeting.' ],
+    exam: w => [ 'كل مدارسه المُعيَّن لها ' + exName(w.ex) + ' فتحته بنسبة عالية — اطلب منه خطته للجدولة وشاركها مع بقية المدراء.',
+                 'Every school of his that is assigned the ' + w.ex.en + ' exam opened it at a high rate — ask for his scheduling plan and share it with the other managers.' ],
+    xc:   w => [ 'أكمل تقريبًا كل المُعيَّنين ' + exName(w.ex) + ' عبر المحفظة — وثّق كيف تابع المتخلّفين.',
+                 'Nearly everyone assigned the ' + w.ex.en + ' exam finished it across the portfolio — document how he chased the stragglers.' ]
+  },
+  lead: {
+    att:   w => [ 'أعلى حضور في نطاق المدير — اطلب منه يشرحه لقائد ' + (w.peer || 'المدرسة الأضعف') + '‏.',
+                  'The highest attendance in the manager\'s scope — have him walk the lead of ' + (w.peer || 'the weakest school') + ' through it.' ],
+    xc:    w => [ 'كاد يُكمل ' + exName(w.ex) + ' على كل المُعيَّنين — اسأله كيف رتّب الجلسات وانقلها للمدارس المتعثرة في هذا الاختبار.',
+                  'Nearly everyone assigned the ' + w.ex.en + ' exam completed it — ask how he arranged the sittings and copy it to schools stuck on this exam.' ],
+    trust: () => [ 'ثقة الطلاب في القمة مع عدد استجابات معتبر — اقرأ تعليقاتهم لتعرف ما الذي يصنع الفرق.',
+                   'Student trust at the top with a solid response count — read their comments to see what makes the difference.' ],
+    etq:   () => [ 'صحة تذاكر الخروج عالية — يعني الشرح يصل فعلًا، لا أن الطلاب يغلقون التذاكر فقط.',
+                   'High exit-ticket correctness — the teaching is landing, not just the tickets being closed.' ],
+    never: () => [ 'ولا طالب واحد بلا حضور في مدرسة بهذا الحجم — هذه نتيجة متابعة لا صدفة.',
+                   'Not one absent student in a school this size — that is follow-up, not luck.' ]
+  },
+  fac: {
+    att:   () => [ 'أعلى شريحة حضور بين المشرفين — اطلب منه يشارك أسلوبه مع زملائه في نفس المدرسة.',
+                   'Top decile attendance among facilitators — have him share his approach with colleagues at the same school.' ],
+    etq:   () => [ 'طلابه لا يغلقون التذاكر فحسب بل يجيبون صح — هذا مؤشر جودة شرح، اطلب نموذجًا من حصصه.',
+                   'His students do not just close tickets, they answer correctly — that is teaching quality; ask for a sample lesson.' ],
+    trust: () => [ 'ثقة طلابه شبه كاملة — اسأله كيف يبني هذه العلاقة، فهي أصعب ما يُنقل.',
+                   'His students\' trust is near perfect — ask how he builds it; that is the hardest thing to transfer.' ],
+    never: () => [ 'كل طلابه حضروا — لا غياب صفري بالصدفة في فصل بهذا الحجم.',
+                   'Every one of his students attended — zero absence is not luck in a class this size.' ]
+  }
+};
+
+function schoolWins(){
+  return scopedCampuses().map(c => {
+    const w = [];
+    if(c.att  != null && c.att  >= TOP.att)   w.push({k:'att', sev:2.0, txt:(ar()?'الحضور ':'Attendance ') + pc1(c.att)});
+    examWins(agg([c]), 1.8).forEach(x => w.push(x));
+    if(c.tn >= TOP.minTn && c.tr != null && c.tr >= TOP.trust)
+      w.push({k:'trust', sev:1.6, txt:(ar()?'الثقة ':'Trust ') + pc1(c.tr) + ' (' + bd(c.tn) + ')'});
+    if(c.etq  != null && c.etq  >= TOP.etq)   w.push({k:'etq', sev:1.4, txt:(ar()?'صحة التذاكر ':'Ticket correctness ') + pc1(c.etq)});
+    if(c.enr >= 50 && c.never === 0) w.push({k:'never', sev:1.5,
+      txt:(ar()?'لا طالب واحد بلا حضور من ':'not one absent student out of ') + bd(num(c.enr))});
+    if(!w.length) return null;
+    const lds = leadsOfCampus(c.id).map(l => l.name);
+    return {name:c.name, lvl:'lead', w, sev:w.reduce((x,i) => x + i.sev, 0),
+      sub:(ar()?'قائد: ':'lead: ') + (lds.join('، ') || (ar()?'بلا قائد':'none')) + ' · ' + num(c.enr) + ' ' + t('students')};
+  }).filter(x => x && x.sev >= 1.5).sort((a,b) => b.sev - a.sev);
+}
+function winRow(x){
+  const lead = x.w.slice().sort((a,b) => b.sev - a.sev)[0];
+  const fn = PRAISE[x.lvl][lead.k] || PRAISE[x.lvl].att;
+  const txt = fn(lead)[ar() ? 0 : 1];
+  return '<div class="srow win">'
+    + '<div class="srow-top"><span style="font-size:16px">' + LAYER[x.lvl].ic + '</span>'
+    + '<div><div class="srow-name">' + bd(esc(x.name)) + '</div><div class="srow-meta">' + bd(esc(x.sub)) + '</div></div>'
+    + '<span class="pill p-green" style="margin-inline-start:auto">' + esc(ar() ? 'يستحق النقل' : 'Worth copying') + '</span></div>'
+    + '<div class="srow-tags">' + x.w.map(i => '<span class="dtag good"><b>' + i.txt + '</b></span>').join('') + '</div>'
+    + '<div class="srow-act"><b>' + esc(ar() ? 'ما تفعله به' : 'What to do with it') + ':</b> ' + esc(txt) + '</div></div>';
+}
+
+function schoolBlock(limit){
+  const rows = rankedIssues(scopedCampuses()).filter(x => x.kind === 'campus');
+  if(!rows.length) return '';
+  const shown = limit ? rows.slice(0, limit) : rows;
+  return '<div class="sectitle" style="margin-top:26px">🏫 ' + esc(ar() ? 'مدارس بحاجة إلى متابعة' : 'Schools needing follow-up')
+      + ' <span style="font-size:12.5px;font-weight:600;color:var(--mut)">(' + bd(rows.length) + ')</span></div>'
+    + '<div class="secsub">' + esc(t('bySchoolSub')) + '</div>'
+    + shown.map(issueRow).join('')
+    + (rows.length > shown.length ? '<div style="margin-bottom:6px"><button class="ghost" onclick="setTab(\'action\')">'
+        + esc(ar() ? 'عرض الباقي' : 'See the rest') + ' (' + bd(rows.length - shown.length) + ') →</button></div>' : '');
+}
+function schoolWinsSection(limit){
+  const rows = schoolWins();
+  if(!rows.length) return '';
+  const shown = limit ? rows.slice(0, limit) : rows;
+  return '<div class="sectitle" style="margin-top:30px">🌟 ' + esc(ar() ? 'مدارس يستحق أداؤها النقل' : 'Schools worth copying')
+      + ' <span style="font-size:12.5px;font-weight:600;color:var(--mut)">(' + bd(rows.length) + ')</span></div>'
+    + '<div class="secsub">' + esc(ar()
+        ? 'أعلى عشر بالمئة من التوزيع الفعلي، مع اسم قائد كل مدرسة لتعرف بمن تتصل.'
+        : 'The top decile of the real distribution, with each school\'s lead so you know who to call.') + '</div>'
+    + shown.map(winRow).join('');
+}
+/* the toggle picks the lens; both sides read the same tickets */
+function followUpSection(limit){
+  return state.viewBy === 'school' ? schoolBlock(limit)
+       : (layerBlock('mgr', limit) + layerBlock('lead', limit && limit+1) + layerBlock('fac', limit && limit+1));
+}
+function celebrateSection(limit){
+  return state.viewBy === 'school' ? schoolWinsSection(limit) : winsSection(limit);
+}
+function setViewBy(v){ state.viewBy = v; save(); render(); }
+
+function winsSection(limit){
+  const blocks = ['mgr','lead','fac'].map(k => {
+    const rows = layerWins(k);
+    if(!rows.length) return '';
+    const shown = limit ? rows.slice(0, limit) : rows;
+    return '<div class="sectitle" style="margin-top:22px;font-size:15px">' + LAYER[k].ic + ' '
+        + esc(ar() ? LAYER[k].ar.replace('بحاجة إلى متابعة', 'يستحقون الإشادة')
+                   : LAYER[k].en.replace('needing follow-up', 'worth celebrating'))
+        + ' <span style="font-size:12px;font-weight:600;color:var(--mut)">(' + bd(rows.length) + ')</span></div>'
+      + shown.map(winRow).join('');
+  }).join('');
+  if(!blocks) return '';
+  return '<div class="sectitle" style="margin-top:30px">🌟 ' + esc(ar() ? 'ما يستحق النقل' : 'What is worth copying') + '</div>'
+    + '<div class="secsub">' + esc(ar()
+        ? 'أعلى عشر بالمئة من التوزيع الفعلي — لا أرقام مستديرة. وكل إشادة معها ما تفعله بها، لأن الثناء بلا نقل لا يغيّر شيئًا.'
+        : 'The top decile of the real distribution, not round numbers. Each one says what to do with it — praise that is not transferred changes nothing.') + '</div>'
+    + blocks;
+}
+
+/* names, not counts — a ticket you cannot act on is not a ticket */
+function nameList(arr, max){
+  max = max || 3;
+  if(!arr || !arr.length) return '';
+  const head = arr.slice(0, max).map(x => bd(esc(x))).join('، ');
+  return head + (arr.length > max ? (ar() ? ' و' + bd(arr.length - max) + ' أخرى' : ' +' + bd(arr.length - max)) : '');
+}
+/* open a named list already narrowed to one school or class */
+function openDrillQ(k, q){ state.drill = {k, q: q || '', n: 200, cid:null}; render(); }
+/* schools where a student-level gap concentrates, worst first */
+function topSchools(rows, max){
+  const g = Object.entries(groupBy(rows, r => r[S_CID])).sort((a,b) => b[1].length - a[1].length);
+  const one = g.length === 1;
+  return g.slice(0, max || 3).map(([cid, rs]) =>
+    ((CBY[cid]||{}).name || cid) + (one ? '' : ' (' + rs.length + ')'));
+}
+
+function layerRows(kind){
+  const list = scopedCampuses();
+  const out = [];
+
+  if(kind === 'mgr'){
+    const ids = state.manager === 'ALL' ? M.map(m => m.id) : [Number(state.manager)];
+    ids.forEach(mid => {
+      const cs = list.filter(c => mgrIds(c).includes(Number(mid)));
+      if(!cs.length) return;
+      const a = agg(cs), iss = [];
+      const nolead = cs.filter(c => !leadsOfCampus(c.id).length);
+      const silent = cs.filter(c => c.tn === 0);
+      const orph   = ORPH.filter(o => cs.some(c => c.id === o.c));
+      const never  = a.never;
+      const nvRows = studentsOf(r => cs.some(c => c.id === r[S_CID]) && (r[S_X] & 1));
+      const badAtt = cs.filter(c => c.att != null && c.att < TH.att).sort((x,y) => x.att - y.att);
+      EXM.forEach(e => {
+        const el = eligCampuses(cs, e.k), w = winOf(e);
+        const zero = el.filter(c => xr(c.id, e.k).o === 0);
+        if(zero.length) iss.push({k:'noexam', ex:e, sev:(w.closed ? 1.8 : 1.0)*Math.min(2, 0.6 + zero.length/3),
+          names:zero.map(c => c.name), q:zero.length === 1 ? zero[0].name : '', drill:e.k,
+          lbl:exName(e) + (ar() ? ': لم يفتحه أي طالب' : ': nobody opened it')});
+        const ea = agg(el), rest = el.filter(c => xr(c.id, e.k).o > 0);
+        if(w.closed && ea['n_' + e.k] >= 20 && ea[e.o] != null && ea[e.o] < TH.xo && rest.length){
+          const worst = rest.slice().sort((x,y) => unopenedN(y, e.k) - unopenedN(x, e.k)).slice(0, 3);
+          iss.push({k:'lowopen', ex:e, sev:0.4 + (TH.xo - ea[e.o])/TH.xo*1.6, drill:e.k,
+            names:worst.map(c => c.name + ' (' + unopenedN(c, e.k) + ')'),
+            pre:exName(e) + ' — ' + (ar() ? 'دخله ' : 'opened by ') + pc1(ea[e.o]) + (ar() ? ' من ' : ' of ') + num(ea['n_' + e.k]) + (ar() ? ' مُعيَّنًا، أكثر المتخلفين في' : ' assigned, most unopened at')});
+        }
+      });
+      if(nolead.length) iss.push({k:'nolead', sev:2.2, names:nolead.map(c => c.name),
+        lbl:(ar()?'بلا قائد':'no lead')});
+      if(orph.length) iss.push({k:'orphan', sev:2.0,
+        names:uniq(orph.map(o => o.fn + ' — ' + ((CBY[o.c]||{}).name || o.c))),
+        lbl:(ar()?'مشرف ملفه محذوف':'deleted facilitator')});
+      if(never > 0 && a.enr && 100*never/a.enr > 8) iss.push({k:'never', sev:1.8*Math.min(3,(100*never/a.enr)/8),
+        names:topSchools(nvRows), pre:num(never) + (ar()?' لم يحضروا أبدًا، أكثرهم في':' never attended, mostly at'),
+        drill:'never'});
+      if(a.att != null && a.att < TH.att) iss.push({k:'att', sev:1.6,
+        names:(badAtt.length ? badAtt.slice(0,3).map(c => c.name + ' ' + pc(c.att)) : cs.map(c => c.name)),
+        pre:(ar()?'الحضور ':'Attendance ') + pc1(a.att) + (ar()?'، الأضعف في':', weakest at')});
+      if(silent.length >= 2) iss.push({k:'survey', sev:1.0, names:silent.map(c => c.name),
+        lbl:(ar()?'بلا استبيان ثقة':'no trust survey')});
+      if(iss.length) out.push({name:MNAME[mid], id:mid,
+        sub:cs.length + ' ' + t('schools') + ' · ' + num(a.enr) + ' ' + t('students'),
+        iss, sev:iss.reduce((x,i) => x + i.sev, 0), lvl:'mgr'});
+    });
+  }
+
+  if(kind === 'lead'){
+    const inScope = new Set(list.map(c => c.id));
+    const by = {};
+    LD.filter(l => inScope.has(l.cid)).forEach(l => { (by[l.lid] = by[l.lid] || []).push(l.cid); });
+    Object.entries(by).forEach(([lid, cids]) => {
+      const cs = cids.map(id => CBY[id]).filter(Boolean);
+      const a = agg(cs), iss = [];
+      const silent = cs.filter(c => c.tn === 0);
+      const nvRows  = studentsOf(r => cids.includes(r[S_CID]) && (r[S_X] & 1));
+      const badAtt  = cs.filter(c => c.att != null && c.att < TH.att).sort((x,y) => x.att - y.att);
+      const badEtq  = cs.filter(c => c.etq != null && c.etq < TH.etq).sort((x,y) => x.etq - y.etq);
+      const only1   = cs.length === 1 ? cs[0].name : '';
+      EXM.forEach(e => {
+        const w = winOf(e), el = eligCampuses(cs, e.k);
+        const zero = el.filter(c => xr(c.id, e.k).o === 0);
+        if(zero.length) iss.push({k:'noexam', ex:e, sev:w.closed ? 2.4 : 1.4, names:zero.map(c => c.name),
+          lbl:exName(e) + (ar() ? ': لم يفتحه أي طالب' : ': nobody opened it'), q:zero.length === 1 ? zero[0].name : '', drill:e.k});
+        const live = new Set(el.filter(c => xr(c.id, e.k).o > 0).map(c => c.id));
+        const msRows = studentsOf(r => live.has(r[S_CID]) && (r[S_X] & GAP[e.k].bit));
+        if(msRows.length) iss.push({k:'missed', ex:e, sev:(w.closed ? 1.2 : 0.6)*Math.min(1.6, 0.6 + msRows.length/40),
+          names:topSchools(msRows), pre:exName(e) + ' — ' + num(msRows.length) + (ar() ? ' لم يفتحوه في' : ' have not opened it at'),
+          drill:e.k, q:only1});
+      });
+      if(a.never > 0 && a.enr && 100*a.never/a.enr > 8) iss.push({k:'never', sev:1.9*Math.min(3,(100*a.never/a.enr)/8),
+        names:topSchools(nvRows), pre:num(a.never) + (ar()?' لم يحضروا أبدًا في':' never attended at'),
+        drill:'never', q:only1});
+      if(a.att != null && a.att < TH.att) iss.push({k:'att', sev:1.7,
+        names:(badAtt.length ? badAtt.slice(0,2).map(c => c.name + ' ' + pc(c.att)) : [only1 + ' ' + pc(a.att)]),
+        pre:(ar()?'حضور منخفض في':'Low attendance at')});
+      if(a.etq != null && a.etq < TH.etq) iss.push({k:'etq', sev:1.4,
+        names:(badEtq.length ? badEtq.slice(0,2).map(c => c.name + ' ' + pc(c.etq)) : [only1 + ' ' + pc(a.etq)]),
+        pre:(ar()?'صحة تذاكر ضعيفة في':'Weak ticket correctness at')});
+      if(silent.length) iss.push({k:'survey', sev:0.9, names:silent.map(c => c.name),
+        lbl:(ar()?'بلا استبيان ثقة':'no trust survey')});
+      if(iss.length) out.push({name:LNAME[lid], id:lid,
+        sub:cs.slice(0,2).map(c => c.name).join('، ') + (cs.length > 2 ? ' +' + (cs.length-2) : '') + ' · ' + num(a.enr) + ' ' + t('students'),
+        iss, sev:iss.reduce((x,i) => x + i.sev, 0), lvl:'lead'});
+    });
+  }
+
+  if(kind === 'fac'){
+    scopedFacs().forEach(f => {
+      const iss = [];
+      const mine = studentsOf(r => r[S_FID] === f.fid && r[S_CID] === f.cid);
+      const never = mine.filter(r => r[S_X] & 1).length;
+      const school = (CBY[f.cid]||{}).name || '';
+      const cls = a2 => uniq(a2.map(r => CO[r[S_CO]])).slice(0,3);
+      const nvRows = mine.filter(r => r[S_X] & 1);
+      const clsAll = uniq(mine.map(r => CO[r[S_CO]])).slice(0,2);
+      if(f.att != null && f.att < TH.att) iss.push({k:'att', sev:2.0,
+        names:[school + (clsAll.length ? ' · ' + clsAll[0] : '')],
+        pre:(ar()?'الحضور ':'Attendance ') + pc1(f.att) + (ar()?' في':' at')});
+      if(f.etqs != null && f.etqs < TH.etq) iss.push({k:'etq', sev:1.5, names:[school],
+        pre:(ar()?'صحة التذاكر لكل طالب ':'Per-student correctness ') + pc1(f.etqs) + (ar()?' في':' at')});
+      if(never > 0) iss.push({k:'never', sev:1.4*Math.min(3,never/3),
+        names:cls(nvRows).length ? cls(nvRows) : [school],
+        pre:never + (ar()?' لم يحضروا أبدًا في':' never attended in'), drill:'never', q:f.fname});
+      if(f.tn >= 3 && f.tr != null && f.tr < TH.trust) iss.push({k:'trust', sev:1.2, names:[school],
+        pre:(ar()?'الثقة ':'Trust ') + pc1(f.tr) + (ar()?' في':' at')});
+      EXM.forEach(e => {
+        const msRows = mine.filter(r => r[S_X] & GAP[e.k].bit);
+        if(!msRows.length) return;
+        iss.push({k:'missed', ex:e, sev:(winOf(e).closed ? 0.9 : 0.5)*clamp(msRows.length/5, 0.4, 3),
+          names:cls(msRows).length ? cls(msRows) : [school],
+          pre:exName(e) + ' — ' + msRows.length + (ar() ? ' لم يفتحوه في' : ' have not opened it in'), drill:e.k, q:f.fname});
+      });
+      if(iss.length) out.push({name:f.fname, id:f.fid,
+        sub:((CBY[f.cid]||{}).name || '') + ' · ' + f.n + ' ' + t('students'),
+        iss, sev:iss.reduce((x,i) => x + i.sev, 0), lvl:'fac'});
+    });
+  }
+  return out.sort((a,b) => b.sev - a.sev);
+}
+
+function issueTag(i){
+  const names = nameList(i.names, 2);
+  const body = i.pre ? (esc(i.pre) + ' ' + names)
+             : (names + (i.lbl ? ' <span style="color:var(--mut)">— ' + esc(i.lbl) + '</span>' : ''));
+  const dr = !!i.drill;
+  const click = dr ? ' style="cursor:pointer" onclick="openDrillQ(\'' + i.drill + '\',\''
+        + esc(String(i.q || '')).replace(/'/g, "\\'") + '\')"' : '';
+  return '<span class="dtag' + (i.sev < 1.5 ? ' warn' : '') + '"' + click + '><b>' + body + '</b>'
+    + (dr ? ' <span style="color:var(--brick-t)">↗</span>' : '') + '</span>';
+}
+function layerRow(x){
+  const tier = tierOf(x.sev);
+  const tl = {urgent:[ar()?'عاجل':'Urgent','p-red'], high:[ar()?'مرتفع':'High','p-amber'], watch:[ar()?'للمتابعة':'Watch','p-blue']}[tier];
+  const top3 = x.iss.slice().sort((a,b) => b.sev - a.sev).slice(0, 3);
+  const fixes = top3.map(i => { const fn = FIX[x.lvl][i.k] || FIX[x.lvl].att; return typeof fn === 'function' ? fn(i) : ''; }).filter(Boolean);
+  return '<div class="srow ' + tier + '">'
+    + '<div class="srow-top"><span style="font-size:16px">' + LAYER[x.lvl].ic + '</span>'
+    + '<div><div class="srow-name">' + bd(esc(x.name)) + '</div><div class="srow-meta">' + bd(esc(x.sub)) + '</div></div>'
+    + '<span class="pill ' + tl[1] + '" style="margin-inline-start:auto">' + esc(tl[0]) + '</span></div>'
+    + '<div class="srow-tags">' + x.iss.map(issueTag).join('') + '</div>'
+    + fixes.map(f => '<div class="srow-act"><b>' + esc(t('action')) + ':</b> ' + f + '</div>').join('') + '</div>';
+}
+
+function layerBlock(kind, limit){
+  const rows = layerRows(kind), L = LAYER[kind];
+  if(!rows.length) return '';
+  const shown = limit ? rows.slice(0, limit) : rows;
+  return '<div class="sectitle" style="margin-top:26px">' + L.ic + ' ' + esc(ar() ? L.ar : L.en)
+      + ' <span style="font-size:12.5px;font-weight:600;color:var(--mut)">(' + bd(rows.length) + ')</span></div>'
+    + '<div class="secsub">' + esc(ar() ? L.sar : L.sen) + '</div>'
+    + shown.map(layerRow).join('')
+    + (rows.length > shown.length ? '<div style="margin-bottom:6px"><button class="ghost" onclick="setTab(\'action\')">'
+        + esc(ar() ? 'عرض الباقي' : 'See the rest') + ' (' + bd(rows.length - shown.length) + ') →</button></div>' : '');
+}
+
+/* ==========================================================================
+   VIEWS
+   ========================================================================== */
+function provenance(){
+  const wk = META.weeks.map(w => bd(t('week') + ' ' + w.wk + ': ' + w.from + ' → ' + w.to)).join(' · ');
+  return '<details class="note"><summary>' + esc(t('provT')) + '</summary>'
+    + '<div style="margin-top:9px">' + (ar()
+      ? '<b>كل رقم في هذه اللوحة مسحوب من مستودع بيانات نون</b> عبر Athena‏ (<code>noon2_datamart</code>‏، <code>noon2_core</code>‏)، بإصدار قواعد الأعمال <code>' + META.rules_version + '</code>‏، بتاريخ ' + bd(META.pulled_at) + '‏. لا توجد أي قيمة مُحاكاة.'
+      : '<b>Every figure here is pulled from the Noon data lake</b> via Athena (<code>noon2_datamart</code>, <code>noon2_core</code>), business-rules version <code>' + META.rules_version + '</code>, on ' + bd(META.pulled_at) + '. Nothing is simulated.') + '</div>'
+    + '<ul>'
+    + '<li>' + (ar() ? '<b>النطاق:</b> مدارس TRACKS و UFFUQ في السعودية التي لها مدير مدرسة مُسجَّل، للفترة ' : '<b>Scope:</b> Saudi TRACKS and UFFUQ campuses with a registered school manager, ')
+      + bd(META.window_start + ' → ' + META.window_end) + (ar() ? ' من العام الدراسي ' : ' of school year ') + bd(META.school_year) + '.</li>'
+    + '<li>' + (ar() ? '<b>المدراء:</b> من <code>campus_managers</code> بدور PRINCIPAL ونوع حساب SCHOOL_MANAGER — التسلسل الحقيقي هو مدير ← قائد مدرسة ← مشرف ← طالب.'
+                     : '<b>Managers:</b> from <code>campus_managers</code> with role PRINCIPAL and account type SCHOOL_MANAGER — the real hierarchy is manager → school lead → facilitator → student.') + '</li>'
+    + '<li>' + (ar() ? '<b>الحضور:</b> الحصص التي حضرها الطالب ÷ حصص المقررات التي يدرسها فعلًا خلال الفترة. استُبعد التسجيل الكتالوجي لأن بعض الطلاب مسجلون في مقررات لا جدول لها.'
+                     : '<b>Attendance:</b> sessions attended ÷ sessions of the courses the student actually studies in the window. Catalogue-only enrolments are excluded because some students are enrolled in courses with no timetable.') + '</li>'
+    + '<li>' + (ar() ? '<b>الثقة:</b> استبيان <code>Trust</code> الأسبوعي («كيف تقيم تجربتك خلال هذا الأسبوع؟») محوّلًا من ممتاز/جيد/مقبول/سيئ/سيئ جدًا إلى 5..1 ثم إلى نسبة مئوية.'
+                     : '<b>Trust:</b> the weekly <code>Trust</code> survey ("How do you rate your experience this week?"), mapped EXCELLENT/GOOD/OK/BAD/VERY_BAD to 5..1 and then to a percentage.') + '</li>'
+    + '<li>' + (ar() ? '<b>الاختبارات — ستة اختبارات، كل واحد يُحسب على حدة:</b> ' + EXM.map(e => '«' + esc(e.ar) + '» (' + e.nq + ' سؤالًا)').join('، ') + '. ليس كل طالب يجلس كل اختبار.'
+                     : '<b>Exams — six of them, each counted on its own:</b> ' + EXM.map(e => esc(e.en) + ' (' + e.nq + ' q)').join(', ') + '. Not every student sits every exam.') + '</li>'
+    + '<li>' + (ar() ? '<b>من المُعيَّن له الاختبار؟</b> الطالب مُعيَّن له اختبار إذا جُدول الاختبار على فصله، أو كان مسجَّلًا في برنامجه (قدرات، ESL، تحصيلي، نافس)، أو أجرى الاختبار فعلًا. لذلك لا تُحسب مدارس المرحلة المتوسطة متخلفة عن قدرات أو ESL أو تحصيلي — لا تُعيَّن لها أصلًا.'
+                     : '<b>Who is assigned an exam?</b> A student is assigned an exam when it is scheduled on their class, or they are enrolled in its programme (Qudrat, ESL, Tahsili, NAFES), or they have already sat it. So middle schools are never counted as behind on Qudrat, ESL or Tahsili — those are simply not assigned to them.') + '</li>'
+    + '<li>' + (ar() ? '<b>الصف الدراسي:</b> يُقسَّم المُعيَّنون لكل اختبار على صفوفهم (اولى ثانوي، ثاني ثانوي، ثالث ثانوي، ثالث متوسط) من سجل الطالب في مدرسته؛ ومجموع الصفوف يساوي دائمًا عدد المُعيَّنين.'
+                     : '<b>Grade:</b> the students assigned to each exam are split by their school grade (1st, 2nd, 3rd secondary; 3rd intermediate) from the student record at their school; the grade rows always add up to the assigned total.') + '</li>'
+    + '<li>' + (ar() ? '<b>النسب:</b> الدخول = فتح الاختبار، والإكمال = أجاب 90% من الأسئلة فأكثر — كلاهما ÷ المُعيَّنين لذلك الاختبار وحده، لا إجمالي طلاب المدرسة. المتوسط لمن أكمل فقط. خانة «—» تعني أن الاختبار غير مُعيَّن للمدرسة.'
+                     : '<b>Rates:</b> opened = entered the exam, completed = answered 90%+ of the questions — both ÷ the students assigned that one exam, never the whole roster. The average is of completers only. A "—" cell means the exam is not assigned to that school.') + '</li>'
+    + '<li>' + (ar() ? '<b>النوافذ:</b> ' : '<b>Windows:</b> ') + EXM.map(e => { const w = EXW[e.k]; return w ? esc(exShort(e)) + ' ' + bd(dfmt(w.from) + ' → ' + dfmt(w.to)) : ''; }).filter(Boolean).join(ar() ? '، ' : ', ')
+      + (ar() ? '. النافذة المغلقة تعني أن من لم يدخل فاته الاختبار فعلًا؛ المفتوحة تعني أن الوقت ما زال متاحًا.' : '. A closed window means whoever has not opened it has genuinely missed it; an open one means there is still time.') + '</li>'
+    + '<li>' + (ar() ? '<b>الأسابيع:</b> ' : '<b>Weeks:</b> ') + wk + (ar() ? '. الأسبوع الأول أسبوع تهيئة بلا حصص تقريبًا.' : '. Week 1 is orientation with almost no sessions.') + '</li>'
+    + '<li>' + (ar() ? '<b>حدّ معروف:</b> السلسلة الأسبوعية مخزّنة على مستوى المدير، لذلك تختفي فروق الأسبوع عند الفلترة بمدرسة أو مشرف.'
+                     : '<b>Known limit:</b> the weekly series is stored at manager grain, so week-over-week deltas disappear once you filter to a school or facilitator.') + '</li>'
+    + '</ul></details>';
+}
+
+function execSummary(list){
+  const a = agg(list), L = [];
+  const cur = weeklyFor(state.manager, CUR_WK), base = weeklyFor(state.manager, baseWk());
+
+  if(deltasLive() && cur && base && cur.att != null && base.att != null){
+    const d = cur.att - base.att;
+    L.push({cls: d < -0.5 ? 'warn' : d > 0.5 ? 'good' : 'info', ic: d < -0.5 ? '🔻' : d > 0.5 ? '🔺' : '▪️',
+      html: ar()
+        ? 'الحضور في الأسبوع ' + bd(CUR_WK) + ' <b>' + bd(pc1(cur.att)) + '</b>، بحركة <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' نقطة') + '</b> مقابل الأسبوع 2‏.'
+        : 'Week ' + bd(CUR_WK) + ' attendance is <b>' + bd(pc1(cur.att)) + '</b>, moving <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' pts') + '</b> against week 2.'});
+  }
+
+  const nvPct = a.enr ? 100*a.never/a.enr : 0;
+  if(a.never > 0){
+    L.push({cls: nvPct > 10 ? 'warn' : 'info', ic:'🚫', html: ar()
+      ? '<b>' + bd(num(a.never)) + ' طالبًا</b> من أصل ' + bd(num(a.enr)) + ' لم يحضروا ولا حصة واحدة (' + bd(pc1(nvPct)) + ')، أكثرهم في '
+        + nameList(topSchools(studentsInScope().filter(r => r[S_X] & 1), 3), 3) + '‏. '
+        + '<span class="lnk" onclick="openDrill(\'never\')">عرض أسماءهم ↗</span>'
+      : '<b>' + bd(num(a.never)) + ' students</b> of ' + bd(num(a.enr)) + ' have not attended a single session (' + bd(pc1(nvPct)) + '), mostly at '
+        + nameList(topSchools(studentsInScope().filter(r => r[S_X] & 1), 3), 3) + '. '
+        + '<span class="lnk" onclick="openDrill(\'never\')">See their names ↗</span>'});
+  }
+
+  /* one line per exam, each over its OWN assigned students — never a blended "the diagnostic" */
+  EXM.forEach(e => {
+    const nE = a['n_' + e.k];
+    if(!(nE > 0)) return;
+    const el = eligCampuses(list, e.k), w = winOf(e), o = a[e.o], c = a[e.c];
+    const un = el.reduce((s2, cc) => s2 + unopenedN(cc, e.k), 0);
+    const worst = el.filter(cc => unopenedN(cc, e.k) > 0).sort((x,y) => unopenedN(y, e.k) - unopenedN(x, e.k)).slice(0, 3);
+    const zero = el.filter(cc => xr(cc.id, e.k).o === 0);
+    const quit = el.map(cc => ({name:cc.name, g:(xr(cc.id, e.k).o || 0) - (xr(cc.id, e.k).c || 0), n:xr(cc.id, e.k).n}))
+                   .filter(r2 => r2.g >= 15 && r2.n >= 10).sort((x,y) => y.g - x.g);
+    const soon = !w.closed && w.left != null && w.left <= 1;
+    const cls = w.closed ? (o < 85 ? 'warn' : 'good') : ((soon ? o < 85 : o < 60) ? 'warn' : (o >= 85 ? 'good' : 'info'));
+    const nmW = worst.map(cc => bd(esc(cc.name)) + ' (' + bd(num(unopenedN(cc, e.k))) + ')').join(ar() ? '، ' : ', ');
+    const nmZ = zero.slice(0, 3).map(cc => bd(esc(cc.name))).join(ar() ? '، ' : ', ') + (zero.length > 3 ? (ar() ? ' و' + bd(zero.length - 3) + ' أخرى' : ' +' + bd(zero.length - 3)) : '');
+    const nmQ = quit.slice(0, 3).map(r2 => bd(esc(r2.name)) + ' (' + bd(Math.round(r2.g)) + (ar() ? ' نقطة' : ' pt') + ')').join(ar() ? '، ' : ', ');
+    L.push({cls, ic:e.ic, html: ar()
+      ? '<b>' + esc(exName(e)) + '</b> — مُعيَّن لـ' + bd(num(nE)) + ' طالبًا في ' + schAr(el.length) + ': دخله <b>' + bd(pc1(o)) + '</b> وأكمله <b>' + bd(pc1(c)) + '</b> — ' + esc(winText(e)) + '. '
+        + (un > 0 ? 'لم يدخله <b>' + bd(num(un)) + '</b> طالبًا، أكثرهم في ' + nmW + '. ' : 'دخله الجميع. ')
+        + (zero.length ? 'لم يفتحه أحد في ' + nmZ + '. ' : '')
+        + (quit.length ? 'يتركه طلاب بعد الدخول في ' + nmQ + '. ' : '')
+        + (un > 0 ? '<span class="lnk" onclick="openDrill(\'' + e.k + '\')">أسماء من لم يدخلوه ↗</span>' : '')
+      : '<b>' + esc(exName(e)) + '</b> — assigned to ' + bd(num(nE)) + ' students in ' + bd(el.length) + ' schools: <b>' + bd(pc1(o)) + '</b> opened and <b>' + bd(pc1(c)) + '</b> completed — ' + esc(winText(e)) + '. '
+        + (un > 0 ? '<b>' + bd(num(un)) + '</b> have not opened it, mostly at ' + nmW + '. ' : 'Everyone opened it. ')
+        + (zero.length ? 'Nobody opened it at ' + nmZ + '. ' : '')
+        + (quit.length ? 'Students drop out after opening at ' + nmQ + '. ' : '')
+        + (un > 0 ? '<span class="lnk" onclick="openDrill(\'' + e.k + '\')">Names of who has not opened it ↗</span>' : '')});
+  });
+  const noAssign = list.filter(cc => EXM.every(e => xr(cc.id, e.k).n === 0));
+  if(noAssign.length){
+    L.push({cls:'info', ic:'ℹ️', html: ar()
+      ? '<b>' + schAr(noAssign.length, 1) + '</b> لا يوجد لها أي من الاختبارات الستة مُعيَّنًا: ' + noAssign.slice(0, 5).map(cc => bd(esc(cc.name))).join('، ') + (noAssign.length > 5 ? ' وغيرها' : '')
+        + '‏. هذا تصميم لا تقصير — تأكد فقط أنه مقصود.'
+      : '<b>' + bd(noAssign.length) + ' schools</b> have none of the six exams assigned: ' + noAssign.slice(0, 5).map(cc => bd(esc(cc.name))).join(', ') + (noAssign.length > 5 ? ' and others' : '')
+        + '. That is by design rather than a lapse — just confirm it is intended.'});
+  }
+
+  const noSurvey = list.filter(c => c.tn === 0).sort((a,b) => b.enr - a.enr);
+  if(noSurvey.length){
+    const nm = noSurvey.slice(0,4).map(c => bd(esc(c.name)) + ' (' + bd(num(c.enr)) + ')').join('، ')
+             + (noSurvey.length > 4 ? (ar() ? ' و' + bd(noSurvey.length-4) + ' أخرى' : ' +' + bd(noSurvey.length-4)) : '');
+    L.push({cls:'info', ic:'🤝', html: ar()
+      ? 'استبيان الثقة بلا أي استجابة في <b>' + bd(noSurvey.length) + '</b> من ' + bd(list.length) + ' مدرسة: ' + nm + '‏.'
+      : 'The trust survey has no responses at all in <b>' + bd(noSurvey.length) + '</b> of ' + bd(list.length) + ' schools: ' + nm + '.'});
+  }
+
+  /* structural gaps — an owner is missing, so no metric will ever flag them */
+  const nolead = list.filter(c => !leadsOfCampus(c.id).length);
+  if(nolead.length) L.push({cls:'warn', ic:'🎖️', html: ar()
+    ? '<b>' + bd(nolead.length) + ' مدرسة بلا قائد مُعيَّن</b> (' + bd(num(nolead.reduce((a,c) => a + c.enr, 0))) + ' طالبًا): '
+      + nolead.map(c => bd(esc(c.name))).join('، ') + '. لا أحد يملك تشغيلها اليوم‏.'
+    : '<b>' + bd(nolead.length) + ' schools have no assigned lead</b> (' + bd(num(nolead.reduce((a,c) => a + c.enr, 0))) + ' students): '
+      + nolead.map(c => bd(esc(c.name))).join(', ') + '. Nobody owns running them today.'});
+
+  const orphAll = ORPH.filter(o => list.some(c => c.id === o.c));
+  const orph = orphAll.filter(o => (o.w || 'D') === 'D');
+  if(orph.length){
+    const byFac = groupBy(orph, o => o.f);
+    L.push({cls:'warn', ic:'⛓️', html: ar()
+      ? '<b>' + bd(orph.length) + ' فصلًا مُسندًا إلى مشرف ملفه محذوف</b> (' + bd(num(orph.reduce((a,o) => a + o.n, 0))) + ' طالبًا) — '
+        + Object.values(byFac).map(g => bd(esc(g[0].fn)) + ' في ' + bd(esc((CBY[g[0].c]||{}).name || g[0].c)) + ' (' + bd(g.length) + ')').join('، ')
+        + '. الطلاب بلا مسؤول فعلي‏.'
+      : '<b>' + bd(orph.length) + ' classes are assigned to a deleted facilitator profile</b> (' + bd(num(orph.reduce((a,o) => a + o.n, 0))) + ' students) — '
+        + Object.values(byFac).map(g => bd(esc(g[0].fn)) + ' at ' + bd(esc((CBY[g[0].c]||{}).name || g[0].c)) + ' (' + bd(g.length) + ')').join(', ')
+        + '. These students have no real owner.'});
+  }
+  /* A cohort pointed at an internal placeholder account. It is NOT a person's workload —
+     naming them as a facilitator would blame someone who never taught there. */
+  const plac = orphAll.filter(o => o.w === 'I');
+  if(plac.length){
+    const stu = plac.reduce((a,o) => a + o.n, 0);
+    const kk  = [...new Set(plac.map(o => o.k))];
+    const sch = plac.slice().sort((a,b) => b.n - a.n).slice(0,4)
+                 .map(o => bd(esc((CBY[o.c]||{}).name || o.c)) + ' (' + bd(o.n) + ')');
+    L.push({cls:'warn', ic:'🏷️', html: ar()
+      ? '<b>' + bd(num(stu)) + ' طالبًا في ' + bd(plac.length) + ' فصلًا بلا مشرف حقيقي</b> — الفصل '
+        + kk.map(k => bd(esc(k))).join('، ') + ' مرتبط بحساب داخلي لا بشخص، ويمتد عبر '
+        + bd(new Set(plac.map(o => o.c)).size) + ' مدرسة: ' + sch.join('، ')
+        + (plac.length > 4 ? ' وغيرها' : '') + '‏. استُبعد الحساب من قائمة المشرفين عمدًا حتى لا تُنسب أرقام هذه المدارس إلى شخص لا يعمل فيها — عيّن مشرفًا حقيقيًا لهذا الفصل‏.'
+      : '<b>' + bd(num(stu)) + ' students in ' + bd(plac.length) + ' classes have no real facilitator</b> — cohort '
+        + kk.map(k => bd(esc(k))).join(', ') + ' points at an internal account rather than a person, and spans '
+        + bd(new Set(plac.map(o => o.c)).size) + ' schools: ' + sch.join(', ')
+        + (plac.length > 4 ? ' and others' : '')
+        + '. The account is deliberately kept out of the facilitator list so these schools\' numbers are never attributed to someone who does not work there — assign a real facilitator to this cohort.'});
+  }
+
+  const worst = list.filter(c => c.att != null).sort((x,y) => x.att - y.att)[0];
+  if(worst){
+    L.push({cls:'info', ic:'🏫', html: ar()
+      ? 'أدنى حضور: <b>' + bd(esc(worst.name)) + '</b> عند ' + bd(pc1(worst.att)) + ' لـ' + bd(num(worst.enr)) + ' طالبًا‏.'
+      : 'Lowest attendance: <b>' + bd(esc(worst.name)) + '</b> at ' + bd(pc1(worst.att)) + ' across ' + bd(num(worst.enr)) + ' students.'});
+  }
+  return '<div class="execwrap">' + L.map(x => '<div class="execline ' + x.cls + '"><span class="ic">' + x.ic + '</span><span>' + x.html + '</span></div>').join('') + '</div>';
+}
+
+/* which KPI tiles open a student list */
+const KPI_DRILL = {never:'never', qs:'q'};
+EXM.forEach(e => { KPI_DRILL[e.o] = e.k; });
+const KPI_CM = 'tr';   /* trust card opens the comments instead of a student list */
+function kpiCard(k, a, hero){
+  const m = MET[k], v = a[k];
+  const dk = KPI_DRILL[k], n = dk ? gapCount(dk) : 0;
+  const cur = weeklyFor(state.manager, CUR_WK), base = weeklyFor(state.manager, baseWk());
+  let dl = '';
+  if(m.wkKey && cur && base) dl = deltaChip(k, cur[m.wkKey], base[m.wkKey]);
+  let sp = '';
+  if(m.wkKey && deltasLive()){
+    const s = WEEKS.map(w => { const x = weeklyFor(state.manager, w); return x ? x[m.wkKey] : null; });
+    sp = '<div class="spark">' + spark(s) + '</div>';
+  }
+  let note = '';
+  if(k === 'enr')  note = '<div class="note2">' + bd(num(a.act)) + ' ' + esc(t('active')) + ' · ' + bd(num(a.never)) + ' ' + esc(t('never')) + '</div>';
+  if(k === 'tr')   note = '<div class="note2">' + bd(num(a.tn)) + ' ' + (ar() ? 'مستجيب' : 'responses') + '</div>';
+  if(k === 'qs')   note = '<div class="note2">' + (a.n_q > 0
+      ? (ar() ? 'أكمله ' : 'completed by ') + bd(pc(a.qc)) + (ar() ? ' من ' : ' of ') + bd(num(a.n_q)) + (ar() ? ' مُعيَّنًا في ' : ' assigned in ') + (ar() ? schAr(a.sch_q) : bd(a.sch_q) + ' schools')
+      : (ar() ? 'قدرات غير مُعيَّن في هذا النطاق' : 'Qudrat is not assigned in this scope')) + '</div>';
+  if(m.ex) note = '<div class="note2">' + (a['n_' + m.ex.k] > 0
+      ? (ar() ? 'من ' : 'of ') + bd(num(a['n_' + m.ex.k])) + (ar() ? ' مُعيَّنًا في ' : ' assigned in ') + (ar() ? schAr(a['sch_' + m.ex.k]) + ' · ' : bd(a['sch_' + m.ex.k]) + ' schools · ') + esc(winText(m.ex))
+      : (ar() ? 'غير مُعيَّن في هذا النطاق' : 'Not assigned in this scope')) + '</div>';
+  if(k === 'att')  note = '<div class="note2">' + (ar() ? 'من حصص مقرراتهم الفعلية · متوسط الفترة' : 'of their real timetable · window average') + '</div>';
+  if(k === 'etq')  note = '<div class="note2">' + (ar() ? 'الإغلاق ' : 'closure ') + bd(pc(a.etc))
+                        + ' · ' + (ar() ? 'لكل طالب مغلِق ' : 'per closer ') + '<b style="color:var(--txt)">' + bd(pc(a.etqs)) + '</b>'
+                        + ' (' + bd(num(a.etn)) + ')</div>';
+  if(k === 'etqs') note = '<div class="note2">' + bd(num(a.etn)) + ' ' + (ar() ? 'طالبًا أغلقوا تذكرة واحدة على الأقل' : 'students closed at least one ticket') + '</div>';
+  const nCm = k === KPI_CM ? commentsInScope().length : 0;
+  if(k === KPI_CM && nCm > 0){
+    return '<div class="kpi' + (hero ? ' hero' : '') + ' clk" onclick="openComments()">'
+      + '<div class="lbl"><span>' + m.ic + '</span>' + esc(t(m.lbl)) + '</div>'
+      + '<div class="val">' + bd(m.fmt(v)) + '</div>' + note + dl + sp
+      + '<div class="drill">▸ ' + bd(num(nCm)) + ' ' + esc(ar() ? 'تعليقًا' : 'comments') + ' · '
+      + esc(t('openComments')) + ' ↗</div></div>';
+  }
+  const clickable = dk && n > 0;
+  const foot = clickable
+    ? '<div class="drill">' + (k === 'never' ? '' : '▸ ' + bd(num(n)) + ' ' + esc(ar() ? 'لم يدخلوه' : 'missed it') + ' · ')
+      + esc(t('drillOpen')) + ' ↗</div>'
+    : '';
+  return '<div class="kpi' + (hero ? ' hero' : '') + (clickable ? ' clk" onclick="openDrill(\'' + dk + '\')"' : '"') + '>'
+    + '<div class="lbl"><span>' + m.ic + '</span>' + esc(t(m.lbl)) + '</div>'
+    + '<div class="val">' + bd(m.fmt(v)) + '</div>' + note + dl + sp + foot + '</div>';
+}
+
+function viewExec(){
+  const list = scopedCampuses();
+  if(!list.length) return emptyState();
+  const a = agg(list);
+  let h = provenance() + execSummary(list);
+  h += '<div class="sectitle">' + esc(t('headline')) + '</div><div class="secsub">' + esc(t('headlineSub')) + '</div>'
+    +  '<div class="kpis">' + ['enr','qs','att','etq','tr'].map(k => kpiCard(k, a, true)).join('') + '</div>'
+    +  '<div class="sectitle" style="margin-top:20px">' + esc(t('rest')) + '</div>'
+    +  '<div class="secsub">' + (ar() ? 'كل اختبار مُعيَّن في هذا النطاق بنسبة من دخله من مُعيَّنيه، ثم نطاق المحفظة.' : 'Each exam assigned in this scope, as the share of its assigned students who opened it, then portfolio size.') + '</div>'
+    +  '<div class="kpis sm">' + ['etqs'].concat(EXM.filter(e => a['n_' + e.k] > 0).map(e => e.o), ['never','campuses','facs']).map(k => kpiCard(k, a, false)).join('') + '</div>';
+
+  /* manager comparison at network level */
+  if(state.manager === 'ALL'){
+    h += '<div class="sectitle" style="margin-top:26px">' + (ar() ? 'مقارنة المدراء' : 'Manager comparison') + '</div>'
+      +  '<div class="secsub">' + (ar() ? 'كل مدير ومحفظة مدارسه في صف واحد.' : 'Each manager and their school portfolio, one per row.') + '</div>'
+      +  managerTable();
+  }
+  h += moversCard();
+  /* three layers of accountability — who to talk to, in order */
+  const peopleLens = state.viewBy === 'people';
+  h += '<div class="sectitle" style="margin-top:30px">🎯 '
+    + (peopleLens ? (ar() ? 'مع من أتكلّم؟' : 'Who do I talk to?')
+                  : (ar() ? 'أي مدرسة أتابع؟' : 'Which school do I chase?')) + '</div>'
+    + '<div class="secsub">' + (peopleLens
+        ? esc(ar() ? 'ثلاث طبقات، كل واحدة تحمل فقط ما يستطيع صاحبها إصلاحه في موقعه.'
+                   : 'Three layers, each carrying only what the person at that level can actually fix.')
+        : esc(t('bySchoolSub'))) + '</div>';
+  h += followUpSection(4) || okState();
+  h += celebrateSection(3);
+  return h;
+}
+
+function managerTable(){
+  const rows = M.map(m => {
+    const list = managerCampuses(m.id).filter(typeOk);
+    const a = agg(list);
+    /* the weekly series is manager-grain, so it cannot be split by campus type —
+       show no delta rather than one that silently covers the whole portfolio */
+    const c3 = deltasLive() ? weeklyFor(m.id, CUR_WK) : null;
+    const c2 = deltasLive() ? weeklyFor(m.id, baseWk()) : null;
+    return {name:m.name, id:m.id, a, n:list.length,
+            d:(c3 && c2 && c3.att != null && c2.att != null) ? c3.att - c2.att : null};
+  }).filter(r => r.a.enr > 0).sort((x,y) => y.a.enr - x.a.enr);
+  const cols = [['enr',num],['act',num],['never',num],['att',pc1],['etq',pc1],['tr',pc1]].concat(EXM.map(e => [e.o, pc]));
+  const head = '<tr><th>' + esc(t('rank')) + '</th><th>' + esc(t('manager')) + '</th>'
+    + cols.map(c => '<th class="num">' + esc(t(MET[c[0]] ? MET[c[0]].lbl : c[0]) || c[0]) + '</th>').join('')
+    + '<th class="num">' + (ar()?'حركة الحضور':'Attendance Δ') + '</th></tr>';
+  const body = rows.map((r,i) => '<tr>'
+    + '<td class="rankcell">' + (i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)) + '</td>'
+    + '<td class="namecell">' + bd(esc(r.name)) + '<small>' + bd(r.n) + ' ' + esc(t('schools')) + '</small></td>'
+    + cols.map(c => '<td class="num">' + bd(c[1](r.a[c[0]])) + '</td>').join('')
+    + '<td class="num">' + (r.d == null ? '—' : '<span style="font-weight:700;color:' + (r.d>=0?'var(--green-t)':'var(--red-t)') + '">'
+        + (r.d>=0?'▲ +':'▼ −') + bd(Math.abs(r.d).toFixed(1)) + '</span>') + '</td></tr>').join('');
+  return '<div class="card"><div class="tscroll"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div></div>';
+}
+
+function moversCard(){
+  /* cross-manager ranking. With one manager selected it is both irrelevant to them
+     and a leak of their peers' numbers, so it only exists at network scope. */
+  if(state.manager !== 'ALL') return '';
+  if(!deltasLive()) return '<div class="note" style="border-inline-start-color:var(--blue)">'
+    + (ar() ? 'حركة الأسبوع مخزّنة على مستوى المدير فقط، فلا يمكن عرضها مع فلتر النوع أو المدرسة أو المشرف. أزل الفلتر لرؤيتها.'
+            : 'The week-over-week series is stored at manager grain, so it cannot be shown alongside a type, school or facilitator filter. Clear the filter to see it.')
+    + '</div>';
+  const rows = M.map(m => {
+    const c3 = weeklyFor(m.id, CUR_WK), c2 = weeklyFor(m.id, baseWk());
+    if(!c3 || !c2 || c3.att == null || c2.att == null) return null;
+    return {name:m.name, sub:managerCampuses(m.id).length + ' ' + t('schools'), d:c3.att - c2.att, cur:c3.att};
+  }).filter(Boolean).sort((a,b) => b.d - a.d);
+  if(rows.length < 2) return '';
+  const row = x => '<div class="moverow"><div><div class="nm">' + bd(esc(x.name)) + '</div><div class="sc">' + bd(esc(x.sub)) + ' · ' + bd(pc1(x.cur)) + '</div></div>'
+    + '<span class="vv" style="color:' + (x.d>=0?'var(--green-t)':'var(--red-t)') + '">' + (x.d>=0?'▲ +':'▼ −') + bd(Math.abs(x.d).toFixed(1)) + '</span></div>';
+  const down = rows.slice(-4).reverse(), anyDown = down.some(x => x.d < 0);
+  return '<div class="sectitle" style="margin-top:26px">' + (ar() ? 'أكبر التحركات — الحضور، الأسبوع ' + CUR_WK + ' مقابل ' + baseWk() : 'Biggest movers — attendance, week ' + CUR_WK + ' vs ' + baseWk()) + '</div>'
+    + '<div class="secsub">' + (ar() ? 'على مستوى المدير، لأن السلسلة الأسبوعية متاحة بهذا التفصيل فقط.' : 'At manager grain, because that is the only grain the weekly series is stored at.') + '</div>'
+    + '<div class="grid2">'
+    + '<div class="card"><h3>🔺 ' + (ar()?'أكبر تحسّن':'Biggest improvement') + '</h3>' + rows.slice(0,4).map(row).join('') + '</div>'
+    + '<div class="card"><h3>' + (anyDown?'🔻 ':'▪️ ') + (anyDown ? (ar()?'أكبر تراجع':'Biggest decline') : (ar()?'الأقل تحسّنًا':'Least improvement')) + '</h3>' + down.map(row).join('') + '</div>'
+    + '</div>';
+}
+
+/* ---------- schools ---------- */
+const CCOLS = [
+  ['enr',  num,  'enrolled'], ['act', num, 'active'], ['never', num, 'never'],
+  ['att',  pc1,  'att'], ['etq', pc1, 'etq'], ['etqs', pc1, 'etqs'], ['etn', num, 'etn'], ['etc', pc1, 'etc'], ['tr', pc1, 'trust'],
+].concat(EXM.map(e => [e.o, pc, 'open_' + e.k]), [['facs', num, 'facsK']]);
+/* an exam column reads "—" unless the exam is assigned to that school */
+function campusRow(c){
+  const r = Object.assign({}, c);
+  EXM.forEach(e => {
+    const x = xr(c.id, e.k);
+    r['n_' + e.k] = x.n;
+    r[e.o] = x.n ? x.o : null; r[e.c] = x.n ? x.c : null; r[e.s] = x.n ? x.s : null;
+  });
+  return r;
+}
+const EXOCOL = Object.fromEntries(EXM.map(e => [e.o, e.k]));
+function sortC(k){ const s = state.sortC; s.d = s.k === k ? -s.d : -1; s.k = k; render(); }
+function sortF(k){ const s = state.sortF; s.d = s.k === k ? -s.d : -1; s.k = k; render(); }
+
+function viewSchools(){
+  const list = scopedCampuses();
+  if(!list.length) return emptyState();
+  const rows = list.map(campusRow).sort((a,b) => {
+    const va = a[state.sortC.k], vb = b[state.sortC.k];
+    if(va == null) return 1; if(vb == null) return -1;
+    return (va - vb) * state.sortC.d;
+  });
+  const head = '<tr><th>' + esc(t('rank')) + '</th><th>' + esc(t('school')) + '</th>'
+    + CCOLS.map(c => '<th class="num ' + (state.sortC.k === c[0] ? 'sorted' : '') + '" onclick="sortC(\'' + c[0] + '\')">'
+        + esc(t(c[2])) + (state.sortC.k === c[0] ? (state.sortC.d < 0 ? ' ▼' : ' ▲') : '') + '</th>').join('') + '</tr>';
+  const body = rows.map((r,i) => '<tr>'
+    + '<td class="rankcell">#' + (i+1) + '</td>'
+    + '<td class="namecell">' + bd(esc(r.name)) + '<small>' + bd(esc(r.type)) + ' · ' + bd(r.facs) + ' ' + esc(t('facs'))
+      + ' · ' + (ar() ? 'مدير: ' : 'mgr: ') + mgrIds(r).map(id => bd(esc(MNAME[id] || id))).join('، ')
+      + ' · ' + (ar() ? 'قائد: ' : 'lead: ')
+      + (leadsOfCampus(r.id).length ? leadsOfCampus(r.id).map(l => bd(esc(l.name))).join('، ')
+                                    : '<span style="color:var(--red-t)">' + esc(t('noLead')) + '</span>')
+      + '</small></td>'
+    + CCOLS.map(c => {
+        const v = r[c[0]];
+        const col = c[0] === 'att' ? attColor(v) : null;
+        const warn = (EXOCOL[c[0]] && r['n_' + EXOCOL[c[0]]] > 0 && v === 0) || (c[0] === 'never' && r.enr && 100*v/r.enr > TH.neverPct);
+        return '<td class="num"' + (warn ? ' style="color:var(--red-t);font-weight:700"' : '') + '>'
+          + '<span' + (col ? ' style="font-weight:700;color:' + col + '"' : '') + '>' + bd(c[1](v)) + '</span>'
+          + (c[0] === 'att' ? bar(v, col) : '') + '</td>';
+      }).join('') + '</tr>').join('');
+  const a = agg(list);
+  const tot = '<tr class="tot"><td></td><td>' + esc(t('total')) + '</td>'
+    + CCOLS.map(c => '<td class="num">' + bd(c[1](a[c[0]])) + '</td>').join('') + '</tr>';
+  let h = '<div class="sectitle">' + esc(t('schoolsTitle')) + '</div><div class="secsub">' + esc(t('schoolsSub')) + '</div>'
+    + '<div class="card"><div class="tscroll"><table><thead>' + head + '</thead><tbody>' + body + tot + '</tbody></table></div>'
+    + '<div class="legend"><span>' + (ar()
+        ? 'الأحمر: اختبار مُعيَّن للمدرسة ولم يفتحه أي طالب، أو أكثر من 15% من الطلاب لم يحضروا أبدًا. «—» = الاختبار غير مُعيَّن لهذه المدرسة. نسب الاختبارات من المُعيَّنين له فقط.'
+        : 'Red: an exam is assigned to the school and no student opened it, or more than 15% of students never attended. "—" = exam not assigned to this school. Exam rates are over assigned students only.') + '</span></div></div>';
+  h += trendSection();
+  return h;
+}
+
+function trendSection(){
+  if(!deltasLive()) return '';
+  const mets = [['att','att','var(--c1)'],['etq','etq','var(--c2)'],['tr','trust','var(--c5)']];
+  const ids = state.manager === 'ALL' ? M.map(m => m.id) : [Number(state.manager)];
+  const cols = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)'];
+  const mk = state.trendMetric;
+  const facets = ids.map((id,i) => {
+    const s = WEEKS.map(w => { const x = weeklyFor(id, w); return x ? x[mk] : null; });
+    if(s.every(x => x == null)) return '';
+    const d = (s[2] != null && s[1] != null) ? s[2] - s[1] : null;
+    return '<div class="facet"><div class="fh"><span class="fn">' + bd(esc(MNAME[id] || id)) + '</span>'
+      + (d == null ? '' : '<span class="fd" style="color:' + (d>=0?'var(--green-t)':'var(--red-t)') + '">' + (d>=0?'▲ +':'▼ −') + bd(Math.abs(d).toFixed(1)) + '</span>')
+      + '</div><div class="fv" style="color:' + cols[i%5] + '">' + bd(pc1(s[2])) + '</div>'
+      + trendChart(s, cols[i%5], pc1)
+      + '<div dir="ltr" style="display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin-top:2px">'
+      + '<span>' + bd(t('week') + ' ' + FST_WK) + '</span><span>' + bd(t('week') + ' ' + CUR_WK) + '</span></div></div>';
+  }).join('');
+  return '<div class="sectitle" style="margin-top:26px">' + esc(t('trendTitle')) + '</div>'
+    + '<div class="secsub">' + esc(t('trendSub')) + '</div>'
+    + '<div class="chips">' + mets.map(m => '<button class="chip ' + (mk === m[0] ? 'on' : '') + '" onclick="setTrend(\'' + m[0] + '\')">' + esc(t(m[1])) + '</button>').join('') + '</div>'
+    + '<div class="card"><div class="facets">' + facets + '</div></div>';
+}
+function setTrend(v){ state.trendMetric = v; save(); render(); }
+
+/* ---------- exams ---------- */
+function rowbar(lb, v, col){
+  return '<div class="erow"><span class="el">' + esc(lb) + '</span>'
+    + '<div class="etrack"><i style="width:' + clamp(v||0,0,100) + '%;background:' + col + '"></i></div>'
+    + '<span class="ev">' + bd(pc(v)) + '</span></div>';
+}
+function winPill(e){
+  const w = winOf(e);
+  const cls = w.closed ? 'p-red' : (w.left != null && w.left <= 1 ? 'p-amber' : 'p-green');
+  return '<span class="pill ' + cls + '">' + esc(winText(e)) + '</span>';
+}
+function examCounts(list, k){
+  let n = 0, o = 0, c = 0;
+  eligCampuses(list, k).forEach(x => { const r = xr(x.id, k); n += r.n; o += Math.round(r.n * (r.o||0) / 100); c += Math.round(r.n * (r.c||0) / 100); });
+  return {n, o, c};
+}
+function viewExams(){
+  const list = scopedCampuses();
+  if(!list.length) return emptyState();
+  const a = agg(list);
+  const A = ar();
+  const live = EXM.filter(e => eligCampuses(list, e.k).length);
+  let h = '<div class="sectitle">' + esc(t('examsTitle')) + '</div><div class="secsub">' + esc(t('examsSub')) + '</div>';
+
+  /* overview: one row per exam that is assigned to at least one school in scope */
+  const ohead = '<tr><th>' + esc(A ? 'الاختبار' : 'Exam') + '</th><th>' + esc(t('exWindow')) + '</th>'
+    + ['exAssigned','exSchools','exOpenedC','exDoneC','exScoreC','exUnopenedC'].map(k => '<th class="num">' + esc(t(k)) + '</th>').join('') + '</tr>';
+  const obody = live.map(e => {
+    const ct = examCounts(list, e.k);
+    return '<tr><td class="namecell">' + bd(esc(exShort(e))) + '</td><td>' + winPill(e) + '</td>'
+      + '<td class="num">' + bd(num(ct.n)) + '</td><td class="num">' + bd(a['sch_' + e.k]) + '</td>'
+      + '<td class="num">' + bd(pc(a[e.o])) + '</td><td class="num">' + bd(pc(a[e.c])) + '</td>'
+      + '<td class="num"><b>' + bd(pc(a[e.s])) + '</b></td>'
+      + '<td class="num"' + (ct.n - ct.o > 0 ? ' style="color:var(--red-t);font-weight:700"' : '') + '>' + bd(num(ct.n - ct.o)) + '</td></tr>';
+  }).join('');
+  h += '<div class="sectitle" style="margin-top:6px">' + esc(t('exOverview')) + '</div>'
+    + '<div class="card"><div class="tscroll"><table><thead>' + ohead + '</thead><tbody>' + obody + '</tbody></table></div></div>';
+
+  /* assigned students split by grade: exams down, grades across */
+  const gset = [...new Set(live.flatMap(e => gradeSplit(list, e.k).map(r => r.g)))].sort((x, y) => gradeRank(x) - gradeRank(y));
+  const gtot = {}; gset.forEach(g => { gtot[g] = 0; });
+  const mrows = live.map(e => {
+    const sp = gradeSplit(list, e.k), by = {}; sp.forEach(r => { by[r.g] = r; });
+    return '<tr><td class="namecell">' + bd(esc(exShort(e))) + '</td>'
+      + gset.map(g => { const r = by[g]; if(!r) return '<td class="num" style="color:var(--mut)">—</td>'; gtot[g] += r.n;
+          return '<td class="num"><b>' + bd(num(r.n)) + '</b><small style="display:block;color:' + (r.o === 0 ? 'var(--red-t)' : 'var(--mut)') + ';font-size:11px">'
+            + bd(pc(100 * r.o / r.n)) + ' ' + esc(t('exOpenedC')) + '</small></td>'; }).join('')
+      + '<td class="num"><b>' + bd(num(sp.reduce((q, r) => q + r.n, 0))) + '</b></td></tr>';
+  }).join('');
+  h += '<div class="sectitle" style="margin-top:26px">' + esc(t('exByGrade')) + '</div><div class="secsub">' + esc(t('exByGradeSub')) + '</div>'
+    + '<div class="card"><div class="tscroll"><table><thead><tr><th>' + esc(A ? 'الاختبار' : 'Exam') + '</th>'
+    + gset.map(g => '<th class="num">' + bd(esc(gradeLbl(g))) + '</th>').join('') + '<th class="num">' + esc(t('exTotal')) + '</th></tr></thead><tbody>'
+    + mrows + '</tbody></table></div></div>';
+
+  /* one section per exam — never blended with another */
+  live.forEach(e => {
+    const el = eligCampuses(list, e.k);
+    const ct = examCounts(list, e.k);
+    const zero = el.filter(c => xr(c.id, e.k).o === 0);
+    const gapPts = (a[e.o] || 0) - (a[e.c] || 0);
+    const un = ct.n - ct.o;
+    h += '<div class="sectitle" style="margin-top:30px">' + e.ic + ' ' + bd(esc(exName(e))) + '</div>';
+    h += '<div class="grid2"><div class="examcard">'
+      + '<div class="eh"><span class="en">' + bd(esc(exShort(e))) + '</span>' + winPill(e) + '</div>'
+      + '<div class="ed">' + esc(A ? e.dar : e.den) + '</div>'
+      + '<div style="font-size:29px;font-weight:800;line-height:1.1;color:' + e.col + '">' + bd(pc(a[e.s])) + '</div>'
+      + '<div style="font-size:11px;color:var(--mut);margin-bottom:13px">' + esc(t('examAvg')) + '</div>'
+      + rowbar(t('examOpened'), a[e.o], 'var(--blue)')
+      + rowbar(t('examDone'), a[e.c], e.col)
+      + '<div class="esplit">'
+      + (A ? bd(num(ct.c)) + ' أكملوا من ' + bd(num(ct.o)) + ' دخلوا، من ' + bd(num(ct.n)) + ' طالبًا مُعيَّنًا لهذا الاختبار في ' + schAr(el.length) + '.'
+           : bd(num(ct.c)) + ' completed of ' + bd(num(ct.o)) + ' who opened, out of ' + bd(num(ct.n)) + ' students assigned this exam in ' + bd(el.length) + ' schools.')
+      + (gapPts >= 15 ? '<br><b style="color:var(--red-t)">' + (A ? 'فجوة ' + bd(gapPts.toFixed(1)) + ' نقطة بين الدخول والإكمال — يفتحونه ثم يتركونه.' : bd(gapPts.toFixed(1)) + ' pt gap between opening and completing — students open it and walk away.') + '</b>' : '')
+      + (zero.length ? '<br><b style="color:var(--red-t)">' + (A ? schAr(zero.length, 1) + ' لم يفتح أي طالب فيها هذا الاختبار.' : bd(zero.length) + ' schools where no student opened this exam.') + '</b>' : '')
+      + (un > 0 ? '<br><span class="lnk" onclick="openDrill(\'' + e.k + '\')">' + bd(num(un)) + (A ? ' طالبًا لم يفتحوه — عرض أسمائهم ↗' : ' students have not opened it — see their names ↗') + '</span>' : '')
+      + '</div></div>'
+      + '<div class="card" style="font-size:12.5px;line-height:1.8">'
+      + '<b>' + esc(A ? 'لماذا يهم' : 'Why it matters') + '</b><br>' + esc(A ? e.rar : e.ren) + '.<br>'
+      + '<b>' + esc(A ? 'النافذة' : 'Window') + ':</b> ' + esc((EXW[e.k] ? dfmt(EXW[e.k].from) + ' → ' + dfmt(EXW[e.k].to) : '')) + ' — ' + esc(winText(e)) + '.<br>'
+      + '<b>' + esc(A ? 'عدد الأسئلة' : 'Questions') + ':</b> ' + bd(e.nq)
+      + '</div></div>';
+
+    const gsp = gradeSplit(list, e.k);
+    const ghead = '<tr><th>' + esc(t('exGrade')) + '</th><th class="num">' + esc(t('exAssigned')) + '</th>'
+      + '<th class="num">' + esc(t('exOpenedC')) + '</th><th class="num">' + esc(t('exDoneC')) + '</th>'
+      + '<th class="num">' + esc(t('exScoreC')) + '</th><th class="num">' + esc(t('exUnopenedC')) + '</th></tr>';
+    const gbody = gsp.map(r => '<tr><td class="namecell">' + bd(esc(gradeLbl(r.g))) + '</td><td class="num"><b>' + bd(num(r.n)) + '</b></td>'
+      + '<td class="num">' + bd(num(r.o)) + '<small style="display:block;color:var(--mut);font-size:11px">' + bd(pc(100 * r.o / r.n)) + '</small></td>'
+      + '<td class="num">' + bd(num(r.c)) + '<small style="display:block;color:var(--mut);font-size:11px">' + bd(pc(100 * r.c / r.n)) + '</small></td>'
+      + '<td class="num"><b>' + bd(pc(r.s)) + '</b></td>'
+      + '<td class="num"' + (r.n - r.o > 0 ? ' style="color:var(--red-t);font-weight:700"' : '') + '>' + bd(num(r.n - r.o)) + '</td></tr>').join('');
+    h += '<div class="card" style="margin-top:12px"><div style="font-weight:700;font-size:13px;margin-bottom:8px">' + esc(t('exByGrade')) + '</div>'
+      + '<div class="tscroll"><table><thead>' + ghead + '</thead><tbody>' + gbody + '</tbody></table></div></div>';
+
+    const rows = el.map(c => Object.assign({name:c.name, cid:c.id}, xr(c.id, e.k), {un: unopenedN(c, e.k)}))
+      .sort((x,y) => (y.un - x.un) || (x.o||0) - (y.o||0));
+    const head = '<tr><th>' + esc(t('school')) + '</th><th class="num">' + esc(t('exAssigned')) + '</th>'
+      + '<th class="num">' + esc(t('exOpenedC')) + '</th><th class="num">' + esc(t('exDoneC')) + '</th>'
+      + '<th class="num">' + esc(t('exScoreC')) + '</th><th class="num">' + esc(t('exUnopenedC')) + '</th></tr>';
+    const gtxt = cid => gradeSplit([{id:cid}], e.k).map(r => gradeLbl(r.g) + ' ' + num(r.n)).join(A ? '، ' : ', ');
+    const body = rows.map(r => '<tr><td class="namecell">' + bd(esc(r.name)) + '<small>' + bd(esc(gtxt(r.cid))) + '</small></td><td class="num">' + bd(num(r.n)) + '</td>'
+      + '<td class="num"' + (r.o === 0 ? ' style="color:var(--red-t);font-weight:700"' : '') + '>' + bd(pc(r.o)) + '</td>'
+      + '<td class="num"' + ((r.o||0) - (r.c||0) >= 15 ? ' style="color:var(--red-t);font-weight:700"' : '') + '>' + bd(pc(r.c)) + '</td>'
+      + '<td class="num"><b>' + bd(pc(r.s)) + '</b></td><td class="num">' + bd(num(r.un)) + '</td></tr>').join('');
+    h += '<div class="card" style="margin-top:12px"><div class="tscroll"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
+      + '<div class="legend"><span>' + esc(t('perSchool')) + ' — ' + (A
+        ? 'مرتّبة بأكبر عدد لم يفتح الاختبار. الأحمر تحت «دخلوا» = لم يفتحه أحد؛ تحت «أكملوا» = فتحوه وتركوه.'
+        : 'sorted by most students who have not opened it. Red under Opened = nobody opened it; red under Completed = opened and abandoned.') + '</span></div></div>';
+  });
+
+  /* schools with no exam assigned: not a gap, just not in scope of any diagnostic */
+  const bare = list.filter(c => !EXM.some(e => xr(c.id, e.k).n > 0));
+  if(bare.length) h += '<div class="card" style="margin-top:26px;font-size:12.5px;line-height:1.8">'
+    + (A ? '<b>' + schAr(bare.length, 1) + '</b> لا يوجد اختبار تشخيصي مُعيَّن لها في هذه النافذة: ' : '<b>' + bd(bare.length) + ' schools</b> have no diagnostic assigned in this window: ')
+    + bare.map(c => bd(esc(c.name))).join(A ? '، ' : ', ') + '.</div>';
+  h += simSection();
+  return h;
+}
+
+/* ---------- diagnostics + simulators by grade (all of Noon, not the managers' schools) ---------- */
+const SIM = DATA.simgrades || [];            /* [programme, assessment_type, period, grade, assessments, students] */
+const SIM_TY = [['DIAGNOSTIC','تشخيصي','Diagnostic'], ['QUDRAT_SIMULATOR','محاكي القدرات','Qudrat simulator'], ['TAHSILI_SIMULATOR','محاكي التحصيلي','Tahsili simulator']];
+const SIM_P  = [['all','كل الفترة (منذ أغسطس 2025)','Everything since Aug 2025'], ['y2526','العام 2025/26','2025/26'], ['y2627','العام 2026/27','2026/27']];
+const SIM_PR = [['القدرات','Qudrat'], ['التحصيلي','Tahsili'], ['نافس','NAFES'], ['ESL','ESL'], ['المنهج الوطني','National curriculum'], ['الدولي','International']];
+const SIM_G  = ['سادس ابتدائي','اول متوسط','ثاني متوسط','ثالث متوسط','Grade 9','Grade 10','اولى ثانوي','ثاني ثانوي','ثالث ثانوي','Graduated - Middle School','Graduated','بدون صف'];
+const SIM_G_EN = {'سادس ابتدائي':'6th primary','اول متوسط':'1st intermediate','ثاني متوسط':'2nd intermediate','ثالث متوسط':'3rd intermediate',
+  'اولى ثانوي':'1st secondary','ثاني ثانوي':'2nd secondary','ثالث ثانوي':'3rd secondary','Graduated':'Graduated','Graduated - Middle School':'Graduated (middle school)','بدون صف':'No grade'};
+const SIM_G_AR = {'Graduated':'خريج','Graduated - Middle School':'خريج (متوسط)','Grade 9':'Grade 9','Grade 10':'Grade 10'};
+const simGrade = g => ar() ? (SIM_G_AR[g] || g) : (SIM_G_EN[g] || g);
+const simRank = g => { const i = SIM_G.indexOf(g); return i < 0 ? 50 : i; };
+function setSim(k, v){ state[k] = v; save(); render(); }
+function simSection(){
+  const A = ar();
+  const chips = (key, opts) => '<div class="chips">' + opts.map(o => '<button class="chip ' + (state[key] === o[0] ? 'on' : '') + '" onclick="setSim(\'' + key + '\',\'' + o[0] + '\')">' + esc(A ? o[1] : o[2]) + '</button>').join('') + '</div>';
+  const prs = [['ALL','كل البرامج','All programmes']].concat(SIM_PR.map(p => [p[0], p[0], p[1]]));
+  const rows = SIM.filter(r => r[5] >= 5 && r[1] === state.simTy && r[2] === state.simP && (!state.simHide || r[3] !== 'بدون صف')
+                            && (state.simPr === 'ALL' || r[0] === state.simPr));
+  let h = '<div class="sectitle" style="margin-top:34px">' + esc(t('simTitle')) + '</div><div class="secsub">' + esc(t('simSub')) + '</div>'
+    + '<div class="card">'
+    + chips('simTy', SIM_TY) + chips('simP', SIM_P) + chips('simPr', prs)
+    + '<label style="font-size:12.5px;color:var(--mut);cursor:pointer"><input type="checkbox" ' + (state.simHide ? 'checked ' : '') + 'onchange="setSim(\'simHide\',this.checked)"> ' + esc(A ? 'إخفاء «بدون صف»' : 'Hide "No grade"') + '</label>'
+    + '</div>';
+  if(!rows.length) return h + '<div class="card" style="margin-top:12px;color:var(--mut)">' + esc(A ? 'لا توجد محاولات لهذا الاختيار.' : 'No attempts for this selection.') + '</div>';
+  const grades = [...new Set(rows.map(r => r[3]))].sort((x, y) => simRank(x) - simRank(y));
+  const progs = [...new Set(rows.map(r => r[0]))].sort((x, y) => {
+    const tot = p => rows.filter(r => r[0] === p).reduce((q, r) => q + r[5], 0); return tot(y) - tot(x); });
+  const mx = Math.max.apply(null, rows.map(r => r[5]));
+  const cell = (p, g) => {
+    const r = rows.find(x => x[0] === p && x[3] === g);
+    if(!r) return '<td class="num" style="color:var(--mut)">—</td>';
+    const a = Math.round(8 + 52 * r[5] / mx);
+    return '<td class="num" title="' + esc((A ? 'عدد الاختبارات: ' : 'Assessments: ') + r[4]) + '" style="background:color-mix(in srgb,var(--blue) ' + a + '%,transparent)"><b>' + bd(num(r[5])) + '</b></td>';
+  };
+  const head = '<tr><th>' + esc(A ? 'البرنامج' : 'Programme') + '</th>' + grades.map(g => '<th class="num">' + bd(esc(simGrade(g))) + '</th>').join('') + '</tr>';
+  const body = progs.map(p => '<tr><td class="namecell">' + bd(esc(A ? p : (SIM_PR.find(x => x[0] === p) || [0, p])[1])) + '</td>' + grades.map(g => cell(p, g)).join('') + '</tr>').join('');
+  h += '<div class="card" style="margin-top:12px"><div class="tscroll"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
+    + '<div class="legend" style="display:block;line-height:1.9"><div>' + (A
+      ? '<b>الصف = الصف الحالي للطالب</b> لا صفه وقت المحاولة، ولهذا يظهر «خريج». <b>«حلّ الاختبار»</b> = للطالب سطر واحد على الأقل في سجل المحاولات. التشخيصي والمحاكي لا يُجدولان على الفصل، فالمصدر هو من حلّ فعلًا لا من أُسند إليه.'
+      : '<b>Grade = the student\'s current grade</b>, not the grade at the time of the attempt, which is why "Graduated" appears. <b>"Sat the exam"</b> = at least one attempt row. Diagnostics and simulators are not scheduled on classes, so this counts who actually sat, not who was assigned.')
+    + '</div><div>' + (A
+      ? 'عدد الطلاب المختلفين في كل خلية؛ لا تُجمع الأرقام عبر البرامج لأن الطالب قد يحلّ أكثر من برنامج. خلايا أقل من 5 طلاب مخفية. «بدون صف» غالبًا طلاب التطبيق. مرّر على الخلية لعدد الاختبارات.'
+      : 'Distinct students per cell; never add across programmes, one student can sit several. Cells under 5 students are hidden. "No grade" is mostly app students. Hover a cell for the number of assessments.') + '</div></div></div>';
+  return h;
+}
+
+/* ---------- school leads (the layer between manager and facilitator) ---------- */
+function viewLeads(){
+  const list = scopedCampuses();
+  if(!list.length) return emptyState();
+  const inScope = new Set(list.map(c => c.id));
+  const byLead = {};
+  LD.filter(l => inScope.has(l.cid)).forEach(l => { (byLead[l.lid] = byLead[l.lid] || []).push(l.cid); });
+  const rows = Object.entries(byLead).map(([lid, cids]) => {
+    const cs = cids.map(id => CBY[id]).filter(Boolean);
+    return { lid, name: LNAME[lid], cs, a: agg(cs) };
+  }).sort((x,y) => y.a.enr - x.a.enr);
+
+  /* campuses in scope that nobody leads — a real gap, not an empty row */
+  const orphan = list.filter(c => !leadsOfCampus(c.id).length);
+
+  const cols = [['enr',num,'enrolled'],['act',num,'active'],['never',num,'never'],
+                ['att',pc1,'att'],['etq',pc1,'etq'],['etqs',pc1,'etqs'],['etn',num,'etn'],
+                ['tr',pc1,'trust']].concat(EXM.filter(e => list.some(c => xr(c.id, e.k).n > 0)).map(e => [e.o, pc, 'open_' + e.k]));
+  const head = '<tr><th>' + esc(t('rank')) + '</th><th>' + esc(t('lead')) + '</th>'
+    + cols.map(c => '<th class="num">' + esc(t(c[2])) + '</th>').join('') + '</tr>';
+  const body = rows.map((r,i) => '<tr>'
+    + '<td class="rankcell">#' + (i+1) + '</td>'
+    + '<td class="namecell">' + bd(esc(r.name)) + '<small>' + bd(r.cs.length) + ' ' + esc(t('schools')) + ' · '
+      + r.cs.slice(0,2).map(c => bd(esc(c.name))).join('، ') + (r.cs.length > 2 ? ' +' + bd(r.cs.length - 2) : '') + '</small></td>'
+    + cols.map(c => {
+        const v = r.a[c[0]], col = c[0] === 'att' ? attColor(v) : null;
+        return '<td class="num"><span' + (col ? ' style="font-weight:700;color:' + col + '"' : '') + '>' + bd(c[1](v)) + '</span>'
+          + (c[0] === 'att' ? bar(v, col) : '') + '</td>';
+      }).join('') + '</tr>').join('');
+  let h = '<div class="sectitle">' + esc(t('leadsTitle')) + '</div><div class="secsub">' + esc(t('leadsSub')) + '</div>'
+    + '<div class="card"><div class="tscroll"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div></div>';
+  if(orphan.length){
+    h += '<div class="note" style="border-inline-start-color:var(--amber)"><b>' + esc(t('noLead')) + '</b> — '
+      + (ar() ? 'هذه المدارس لا يوجد لها قائد مسجّل في النظام، فلا تظهر في أي صف أعلاه: '
+              : 'these schools have no lead registered in the system, so they appear in no row above: ')
+      + orphan.map(c => bd(esc(c.name)) + ' (' + bd(num(c.enr)) + ')').join('، ') + '</div>';
+  }
+  return h;
+}
+
+/* ---------- facilitators ---------- */
+function viewFacs(){
+  const list = scopedFacs();
+  if(!list.length) return emptyState();
+  const rows = list.slice().sort((a,b) => {
+    const va = a[state.sortF.k], vb = b[state.sortF.k];
+    if(va == null) return 1; if(vb == null) return -1;
+    return (va - vb) * state.sortF.d;
+  });
+  const cols = [['n',num,'students'],['act',num,'active'],['att',pc1,'att'],['etq',pc1,'etq'],['etqs',pc1,'etqs'],['etn',num,'etn'],['tr',pc1,'trust'],['tn',num,'']];
+  const head = '<tr><th>' + esc(t('rank')) + '</th><th>' + esc(t('facilitator')) + '</th>'
+    + cols.map(c => '<th class="num ' + (state.sortF.k === c[0] ? 'sorted' : '') + '" onclick="sortF(\'' + c[0] + '\')">'
+        + esc(c[2] ? t(c[2]) : (ar() ? 'مستجيبو الثقة' : 'Trust n')) + (state.sortF.k === c[0] ? (state.sortF.d < 0 ? ' ▼' : ' ▲') : '') + '</th>').join('') + '</tr>';
+  const body = rows.map((r,i) => '<tr><td class="rankcell">#' + (i+1) + '</td>'
+    + '<td class="namecell">' + bd(esc(r.fname)) + '<small>' + bd(esc((CBY[r.cid]||{}).name || r.cid)) + '</small></td>'
+    + cols.map(c => {
+        const v = r[c[0]], col = c[0] === 'att' ? attColor(v) : null;
+        return '<td class="num"><span' + (col ? ' style="font-weight:700;color:' + col + '"' : '') + '>' + bd(c[1](v)) + '</span>'
+          + (c[0] === 'att' ? bar(v, col) : '') + '</td>';
+      }).join('') + '</tr>').join('');
+  return '<div class="sectitle">' + esc(t('facsTitle')) + '</div><div class="secsub">' + esc(t('facsSub')) + '</div>'
+    + '<div class="card"><div class="tscroll"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
+    + '<div class="legend"><span>' + (ar()
+      ? 'المشرف الذي يعمل في أكثر من مدرسة يظهر بصف لكل مدرسة، لأن أداءه يختلف بينها.'
+      : 'A facilitator working across several schools appears once per school, because their performance differs between them.') + '</span></div></div>';
+}
+
+/* ---------- needs follow-up ---------- */
+function rankedIssues(list){
+  const out = [];
+  list.forEach(c => {
+    const iss = issuesOf(c, 'campus');
+    if(iss.length){
+      const lds = leadsOfCampus(c.id).map(l => l.name);
+      const mgs = mgrIds(c).map(id => MNAME[id]).filter(Boolean);
+      out.push({kind:'campus', name:c.name, row:c, iss, sev:iss.reduce((s,i) => s + i.sev, 0),
+        sub:(ar()?'مدير: ':'mgr: ') + (mgs.join('، ') || '—')
+          + (ar()?' · قائد: ':' · lead: ') + (lds.join('، ') || (ar()?'بلا قائد':'none'))
+          + ' · ' + c.facs + ' ' + t('facs') + ' · ' + c.enr + ' ' + t('students')});
+    }
+  });
+  const cids = new Set(list.map(c => c.id));
+  FA.filter(f => cids.has(f.cid)).forEach(f => {
+    const iss = issuesOf(f, 'fac');
+    if(iss.length) out.push({kind:'fac', name:f.fname, sub:(ar()?'مشرف · ':'Facilitator · ') + ((CBY[f.cid]||{}).name || '') + ' · ' + f.n + ' ' + t('students'),
+      row:f, iss, sev:iss.reduce((s,i) => s + i.sev, 0)});
+  });
+  /* Floor and tiers read off the real severity spread (max 7.6, p05 3.1, p20 2.0,
+     p35 0.95). Below 1.0 the gap is noise, and a lone survey-coverage flag is a
+     reporting gap rather than a performance problem — neither earns a row. */
+  return out
+    .filter(x => x.sev >= 1.0 && !x.iss.every(i => i.k === 'survey'))
+    .sort((a,b) => b.sev - a.sev);
+}
+const tierOf = sev => sev >= 3.1 ? 'urgent' : sev >= 2.0 ? 'high' : 'watch';
+function issueRow(x){
+  const tier = tierOf(x.sev);
+  const tl = {urgent:[ar()?'عاجل':'Urgent','p-red'], high:[ar()?'مرتفع':'High','p-amber'], watch:[ar()?'للمتابعة':'Watch','p-blue']}[tier];
+  const acts = x.iss.slice().sort((a,b) => b.sev - a.sev).slice(0, 3);
+  return '<div class="srow ' + tier + '">'
+    + '<div class="srow-top"><span style="font-size:16px">' + (x.kind === 'campus' ? '🏫' : '🎓') + '</span>'
+    + '<div><div class="srow-name">' + bd(esc(x.name)) + '</div><div class="srow-meta">' + bd(esc(x.sub)) + '</div></div>'
+    + '<span class="pill ' + tl[1] + '" style="margin-inline-start:auto">' + esc(tl[0]) + '</span></div>'
+    + '<div class="srow-tags">' + x.iss.map(i => '<span class="dtag' + (i.sev < 1.5 ? ' warn' : '') + '"><b>' + i.txt + '</b></span>').join('') + '</div>'
+    + acts.map(i => '<div class="srow-act"><b>' + esc(t('action')) + ':</b> ' + esc(actText(i, x.name)) + '</div>').join('') + '</div>';
+}
+function viewAction(){
+  const list = scopedCampuses();
+  if(!list.length) return emptyState();
+  const all = rankedIssues(list);
+  if(!all.length) return okState();
+  const byTier = {urgent:0, high:0, watch:0};
+  all.forEach(x => byTier[tierOf(x.sev)]++);
+  const tiles = '<div class="kpis sm" style="margin-bottom:14px">'
+    + [['urgent','🚨',ar()?'عاجل':'Urgent','var(--red)'],['high','⚠️',ar()?'مرتفع':'High','var(--amber)'],['watch','👁️',ar()?'للمتابعة':'Watch','var(--blue)']]
+      .map(x => '<div class="kpi"><div class="lbl">' + x[1] + ' ' + esc(x[2]) + '</div><div class="val" style="color:' + x[3] + '">' + bd(byTier[x[0]]) + '</div></div>').join('')
+    + '<div class="kpi"><div class="lbl">🏫 ' + (ar()?'مدارس متأثرة':'Schools affected') + '</div><div class="val">'
+      + bd(uniq(all.filter(x => x.kind === 'campus').map(x => x.name)).length) + '</div>'
+      + '<div class="note2">' + (ar()?'من ':'of ') + bd(list.length) + '</div></div></div>';
+  return '<div class="sectitle">' + esc(t('actionTitle')) + '</div><div class="secsub">' + esc(t('actionSub')) + '</div>'
+    + tiles + followUpSection() + celebrateSection();
+}
+function toggleAct(){ state.actExpand = !state.actExpand; render(); }
+
+function emptyState(){
+  return '<div class="card"><div class="empty"><span class="big">🔍</span>' + esc(t('noData'))
+    + '<div style="margin-top:10px"><button class="ghost" onclick="clearAll()">' + esc(t('clear')) + '</button></div></div></div>';
+}
+function okState(){ return '<div class="card"><div class="empty"><span class="big">✅</span><b>' + esc(t('allGood')) + '</b></div></div>'; }
+
+/* ==========================================================================
+   CHROME
+   ========================================================================== */
+function topbar(){
+  const opts = ['<option value="ALL"' + (state.manager === 'ALL' ? ' selected' : '') + '>' + esc(t('allNet')) + '</option>']
+    .concat(M.map(m => '<option value="' + m.id + '"' + (String(state.manager) === String(m.id) ? ' selected' : '') + '>'
+      + esc(m.name) + ' — ' + managerCampuses(m.id).length + ' ' + esc(t('schools')) + '</option>'));
+  const viewer = DATA.viewer;
+  const roles = {ADMIN:['مسؤول','Admin'], SCHOOL_MANAGER:['مدير مدرسة','School manager'],
+    SCHOOL_LEAD:['قائد مدرسة','School lead'], FACILITATOR:['مشرف','Facilitator']};
+  const identity = viewer ? '<span class="flabel">' + (ar() ? 'الحساب الحالي: ' : 'Signed in: ')
+    + esc(viewer.email) + ' · ' + esc((roles[viewer.userType] || ['', ''])[ar() ? 0 : 1])
+    + '</span><a class="ghost" href="/api/dashboard/login">'
+    + (ar() ? 'تغيير الملف الشخصي' : 'Switch profile') + '</a>' : '';
+  return identity + '<span class="flabel">' + esc(t('manager')) + '</span>'
+    + '<select class="msel" onchange="setManager(this.value)">' + opts.join('') + '</select>'
+    + '<span class="live"><i></i>' + (ar() ? 'بيانات حيّة · ' : 'live data · ') + bd(META.pulled_at) + '</span>'
+    + '<button class="ghost" style="margin-inline-start:auto" onclick="toggleLang()">' + (ar() ? 'EN' : 'ع') + '</button>';
+}
+function setType(v){ state.fType = v; state.fLead = []; state.fCampus = []; state.fFac = []; save(); render(); }
+function setManager(v){ state.manager = v; state.fLead = []; state.fCampus = []; state.fFac = []; save(); render(); }
+function toggleLang(){ state.lang = ar() ? 'en' : 'ar'; save(); render(); }
+function setTab(v){ state.tab = v; state.actExpand = false; render(); }
+function setCmp(v){ state.cmp = v; save(); render(); }
+
+function sidebar(){
+  const list = scopedCampuses();
+  const tabs = [
+    ['exec','📊',t('tExec'),null],
+    ['schools','🏫',t('tSchools'),list.length],
+    ['leads','🎖️',t('tLeads'),uniq(LD.filter(l => list.some(c => c.id === l.cid)).map(l => l.lid)).length],
+    ['exams','🩺',t('tExams'),null],
+    ['facs','🎓',t('tFacs'),uniq(scopedFacs().map(f => f.fid)).length],
+    ['action','⚠️',t('tAction'),rankedIssues(list).length]
+  ];
+  return '<div class="sblabel">' + (ar() ? 'الأقسام' : 'Sections') + '</div>'
+    + tabs.map(x => '<button class="' + (state.tab === x[0] ? 'active' : '') + '" onclick="setTab(\'' + x[0] + '\')">'
+      + '<span class="sbic">' + x[1] + '</span><span>' + esc(x[2]) + '</span>'
+      + (x[3] != null ? '<span class="cnt">' + bd(x[3]) + '</span>' : '') + '</button>').join('');
+}
+
+function msOptions(kind){
+  const base = managerCampuses(state.manager).filter(typeOk);
+  if(kind === 'fLead'){
+    const ids = new Set(base.map(c => c.id));
+    const seen = {};
+    LD.filter(l => ids.has(l.cid)).forEach(l => { seen[l.lid] = l.name; });
+    return Object.entries(seen).map(([v,l]) => ({v, l})).sort((a,b) => a.l.localeCompare(b.l));
+  }
+  if(kind === 'fCampus'){
+    let cs = base;
+    if(state.fLead.length){ const ids = new Set(state.fLead.flatMap(leadCampusIds)); cs = cs.filter(c => ids.has(c.id)); }
+    return cs.map(c => ({v:String(c.id), l:c.name}));
+  }
+  const cids = new Set(managerCampuses(state.manager).filter(c => !state.fCampus.length || state.fCampus.includes(String(c.id))).map(c => c.id));
+  const seen = {};
+  FA.filter(f => cids.has(f.cid)).forEach(f => { seen[f.fid] = f.fname; });
+  return Object.entries(seen).map(([v,l]) => ({v, l})).sort((a,b) => a.l.localeCompare(b.l));
+}
+function ms(kind, label){
+  const sel = state[kind], opts = msOptions(kind), open = state.openMS === kind;
+  const cap = !sel.length ? label : sel.length === 1 ? ((opts.find(o => o.v === sel[0]) || {l:sel[0]}).l)
+            : label + ' · ' + sel.length + ' ' + t('selected');
+  let panel = '';
+  if(open){
+    const q = state.msSearch.toLowerCase();
+    const rows = opts.filter(o => !q || o.l.toLowerCase().includes(q)).slice(0, 400);
+    panel = '<div class="mspanel" onclick="event.stopPropagation()">'
+      + '<input class="mssearch" placeholder="' + esc(t('search')) + '" value="' + esc(state.msSearch) + '" oninput="msSearch(this.value)" autofocus>'
+      + '<div class="msrows">' + (rows.length ? rows.map(o => '<div class="msrow ' + (sel.includes(o.v) ? 'on' : '') + '" onclick="msToggle(\'' + kind + '\',\'' + esc(o.v) + '\')">'
+          + '<span class="ck">' + (sel.includes(o.v) ? '✓' : '') + '</span>' + bd(esc(o.l)) + '</div>').join('')
+          : '<div style="padding:10px;color:var(--mut);font-size:12px">—</div>') + '</div>'
+      + (sel.length ? '<div class="msclear" onclick="msClear(\'' + kind + '\')">' + esc(t('clear')) + '</div>' : '') + '</div>';
+  }
+  return '<div class="ms"><button class="mstrig ' + (sel.length ? 'has' : '') + '" onclick="msOpen(event,\'' + kind + '\')">'
+    + bd(esc(cap)) + ' <span style="font-size:9px">▾</span></button>' + panel + '</div>';
+}
+function msOpen(e, kind){ e.stopPropagation(); state.openMS = state.openMS === kind ? null : kind; state.msSearch = ''; renderBar(); }
+function msSearch(v){ state.msSearch = v; renderBar(); const i = document.querySelector('.mssearch'); if(i){ i.focus(); i.setSelectionRange(v.length, v.length); } }
+function msToggle(kind, v){
+  const a = state[kind], i = a.indexOf(v);
+  if(i < 0) a.push(v); else a.splice(i, 1);
+  if(kind === 'fLead')   { state.fCampus = []; state.fFac = []; }
+  if(kind === 'fCampus') state.fFac = [];
+  render();
+}
+function msClear(kind){ state[kind] = [];
+  if(kind === 'fLead'){ state.fCampus = []; state.fFac = []; }
+  if(kind === 'fCampus') state.fFac = [];
+  render(); }
+function clearAll(){ state.fType = 'ALL'; state.fLead = []; state.fCampus = []; state.fFac = []; state.openMS = null; render(); }
+document.addEventListener('click', () => { if(state.openMS){ state.openMS = null; renderBar(); } });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && state.drill) closeDrill(); });
+
+function filterBar(){
+  const any = state.fType !== 'ALL' || state.fLead.length || state.fCampus.length || state.fFac.length;
+  const all = managerCampuses(state.manager);
+  const cnt = v => v === 'ALL' ? all.length : all.filter(c => c.type === v).length;
+  const tbtn = (v, lbl) => '<button class="' + (state.fType === v ? 'on' : '') + '" onclick="setType(\'' + v + '\')">'
+      + esc(lbl) + ' <span style="opacity:.7;font-weight:600">' + bd(cnt(v)) + '</span></button>';
+  const vb = (v, lbl, ic) => '<button class="' + (state.viewBy === v ? 'on' : '') + '" onclick="setViewBy(\'' + v + '\')">'
+      + ic + ' ' + esc(lbl) + '</button>';
+  return '<span class="flabel">' + esc(t('viewBy')) + '</span>'
+    + '<div class="seg">' + vb('people', t('byPeople'), '👥') + vb('school', t('bySchool'), '🏫') + '</div>'
+    + '<span class="flabel" style="margin-inline-start:6px">' + esc(t('ctype')) + '</span>'
+    + '<div class="seg">' + tbtn('ALL', t('tAll')) + tbtn('TRACKS', t('tTracks')) + tbtn('UFFUQ', t('tUffuq')) + '</div>'
+    + '<span class="flabel" style="margin-inline-start:6px">' + (ar() ? 'تصفية:' : 'Filter:') + '</span>'
+    + ms('fLead', t('lead')) + ms('fCampus', t('school')) + ms('fFac', t('facilitator'))
+    + (any ? '<button class="ghost" onclick="clearAll()">✕ ' + esc(t('clear')) + '</button>' : '')
+    + '<span style="margin-inline-start:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    + '<span class="flabel">' + esc(t('compare')) + '</span>'
+    + '<div class="seg">'
+    + '<button class="' + (state.cmp === 'week' ? 'on' : '') + '" onclick="setCmp(\'week\')">' + esc(t('lastWeek')) + '</button>'
+    + '<button class="' + (state.cmp === 'sem' ? 'on' : '') + '" onclick="setCmp(\'sem\')">' + esc(t('semStart')) + '</button>'
+    + '</div></span>';
+}
+function crumb(){
+  const list = scopedCampuses(), a = agg(list);
+  const who = state.manager === 'ALL' ? t('allNet') : MNAME[state.manager];
+  const ty = state.fType === 'ALL' ? null : (state.fType === 'TRACKS' ? t('tTracks') : t('tUffuq'));
+  return [who, ty, list.length + ' ' + t('schools'), num(a.enr) + ' ' + t('students'),
+          uniq(scopedFacs().map(f => f.fid)).length + ' ' + t('facs')]
+    .filter(Boolean).map(p => bd(esc(p))).join(' <span style="opacity:.5">·</span> ');
+}
+
+function renderBar(){ document.getElementById('filterbar').innerHTML = filterBar(); }
+function render(){
+  const root = document.getElementById('root');
+  root.dir = ar() ? 'rtl' : 'ltr';
+  document.documentElement.lang = state.lang;
+  document.getElementById('h-title').textContent = t('title');
+  document.getElementById('h-sub').textContent = t('sub');
+  const list = scopedCampuses(), a = agg(list);
+  document.getElementById('h-stat').innerHTML =
+      bd(num(a.enr)) + ' ' + esc(t('students')) + ' · ' + bd(list.length) + ' ' + esc(t('schools'))
+    + ' · ' + bd(uniq(scopedFacs().map(f => f.fid)).length) + ' ' + esc(t('facs'))
+    + '<br><span style="opacity:.85">' + esc(state.manager === 'ALL' ? t('allNet') : MNAME[state.manager]) + '</span>'
+    + '<br><span style="opacity:.7">' + bd(META.window_start + ' → ' + META.window_end) + '</span>';
+  document.getElementById('topbar').innerHTML = topbar();
+  document.getElementById('sidebar').innerHTML = sidebar();
+  renderBar();
+  document.getElementById('crumb').innerHTML = crumb();
+  const views = {exec:viewExec, schools:viewSchools, leads:viewLeads, exams:viewExams, facs:viewFacs, action:viewAction};
+  const personalNotice = DATA.viewer?.userType === 'FACILITATOR'
+    ? '<div class="card"><div class="secsub">' + (ar()
+      ? 'تعرض هذه الصفحة بيانات طلابك فقط. إجماليات اختبارات المدرسة والمؤشرات الأسبوعية للمدير غير متاحة في هذا العرض. استخدم تغيير الملف الشخصي لعرض بيانات حساب آخر تملكه.'
+      : 'This page shows only your students. School exam totals and manager weekly trends are unavailable in this view. Use Switch profile to view another account you own.') + '</div></div>' : '';
+  document.getElementById('app').innerHTML = personalNotice + (views[state.tab] || viewExec)();
+  renderDrill();
+  tipHide();
+}
+render();
+</script>
