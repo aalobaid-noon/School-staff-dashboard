@@ -2102,7 +2102,7 @@ function topbar(){
     SCHOOL_LEAD:['قائد مدرسة','School lead'], FACILITATOR:['مشرف','Facilitator']};
   const identity = viewer ? '<span class="flabel">' + (ar() ? 'الحساب الحالي: ' : 'Signed in: ')
     + esc(viewer.email) + ' · ' + esc((roles[viewer.userType] || ['', ''])[ar() ? 0 : 1])
-    + '</span><a class="ghost" href="/api/dashboard/login">'
+    + '</span><a class="ghost" href="/api/dashboard/login?start=1" target="_blank" rel="noopener noreferrer">'
     + (ar() ? 'تغيير الملف الشخصي' : 'Switch profile') + '</a>' : '';
   return identity + '<span class="flabel">' + esc(t('manager')) + '</span>'
     + '<select class="msel" onchange="setManager(this.value)">' + opts.join('') + '</select>'

@@ -1,3 +1,4 @@
+import { checkDashboardLogin } from "./check-dashboard-login";
 import { checkDashboardSummary } from "./check-dashboard-summary";
 import { checkDashboardScope } from "./check-dashboard-scope";
 import assert from "node:assert/strict";
@@ -23,18 +24,20 @@ assert.equal(resolveDashboardTemplate(packageRoot), template);
 assert.throws(() => resolveDashboardTemplate("/nonexistent-dashboard-fixture"), /template was not found/);
 console.log(`Dashboard template lookup: PASS (${process.cwd() === workspaceRoot ? "workspace-root" : "API-package"} launch)`);
 const productionCookies = dashboardCookies(false);
-for (const options of [previewCookies.sessionOptions, previewCookies.stateOptions]) {
+for (const options of [previewCookies.sessionOptions]) {
   assert.equal(options.sameSite, "none");
   assert.equal(options.partitioned, undefined);
   assert.equal(options.secure, true);
   assert.equal(options.httpOnly, true);
 }
-for (const options of [productionCookies.sessionOptions, productionCookies.stateOptions]) {
+for (const options of [productionCookies.sessionOptions]) {
   assert.equal(options.sameSite, "none");
   assert.equal(options.partitioned, undefined);
   assert.equal(options.secure, true);
   assert.equal(options.httpOnly, true);
 }
+assert.equal(previewCookies.stateOptions.sameSite, "lax");
+assert.equal(productionCookies.stateOptions.sameSite, "lax");
 assert.equal(previewCookies.stateOptions.path, "/");
 assert.equal(productionCookies.stateOptions.path, "/");
 assert.equal(previewCookies.sessionOptions.path, "/api/dashboard");
@@ -48,6 +51,7 @@ assert.equal(verifiedCitadelUserType({ userType: "Admin" }), "ADMIN");
 assert.equal(verifiedCitadelUserType({ role: "ADMIN" }), null);
 assert.equal(verifiedCitadelUserType({ userType: { role: "ADMIN" } }), null);
 console.log("Dashboard cookie policy: PASS");
+await checkDashboardLogin();
 await checkDashboardAuthRoles();
 await checkDashboardSyncRoutes();
 checkDashboardScope();

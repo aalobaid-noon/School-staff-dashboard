@@ -25,7 +25,7 @@ export async function checkDashboardSummary() {
       access_expires_at: new Date(Date.now() + 3600000), expires_at: new Date(Date.now() + 3600000) }] : [] })
   })) as unknown as typeof pool.connect;
   const app = express();
-  app.use((req, _res, next) => { req.log = { error() {} } as unknown as typeof req.log; next(); });
+  app.use((req, _res, next) => { req.log = { error() {}, info() {} } as unknown as typeof req.log; next(); });
   app.use(dashboardRouter);
   app.use(dashboardAuthRouter);
   const server = app.listen(0, "127.0.0.1");
@@ -61,14 +61,24 @@ export async function checkDashboardSummary() {
     assert.equal(body.metrics, null);
     const login = await fetch(url.replace("/summary", "/login"));
     assert.equal(login.status, 200);
-    assert((await login.text()).includes("Choose your school report profile"));
-    assert(login.headers.get("set-cookie")?.includes("Expires="));
-    for (const role of ["ADMIN", "SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR"]) {
-      const redirect = await fetch(url.replace("/summary", "/login") + `?userType=${role}`, { redirect: "manual" });
-      assert.equal(redirect.status, 302);
-      assert.equal(new URL(redirect.headers.get("location")!).searchParams.get("userType"), role);
-    }
-    assert.equal((await fetch(url.replace("/summary", "/login?userType=STUDENT"))).status, 400);
+    const loginHtml = await login.text();
+    assert(loginHtml.includes('target="_blank"'));
+    assert(loginHtml.includes("Open Insights in a new tab"));
+    assert(!loginHtml.includes("<select"));
+    assert.equal(login.headers.get("set-cookie"), null);
+    const embedded = await fetch(url.replace("/summary", "/login?start=1"), {
+      headers: { "sec-fetch-dest": "iframe" }, redirect: "manual",
+    });
+    assert.equal(embedded.status, 200);
+    assert.equal(embedded.headers.get("set-cookie"), null);
+    assert((await embedded.text()).includes('target="_blank"'));
+    const redirect = await fetch(url.replace("/summary", "/login?start=1&userType=ADMIN"), {
+      headers: { "sec-fetch-dest": "document" }, redirect: "manual",
+    });
+    assert.equal(redirect.status, 302);
+    assert.equal(new URL(redirect.headers.get("location")!).searchParams.get("userType"), null);
+    assert(redirect.headers.get("set-cookie")?.includes("SameSite=Lax"));
+    assert(redirect.headers.get("x-dashboard-auth-id"));
     console.log("Summary HTTP endpoint enforces all four role scopes and denies unknown roles: PASS");
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));

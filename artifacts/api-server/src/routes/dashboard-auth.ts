@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, hkdfSync, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { buildHeaders } from "@noonacademy/citadel-transport";
 import { pool } from "@workspace/db";
@@ -86,7 +86,7 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 function signInMessage(message: string): string {
-  return `<p>${escapeHtml(message)}</p><p><a href="/api/dashboard/login">Switch profile</a> and choose Admin, School manager, School lead, or Facilitator.</p>`;
+  return `<p>${escapeHtml(message)}</p><p><a href="/api/dashboard/login?start=1" target="_blank" rel="noopener noreferrer">Switch profile in a new tab</a> and choose your staff profile in Citadel.</p>`;
 }
 function tokens(input: unknown) {
   const value = obj(input);
@@ -104,34 +104,49 @@ export function dashboardPostLoginPath(hasSnapshot: boolean) {
   return hasSnapshot ? "/api/dashboard/report" : "/";
 }
 
+function loginPage(res: Response, message = "Open Insights in a new tab to sign in with Noon.") {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Content-Security-Policy", "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://replit.com https://*.replit.com https://school.noonacademy.com https://school.staging.noonedu.io");
+  res.type("html").send(
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>School Insights sign-in</title></head><body>' +
+    `<h1>School Insights</h1><p>${escapeHtml(message)}</p>` +
+    '<p><a href="/api/dashboard/login?start=1" target="_blank" rel="noopener noreferrer">Open Insights in a new tab</a></p>' +
+    '<p>Choose your staff profile in Citadel. Keep the report open in the new tab.</p></body></html>',
+  );
+}
+
+function loginCorrelationId(cfg: Config | null, state: unknown): string {
+  if (!cfg || typeof state !== "string" || !/^[a-f0-9]{64}$/.test(state)) return randomUUID();
+  return createHmac("sha256", cfg.sessionSecret).update("dashboard-login:" + state).digest("hex").slice(0, 24);
+}
+
 router.get("/dashboard/login", (req, res): void => {
   const cfg = config();
   if (!cfg) {
-    res.status(503).send("Noon sign-in is not configured for this environment.");
+    res.status(503);
+    loginPage(res, "Sign-in is unavailable. Ask your school administrator to check the Insights configuration, then try again.");
+    return;
+  }
+  // Start OAuth only after leaving an embedded page, before setting its state cookie.
+  if (req.query.start !== "1" || req.headers["sec-fetch-dest"] === "iframe" || req.headers["sec-fetch-dest"] === "frame") {
+    loginPage(res);
     return;
   }
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Referrer-Policy", "no-referrer");
   res.clearCookie(COOKIE, sessionCookie);
-  const role = typeof req.query.userType === "string" ? req.query.userType : undefined;
-  if (!role || !isStaffRole(role)) {
-    res.status(role ? 400 : 200).type("html").send(
-      '<h1>Choose your school report profile</h1><p>Select a role you hold, then choose the matching profile in Citadel. This does not change your permissions.</p>' +
-      '<form method="get" action="/api/dashboard/login"><label>Profile role <select name="userType">' +
-      staffRoles.map((value) => `<option value="${value}">${value.replaceAll("_", " ")}</option>`).join("") +
-      '</select></label><button type="submit">Continue to sign in</button></form>',
-    );
-    return;
-  }
   const state = randomBytes(32).toString("hex");
+  const correlationId = loginCorrelationId(cfg, state);
+  res.setHeader("X-Dashboard-Auth-Id", correlationId);
   res.clearCookie(STATE, { ...csrfCookie, path: "/api/dashboard/oauth/callback" });
   res.cookie(STATE, state, { ...csrfCookie, maxAge: 10 * 60_000 });
   const url = new URL("/portal/oauth/authorize", cfg.baseUrl);
   url.search = new URLSearchParams({
     app_id: cfg.appId, redirect_uri: cfg.redirectUri, response_type: "code", state,
-    // Multi-audience Citadel apps must explicitly select the staff login audience.
-    userType: role,
   }).toString();
-  res.setHeader("Cache-Control", "no-store");
+  req.log.info({ event: "dashboard_oauth", reason: "login_started", correlationId }, "School Insights sign-in");
   res.redirect(302, url.toString());
 });
 
@@ -141,12 +156,37 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
   const cfg = config();
   const expected = cookie(req, STATE);
   res.clearCookie(STATE, csrfCookie);
-  if (!cfg || typeof req.query.state !== "string" || typeof req.query.code !== "string" ||
-      !expected || !/^[a-f0-9]{64}$/.test(expected) || !/^[a-f0-9]{64}$/.test(req.query.state) ||
-      !timingSafeEqual(Buffer.from(expected), Buffer.from(req.query.state))) {
-    res.status(400).send("Noon sign-in could not be verified. Please start again.");
+  const correlationId = loginCorrelationId(cfg, req.query.state);
+  res.setHeader("X-Dashboard-Auth-Id", correlationId);
+  let verifiedProfileId: number | undefined;
+  let verifiedRole: string | undefined;
+  const reject = (status: number, reason: string, message: string) => {
+    req.log.warn({ event: "dashboard_oauth", reason, correlationId, profileId: verifiedProfileId, userType: verifiedRole }, "School Insights sign-in rejected");
+    res.status(status);
+    loginPage(res, `${message} Reference: ${correlationId}.`);
+  };
+  if (!cfg) {
+    reject(400, "configuration_missing", "Sign-in is unavailable. Ask your school administrator to check the Insights configuration.");
     return;
   }
+  if (req.headers["sec-fetch-dest"] === "iframe" || req.headers["sec-fetch-dest"] === "frame") {
+    reject(400, "embedded_callback", "Open a new tab and start sign-in again.");
+    return;
+  }
+  if (typeof req.query.state !== "string" || !/^[a-f0-9]{64}$/.test(req.query.state) ||
+      typeof req.query.code !== "string" || !req.query.code) {
+    reject(400, "invalid_callback_parameters", "The sign-in link is incomplete. Start sign-in again.");
+    return;
+  }
+  if (!expected) {
+    reject(400, "state_cookie_missing", "Your sign-in expired or its cookie is unavailable. Start sign-in again in a new tab.");
+    return;
+  }
+  if (!/^[a-f0-9]{64}$/.test(expected) || !timingSafeEqual(Buffer.from(expected), Buffer.from(req.query.state))) {
+    reject(400, "state_mismatch", "This sign-in does not match your latest attempt. Start sign-in again.");
+    return;
+  }
+  let stage = "token_exchange";
   try {
     const exchange = obj(await oauthPost(cfg, "/api/oauth/token", { code: req.query.code }));
     const profile = obj(exchange.profile);
@@ -155,17 +195,20 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
     const profileId = profile.id;
     if (typeof email !== "string" || !/(?:@noonacademy\.com|@noon\.edu\.sa|@non\.sa)$/i.test(email) ||
         !Number.isSafeInteger(profileId) || Number(profileId) <= 0) {
-      res.status(403).send("This Noon account is not authorized to view school reports.");
+      reject(403, "profile_not_authorized", "This account cannot view school reports. Sign in with your Noon staff account.");
       return;
     }
+    verifiedProfileId = Number(profileId);
     const userType = verifiedCitadelUserType(profile);
     if (!isStaffRole(userType)) {
-      res.status(403).type("html").send(signInMessage(userType
-        ? `Citadel signed you in as ${userType}. This profile cannot open school reports.`
-        : "Citadel did not return a profile role. Please sign in again."));
+      reject(403, userType ? "unsupported_profile_role" : "profile_role_missing",
+        "This profile cannot open school reports. Sign in again and choose a supported staff profile in Citadel.");
       return;
     }
+    verifiedRole = userType!;
+    stage = "token_response";
     const issued = tokens(obj(exchange.token));
+    stage = "session_store";
     const snapshot = await pool.query("SELECT 1 FROM school_report_snapshots LIMIT 1");
     const sessionId = randomBytes(32).toString("hex");
     await pool.query(
@@ -175,13 +218,13 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
         new Date(Date.now() + issued.expiresIn * 1000), new Date(Date.now() + sessionLifetimeMs)],
     );
     res.cookie(COOKIE, sessionId, { ...sessionCookie, maxAge: sessionLifetimeMs });
+    req.log.info({ event: "dashboard_oauth", reason: "session_created", correlationId, profileId, userType }, "School Insights sign-in complete");
     res.setHeader("Cache-Control", "no-store");
     // Authentication must work before the first reporting import. The landing
     // page can show the verified session's readiness state instead of a 503.
     res.redirect(302, dashboardPostLoginPath(snapshot.rows.length > 0));
   } catch {
-    req.log.warn("Noon token exchange failed; no session was issued");
-    res.status(502).send("Noon sign-in is temporarily unavailable. Please try again.");
+    reject(502, `${stage}_failed`, "Sign-in is temporarily unavailable. Start sign-in again.");
   }
 }
 
