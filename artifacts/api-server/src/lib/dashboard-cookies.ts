@@ -12,6 +12,6 @@ export function dashboardCookies(development: boolean) {
     sessionName: development ? "school_dashboard_preview_session" : "school_dashboard_session",
     stateName: development ? "school_dashboard_preview_oauth_state" : "school_dashboard_oauth_state",
     sessionOptions: { ...common, path: "/api/dashboard" },
-    stateOptions: { ...common, path: "/" },
+    stateOptions: { ...common, sameSite: "lax" as const, path: "/" },
   };
 }

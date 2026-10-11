@@ -59,6 +59,8 @@ export async function checkDashboardAuthRoles() {
     for (const { role, email, fullAccess } of [
       { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true },
       { role: "SCHOOL_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
+      { role: "SCHOOL_LEAD", email: "role-fixture@noon.edu.sa", fullAccess: false },
+      { role: "FACILITATOR", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: false },
       { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: false },
@@ -77,7 +79,7 @@ export async function checkDashboardAuthRoles() {
         headers: { cookie: `${cookies.stateName}=${state}`, "x-role": "ADMIN" },
         query: { state, code: "synthetic-code", userType: "ADMIN", email: "forged@noonacademy.com" },
         body: { userType: "ADMIN", role: "admin", email: "forged@noonacademy.com" },
-        log: { warn() {} },
+        log: { warn() {}, info() {} },
       } as unknown as Request;
       const response = {
         clearCookie() {},

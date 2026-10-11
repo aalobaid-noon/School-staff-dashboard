@@ -3,7 +3,7 @@ import { LogIn } from "lucide-react";
 export function NoonSignIn({ isArabic, compact = false }: { isArabic: boolean; compact?: boolean }) {
   const button = (
     <a className={`copy-button gate-link${compact ? " header-signin" : ""}`}
-      href="/api/dashboard/login" target="_self"
+      href="/api/dashboard/login?start=1" target="_blank" rel="noopener noreferrer"
       data-testid={compact ? "link-header-signin-noon" : "link-signin-noon"}>
       <LogIn size={15} />
       {isArabic ? "تسجيل الدخول عبر Noon" : "Sign in with Noon"}
@@ -15,8 +15,8 @@ export function NoonSignIn({ isArabic, compact = false }: { isArabic: boolean; c
       {button}
       <p className="gate-note">
         {isArabic
-          ? "يبقى تسجيل الدخول والعودة إلى التقرير داخل النافذة نفسها."
-          : "Sign-in and the return to your report stay in this window."}
+          ? "يفتح تسجيل الدخول والتقرير في علامة تبويب جديدة."
+          : "Sign-in and your report open in a new tab."}
       </p>
     </div>
   );
