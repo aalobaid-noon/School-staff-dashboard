@@ -78,7 +78,7 @@ export function verifiedCitadelUserType(profile: unknown): string | null {
   const value = obj(profile).userType;
   return typeof value === "string" && value.trim() ? value.trim().toUpperCase() : null;
 }
-const staffRoles = ["ADMIN", "SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR"] as const;
+const staffRoles = ["ADMIN", "SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR", "CLUSTER_MANAGER"] as const;
 function isStaffRole(role: string | null | undefined): boolean {
   return staffRoles.some((allowed) => allowed === role);
 }

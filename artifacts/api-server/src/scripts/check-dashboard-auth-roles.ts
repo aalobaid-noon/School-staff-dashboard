@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type { Request, Response } from "express";
 import { pool } from "@workspace/db";
-import { dashboardOAuthCallback, getDashboardUser, getDashboardScope } from "../routes/dashboard-auth";
+import { dashboardOAuthCallback, getDashboardUser, getDashboardScope, isDashboardOps } from "../routes/dashboard-auth";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 
 // Exercise the actual OAuth callback and session reader without connecting to
@@ -60,6 +60,7 @@ export async function checkDashboardAuthRoles() {
       { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true },
       { role: "SCHOOL_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: "SCHOOL_LEAD", email: "role-fixture@noon.edu.sa", fullAccess: false },
+      { role: "CLUSTER_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: "FACILITATOR", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: false },
@@ -111,6 +112,7 @@ export async function checkDashboardAuthRoles() {
       assert.equal(sessionUser.userType, role ?? null);
       const scope = getDashboardScope(sessionUser, { campuses: [{ id: 101, mgr: "7" }, { id: 202, mgr: "8" }] });
       assert.equal(scope.isOps, fullAccess);
+      assert.equal(isDashboardOps(sessionUser), fullAccess);
       assert.equal(scope.campuses.length, fullAccess ? 2 : 0);
     }
     for (const role of [null, "", "   ", "STUDENT", "TEACHER"]) {

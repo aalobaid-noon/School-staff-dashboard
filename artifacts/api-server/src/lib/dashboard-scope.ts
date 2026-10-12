@@ -16,7 +16,10 @@ export function getDashboardScope(user: DashboardUser, document: Row) {
   const all = rows(document, "campuses");
   const isOps = user.userType === "ADMIN";
   const related = new Set(
-    user.userType === "SCHOOL_LEAD"
+    user.userType === "CLUSTER_MANAGER"
+      ? rows(document, "clusterManagers").filter((manager) => Number(manager.profileId) === user.profileId)
+        .map((manager) => String(manager.campusId))
+      : user.userType === "SCHOOL_LEAD"
       ? rows(document, "leads").filter((lead) => Number(lead.lid) === user.profileId).map((lead) => String(lead.cid))
       : user.userType === "FACILITATOR"
         ? rows(document, "facilitators").filter((facilitator) => Number(facilitator.fid) === user.profileId)
@@ -78,7 +81,7 @@ export function filterDashboardReport(user: DashboardUser, document: Row): Row {
     weekly: manager ? rows(document, "weekly").filter((row) => Number(row.mid) === user.profileId) : [],
     facilitators,
     leads: personal ? [] : rows(document, "leads").filter((row) => atCampus(row.cid) &&
-      (manager || Number(row.lid) === user.profileId)),
+      (manager || user.userType === "CLUSTER_MANAGER" || Number(row.lid) === user.profileId)),
     bygrade, simgrades: [], grades, cohorts, students, comments,
     orphanCohorts: personal ? [] : rows(document, "orphanCohorts").filter((row) => atCampus(row.c)),
   };

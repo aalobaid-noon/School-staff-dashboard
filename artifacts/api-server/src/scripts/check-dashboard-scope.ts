@@ -7,6 +7,7 @@ export function checkDashboardScope() {
     campuses: [{ id: 101, name: "School A", type: "TRACKS", mgr: "7,8", enr: 50, act: 40 },
       { id: 202, name: "School B", type: "TRACKS", mgr: "7", enr: 60, act: 50 },
       { id: 303, name: "School C", type: "TRACKS", mgr: "9", enr: 70, act: 60 }],
+    clusterManagers: [{ profileId: 30, campusId: 101 }, { profileId: 30, campusId: 202 }, { profileId: 31, campusId: 303 }],
     managers: [{ id: 7, name: "Manager A" }, { id: 8, name: "Manager B" }, { id: 9, name: "Manager C" }],
     leads: [{ lid: 10, cid: 101, name: "Lead A" }, { lid: 11, cid: 101, name: "Lead B" },
       { lid: 10, cid: 202, name: "Lead A" }, { lid: 12, cid: 303, name: "Lead C" }],
@@ -35,6 +36,14 @@ export function checkDashboardScope() {
   assert.deepEqual(manager.managers.map((row: any) => row.id), [7]);
   assert.deepEqual(manager.weekly.map((row: any) => row.mid), [7]);
   assert.deepEqual(manager.exams.map((row: any) => row.id), [101, 202]);
+  const cluster = filterDashboardReport(user("CLUSTER_MANAGER", 30), document);
+  assert.deepEqual(cluster.campuses.map((row: any) => row.id), [101, 202]);
+  assert.deepEqual(cluster.leads.map((row: any) => row.lid), [10, 11, 10]);
+  assert.deepEqual(cluster.managers, []);
+  assert.deepEqual(cluster.weekly, []);
+  assert.equal(cluster.clusterManagers, undefined);
+  assert.deepEqual(getDashboardScope(user("CLUSTER_MANAGER", 30), { campuses: document.campuses }).campuses, []);
+  assert.deepEqual(getDashboardScope(user("CLUSTER_MANAGER", 7), document).campuses, []);
   const lead = filterDashboardReport(user("SCHOOL_LEAD", 10), document);
   assert.deepEqual(lead.campuses.map((row: any) => row.id), [101, 202]);
   assert.deepEqual(lead.leads.map((row: any) => row.lid), [10, 10]);
@@ -56,16 +65,16 @@ export function checkDashboardScope() {
   assert.deepEqual(secondFacilitator.cohorts, ["Class B"]);
   assert.deepEqual(secondFacilitator.students[0].slice(2, 4), [0, 0]);
   assert.equal(secondFacilitator.comments[0][2], 0);
-  for (const report of [manager, lead, facilitator]) {
+  for (const report of [manager, lead, facilitator, cluster]) {
     const serialized = JSON.stringify(report);
     for (const secret of ["School C", "Student C", "Comment C", "unused-class", "unused-grade",
       "hidden-meta", "hidden-future-field", "global-comparison"]) assert(!serialized.includes(secret), secret);
   }
-  for (const role of [null, "TEACHER", "GUEST", "CLUSTER_MANAGER"]) {
+  for (const role of [null, "TEACHER", "GUEST"]) {
     assert.deepEqual(getDashboardScope(user(role, 7), document).campuses, []);
     assert.deepEqual(filterDashboardReport(user(role, 7), document).students, []);
   }
-  for (const role of ["SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR"]) {
+  for (const role of ["SCHOOL_MANAGER", "SCHOOL_LEAD", "FACILITATOR", "CLUSTER_MANAGER"]) {
     assert.deepEqual(getDashboardScope(user(role, 999), document).campuses, []);
   }
   assert.equal(JSON.stringify(document), before, "Filtering must not mutate the shared snapshot");

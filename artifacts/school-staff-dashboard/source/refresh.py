@@ -205,6 +205,8 @@ def main():
         "campuses": campuses, "exams": exams,
         "weekly": [{k: w[k] for k in ("mid", "wk", "act", "att", "etq", "etn", "tn", "tr")} for w in weekly],
         "facilitators": facs, "leads": leads,
+        "clusterManagers": [{"profileId": row["profile_id"], "campusId": row["campus_id"]}
+                            for row in (sl.get("cluster_managers") or []) if row["campus_id"] in live],
         "bygrade": bygrade,
         "simgrades": [[x["pr"], x["ty"], x["p"], x["g"], x["a"], x["n"]] for x in simgrades_raw],
         "grades": grades, "cohorts": cohorts, "students": students, "comments": comments,
