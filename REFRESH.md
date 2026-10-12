@@ -20,8 +20,21 @@ not automated from here.
 - **Term start** — `2026-08-23`. Week numbers count from here: week *n* covers
   `term_start + 7(n−1)` to `+6 days`.
 - **Extract window** — term start → today (exclusive end = tomorrow).
-- **Weekly series** — complete weeks only; today's partial week is excluded so a
-  week-over-week delta never compares a full week against a half one.
+- **Weekly series** — runs through today, so the current week is included even when
+  partial (rates are ratios, so a half week still compares fairly). The dashboard labels it
+  "partial, to date"; counts such as active students are smaller until the week completes.
+
+## Date ranges
+
+The dashboard can be switched between *this week*, *last week*, *month to date*, *last month* and
+*since term start*. Term weeks run Sunday–Saturday. The campus (`01_campuses.sql`) and facilitator
+(`04_facilitators.sql`) queries are run once more per range with that range's `{{START}} {{END}}
+{{DT_FROM}} {{DT_TO}}`, saved as `_raw_campuses__<range>.json` / `_raw_facilitators__<range>.json`
+(range keys: `week`, `lastweek`, `mtd`, `lastmonth`; `term` is the base extract), with the windows in
+`data/_ranges.json`. `refresh.py` keeps only the window-dependent fields (`ranges` in `real.json`).
+Exams, student gap lists, "never attended" and weekly trends are not range-filtered. In a range,
+attendance is over students who attended at least once in it.
+`athena_pull.py` (`range_windows`) and `report-import.ts` (`reportRanges`) define the same windows.
 
 ## Steps
 

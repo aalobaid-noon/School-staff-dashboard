@@ -31,6 +31,32 @@ def load(name):
     return json.loads(p.read_text(encoding="utf-8"))
 
 
+# "never" is deliberately not here: it means never attended this year, so it stays term-wide
+C_FIELDS = ("act", "att", "etc", "etq", "etn", "etqs", "tn", "tr")
+F_FIELDS = ("act", "att", "etq", "etn", "etqs", "tn", "tr")
+
+
+def build_range(campuses, facs, range_campuses, range_facs):
+    """Window-dependent fields for one date range, aligned with C_FIELDS / F_FIELDS and keyed by
+    campus id / "fid:cid". Returns None for an empty window."""
+    if not range_campuses:
+        return None
+    rc = {c["id"]: c for c in range_campuses}
+    rf = {(f["fid"], f["cid"]): f for f in range_facs}
+    out_c = {}
+    for c in campuses:
+        r = rc.get(c["id"])
+        if r is None:
+            out_c[str(c["id"])] = [0] + [None] * (len(C_FIELDS) - 1)
+        else:
+            out_c[str(c["id"])] = [r.get(k) for k in C_FIELDS]
+    out_f = {}
+    for x in facs:
+        r = rf.get((x["fid"], x["cid"]))
+        out_f[f"{x['fid']}:{x['cid']}"] = [r.get(k) for k in F_FIELDS] if r else [0] + [None] * (len(F_FIELDS) - 1)
+    return {"c": out_c, "f": out_f}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--term", default="2026-08-23")
@@ -148,6 +174,24 @@ def main():
     week_meta = [{"wk": w, "from": (term + dt.timedelta(days=7*(w-1))).isoformat(),
                   "to": (term + dt.timedelta(days=7*(w-1)+6)).isoformat()} for w in wks]
 
+    # ---- date ranges ------------------------------------------------------------------
+    # The campus / facilitator metrics are pulled again per range (athena_pull.py / report-import.ts).
+    # Only the fields that depend on the window are kept, as arrays aligned with C_FIELDS / F_FIELDS;
+    # a campus or facilitator with no activity in a range gets nulls / zero so the UI never falls
+    # back to term-wide numbers by accident.
+    ranges_meta = json.loads((D / "_ranges.json").read_text(encoding="utf-8")) if (D / "_ranges.json").exists() else {}
+    range_order = [k for k in ("week", "lastweek", "mtd", "lastmonth", "term") if k in ranges_meta]
+    ranges = {}
+    for key in range_order:
+        if key != "term" and (D / f"_raw_campuses__{key}.json").exists():
+            block = build_range(campuses, facs, load(f"campuses__{key}"),
+                                [f for f in load(f"facilitators__{key}") if f["fid"] not in internal])
+            if block:
+                ranges[key] = block
+                if all(v[1] is None for v in block["c"].values()):
+                    print(f"  ! range '{key}' has no attendance for any campus (no ended sessions yet?)")
+    range_order = [k for k in range_order if k == "term" or k in ranges]
+
     # ---- sanity checks: a bad extract must fail loudly, not publish quietly ----
     enr = sum(c["enr"] for c in campuses)
     errs = []
@@ -199,12 +243,14 @@ def main():
             "scope": "Saudi Arabia · TRACKS + UFFUQ campuses that have a SCHOOL_MANAGER (role PRINCIPAL)",
             "weeks": week_meta,
             "exam_windows": win,
+            "ranges": [{"key": k, "from": ranges_meta[k]["from"], "to": ranges_meta[k]["to"]} for k in range_order],
         },
         "managers": sorted({w["mid"]: {"id": w["mid"], "name": w["mname"]} for w in weekly}.values(),
                            key=lambda m: m["id"]),
         "campuses": campuses, "exams": exams,
         "weekly": [{k: w[k] for k in ("mid", "wk", "act", "att", "etq", "etn", "tn", "tr")} for w in weekly],
         "facilitators": facs, "leads": leads,
+        "ranges": ranges,
         "bygrade": bygrade,
         "simgrades": [[x["pr"], x["ty"], x["p"], x["g"], x["a"], x["n"]] for x in simgrades_raw],
         "grades": grades, "cohorts": cohorts, "students": students, "comments": comments,
