@@ -83,6 +83,8 @@ export function filterDashboardReport(user: DashboardUser, document: Row): Row {
     leads: personal ? [] : rows(document, "leads").filter((row) => atCampus(row.cid) &&
       (manager || user.userType === "CLUSTER_MANAGER" || Number(row.lid) === user.profileId)),
     bygrade, simgrades: [], grades, cohorts, students, comments,
+    // Campus-wide daily counts include other staff's students, so a facilitator never receives them.
+    daily: personal ? [] : tuples(document, "daily").filter((row) => atCampus(row[0])),
     orphanCohorts: personal ? [] : rows(document, "orphanCohorts").filter((row) => atCampus(row.c)),
   };
 }

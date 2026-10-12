@@ -25,6 +25,7 @@ export function checkDashboardScope() {
       [303, 22, 2, 1, "A", 1, "Comment C"]],
     bygrade: [[101, 0, "q", 10], [202, 1, "q", 20], [303, 2, "q", 30]],
     orphanCohorts: [{ c: 101, k: "Unassigned A" }, { c: 303, k: "Unassigned C" }],
+    daily: [[101, 20261004, 10, 6, 5, 5, 4, 5], [202, 20261004, 20, 9, 8, 8, 6, 8], [303, 20261004, 30, 20, 9, 9, 3, 9]],
     simgrades: [["global-comparison"]], futurePrivateData: "hidden-future-field",
   };
   const before = JSON.stringify(document);
@@ -36,6 +37,7 @@ export function checkDashboardScope() {
   assert.deepEqual(manager.managers.map((row: any) => row.id), [7]);
   assert.deepEqual(manager.weekly.map((row: any) => row.mid), [7]);
   assert.deepEqual(manager.exams.map((row: any) => row.id), [101, 202]);
+  assert.deepEqual(manager.daily.map((row: any) => row[0]), [101, 202], "daily counts follow the manager's schools");
   const cluster = filterDashboardReport(user("CLUSTER_MANAGER", 30), document);
   assert.deepEqual(cluster.campuses.map((row: any) => row.id), [101, 202]);
   assert.deepEqual(cluster.leads.map((row: any) => row.lid), [10, 11, 10]);
@@ -60,6 +62,7 @@ export function checkDashboardScope() {
   for (const key of ["managers", "leads", "weekly", "exams", "bygrade", "orphanCohorts", "simgrades"]) {
     assert.deepEqual(facilitator[key], [], `Facilitator must not receive ${key}`);
   }
+  assert.deepEqual(facilitator.daily, [], "campus-wide daily counts include other staff's students");
   const secondFacilitator = filterDashboardReport(user("FACILITATOR", 21), document);
   assert.deepEqual(secondFacilitator.grades, ["Grade B"]);
   assert.deepEqual(secondFacilitator.cohorts, ["Class B"]);
