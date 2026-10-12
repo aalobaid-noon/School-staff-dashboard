@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Activity, ArrowLeft, Database, Languages, ShieldCheck, Users } from "lucide-react";
+import { Activity, ArrowLeft, Database, Languages, MessageSquare, ShieldCheck, Users } from "lucide-react";
 import { NoonSignIn } from "@/components/noon-sign-in";
 import { Switch } from "@/components/ui/switch";
 import { AdminApiError, useAdminOverview, useSetAdminAccess, type AdminOverview } from "@/lib/admin-api";
@@ -53,6 +53,7 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="header-tools">
+          <Link className="copy-button" href="/admin/feedback" data-testid="link-admin-feedback"><MessageSquare size={14} />Cards Feedback</Link>
           <Link className="copy-button" href="/" data-testid="link-admin-home"><ArrowLeft size={14} />{t("الرئيسية", "Home")}</Link>
           <button className="lang-toggle" type="button" onClick={() => setLanguage(ar ? "en" : "ar")}>
             <Languages size={15} strokeWidth={1.8} />{ar ? "English" : "العربية"}

@@ -5,6 +5,7 @@ import dashboardRouter from "./dashboard";
 import dashboardAuthRouter from "./dashboard-auth";
 import dashboardSyncRouter from "./dashboard-sync";
 import dashboardAdminRouter from "./dashboard-admin";
+import dashboardFeedbackRouter from "./dashboard-feedback";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(dashboardRouter);
 router.use(dashboardAuthRouter);
 router.use(dashboardSyncRouter);
 router.use(dashboardAdminRouter);
+router.use(dashboardFeedbackRouter);
 
 export default router;

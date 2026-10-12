@@ -21,3 +21,4 @@ export * from "./reporting";
 export * from "./dashboard-session";
 export * from "./dashboard-sync";
 export * from "./dashboard-admin";
+export * from "./card-feedback";

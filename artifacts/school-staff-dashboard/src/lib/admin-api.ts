@@ -22,6 +22,13 @@ export type AdminOverview = {
   users: AdminUser[];
 };
 
+export type FeedbackComment = {
+  id: number; profileId: number; name: string | null; email: string; userType: string | null; comment: string; createdAt: string;
+  context: Record<string, string>;
+};
+export type FeedbackCard = { cardKey: string; kind: string; cardText: string; cardHtml: string; lang: "ar" | "en"; comments: FeedbackComment[] };
+export type CardFeedbackResponse = { total: number; css: string; cards: FeedbackCard[] };
+
 export class AdminApiError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
 }
@@ -52,5 +59,12 @@ export function useSetAdminAccess() {
         body: JSON.stringify({ isAdmin }),
       }),
     onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
+export function useCardFeedback() {
+  return useQuery({
+    queryKey: ["dashboard-card-feedback"], queryFn: () => request<CardFeedbackResponse>("/feedback"),
+    retry: false, staleTime: 15_000, refetchInterval: 60_000,
   });
 }

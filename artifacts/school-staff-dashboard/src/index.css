@@ -308,3 +308,16 @@
   .admin-add { margin-inline-start: 0; width: 100%; }
   .admin-add input { flex: 1; min-width: 0; }
 }
+
+/* Cards Feedback */
+.fb-search { height: 34px; padding: 0 12px; border: 1px solid #d9d3c3; border-radius: 9px; background: #fffdf7; font-size: 12px; min-width: 240px; margin-inline-start: auto; }
+.fb-group { border: 1px solid #e7e1d4; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; background: #fbf8ef; }
+.fb-kind { font-size: 11px; font-weight: 800; color: #69776d; margin-bottom: 8px; letter-spacing: .06em; }
+.fb-kind span { font-weight: 600; color: #8a8b80; }
+.fb-frame { width: 100%; border: 0; display: block; background: transparent; }
+.fb-comments { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.fb-comments li { background: #f3efe2; border-radius: 10px; padding: 10px 12px; border-inline-start: 3px solid #bc5a37; }
+.fb-text { margin: 0 0 6px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.fb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 11.5px; color: #77796f; }
+.fb-ctx { background: #ebe5d3; border-radius: 999px; padding: 1px 9px; }
+@media (max-width: 760px) { .fb-search { margin-inline-start: 0; width: 100%; min-width: 0; } }

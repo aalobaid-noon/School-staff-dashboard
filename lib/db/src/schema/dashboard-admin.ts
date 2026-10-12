@@ -4,6 +4,8 @@ import { bigint, boolean, index, integer, pgTable, serial, text, timestamp } fro
 export const dashboardUsers = pgTable("dashboard_users", {
   profileId: bigint("profile_id", { mode: "number" }).primaryKey(),
   email: text("email").notNull(),
+  // Display name from the Citadel profile at the last sign-in.
+  name: text("name"),
   lastUserType: text("last_user_type"),
   firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),

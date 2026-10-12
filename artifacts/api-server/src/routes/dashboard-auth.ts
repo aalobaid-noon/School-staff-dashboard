@@ -200,6 +200,7 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
       return;
     }
     verifiedProfileId = Number(profileId);
+    const displayName = [profile.name, account.name].find((value): value is string => typeof value === "string" && !!value.trim())?.trim().slice(0, 120) ?? null;
     const userType = verifiedCitadelUserType(profile);
     if (!isStaffRole(userType)) {
       reject(403, userType ? "unsupported_profile_role" : "profile_role_missing",
@@ -221,10 +222,10 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
     // Usage record for the admin console. A failure here must never block sign-in.
     try {
       await pool.query(
-        "INSERT INTO dashboard_users (profile_id, email, last_user_type) VALUES ($1, $2, $3) " +
+        "INSERT INTO dashboard_users (profile_id, email, last_user_type, name) VALUES ($1, $2, $3, $4) " +
         "ON CONFLICT (profile_id) DO UPDATE SET email = EXCLUDED.email, last_user_type = EXCLUDED.last_user_type, " +
-        "last_seen_at = now(), login_count = dashboard_users.login_count + 1",
-        [profileId, email.toLowerCase(), userType],
+        "name = COALESCE(EXCLUDED.name, dashboard_users.name), last_seen_at = now(), login_count = dashboard_users.login_count + 1",
+        [profileId, email.toLowerCase(), userType, displayName],
       );
       await pool.query("INSERT INTO dashboard_login_events (profile_id, user_type) VALUES ($1, $2)", [profileId, userType]);
     } catch {
@@ -349,7 +350,7 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
     const title = "noon · School Manager Dashboard";
     res.setHeader("Content-Security-Policy",
       "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; " +
-      "font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; " +
+      "font-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; " +
       "frame-ancestors 'self' https://replit.com https://*.replit.com " +
       "https://school.noonacademy.com https://school.staging.noonedu.io");
     res.type("html").send(

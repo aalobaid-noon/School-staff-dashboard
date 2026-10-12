@@ -9,8 +9,9 @@ const STALE_AFTER_HOURS = 48;
 
 type DashboardUser = NonNullable<Awaited<ReturnType<typeof getDashboardUser>>>;
 
-export function adminOriginAllowed(req: Pick<Request, "headers" | "get">) {
-  if (req.get("X-Dashboard-Admin") !== "1") return false;
+// State-changing requests must carry a custom header and come from this app's own origin.
+export function originAllowed(req: Pick<Request, "headers" | "get">, header: string) {
+  if (req.get(header) !== "1") return false;
   const allowed = [
     process.env.DASHBOARD_OAUTH_REDIRECT_URI,
     process.env.NODE_ENV === "development" && process.env.REPLIT_DEV_DOMAIN
@@ -18,6 +19,7 @@ export function adminOriginAllowed(req: Pick<Request, "headers" | "get">) {
   ].filter((url): url is string => !!url).map((url) => new URL(url).origin);
   return typeof req.headers.origin === "string" && allowed.includes(req.headers.origin);
 }
+export const adminOriginAllowed = (req: Pick<Request, "headers" | "get">) => originAllowed(req, "X-Dashboard-Admin");
 
 export function parseAdminToggle(profileId: unknown, body: unknown): { profileId: number; isAdmin: boolean } | null {
   const id = typeof profileId === "string" && /^\d{1,12}$/.test(profileId) ? Number(profileId) : NaN;

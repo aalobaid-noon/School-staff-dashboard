@@ -8,6 +8,7 @@ import { SummaryPanel } from '@/components/summary-panel';
 import { NoonSignIn } from '@/components/noon-sign-in';
 import NotFound from '@/pages/not-found';
 import AdminPage from '@/pages/admin';
+import AdminFeedbackPage from '@/pages/admin-feedback';
 import { useGetDashboardSync, getGetDashboardSyncQueryKey } from '@workspace/api-client-react';
 import { Database, Languages, ShieldCheck } from 'lucide-react';
 import {
@@ -115,6 +116,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/admin" component={AdminPage} />
+        <Route path="/admin/feedback" component={AdminFeedbackPage} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>

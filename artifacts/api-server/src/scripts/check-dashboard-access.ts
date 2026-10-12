@@ -10,6 +10,7 @@ import { dashboardCookies } from "../lib/dashboard-cookies";
 import { checkDashboardSyncRoutes } from "./check-dashboard-sync";
 import { checkDashboardAuthRoles } from "./check-dashboard-auth-roles";
 import { checkDashboardAdmin } from "./check-dashboard-admin";
+import { checkDashboardFeedback } from "./check-dashboard-feedback";
 
 const previewCookies = dashboardCookies(true);
 const template = resolveDashboardTemplate();
@@ -56,6 +57,7 @@ await checkDashboardLogin();
 await checkDashboardAuthRoles();
 await checkDashboardSyncRoutes();
 await checkDashboardAdmin();
+await checkDashboardFeedback();
 checkDashboardScope();
 await checkDashboardSummary();
 console.log("Synthetic dashboard access checks: PASS");
