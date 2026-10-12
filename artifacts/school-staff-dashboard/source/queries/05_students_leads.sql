@@ -27,6 +27,14 @@ gap AS (
   LEFT JOIN anyatt a ON a.user_id = s.user_id
   LEFT JOIN miss   m ON m.user_id = s.user_id
 ),
+cluster_managers AS (
+  SELECT DISTINCT cm.profile_id, cm.campus_id
+  FROM noon2_core.campus_managers cm
+  JOIN noon2_core.profile p ON p.id = cm.profile_id
+  JOIN noon2_core.campus c ON c.id = cm.campus_id
+  WHERE p.user_type = 'CLUSTER_MANAGER' AND p.is_deleted = 0 AND p.is_deactivated = 0
+    AND c.is_deleted = 0
+),
 leads AS (
   SELECT DISTINCT cm.profile_id AS lid, p.name AS lname, cm.campus_id AS cid
   FROM noon2_core.campus_managers cm
@@ -59,6 +67,8 @@ internal_fac AS (
   GROUP BY c.facilitator_id
 )
 SELECT
+  (SELECT json_format(CAST(ARRAY_AGG(CAST(ROW(profile_id, campus_id)
+      AS ROW(profile_id BIGINT, campus_id BIGINT))) AS JSON)) FROM cluster_managers) AS cluster_managers,
   (SELECT json_format(CAST(ARRAY_AGG(CAST(ROW(nm.user_name, g.campus_id, w.student_grade_name,
       w.cohort_name, w.facilitator_id, g.x) AS ROW(n VARCHAR, c BIGINT, g VARCHAR, k VARCHAR, f BIGINT, x INT))) AS JSON))
    FROM gap g JOIN nm ON nm.user_id = g.user_id JOIN who w ON w.user_id = g.user_id WHERE g.x > 0) AS students,
