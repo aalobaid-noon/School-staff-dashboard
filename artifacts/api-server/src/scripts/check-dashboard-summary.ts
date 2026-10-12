@@ -21,7 +21,10 @@ export async function checkDashboardSummary() {
     clusterManagers: [{ profileId: 7, campusId: 1 }],
     leads: [{ lid: 7, cid: 1 }, { lid: 8, cid: 1 }, { lid: 9, cid: 2 }], managers: [{ id: 7 }, { id: 8 }] };
   pool.query = (async () => ({ rows: [{ document, synced_at: new Date("2026-10-07") }] })) as unknown as typeof pool.query;
-  pool.connect = (async () => ({ release() {}, query: async (sql: string) => ({ rows: sql.startsWith("SELECT")
+  pool.connect = (async () => ({ release() {}, query: async (sql: string) => ({ rows: sql.includes("FROM dashboard_admin_overrides")
+    // Profile 7 is an admin only when the ADMIN case is under test (an explicit console override).
+    ? (role === "ADMIN" ? [{ is_admin: true }] : [])
+    : sql.startsWith("SELECT")
     ? [{ email: "employee@noonacademy.com", profile_id: "7", user_type: role,
       access_expires_at: new Date(Date.now() + 3600000), expires_at: new Date(Date.now() + 3600000) }] : [] })
   })) as unknown as typeof pool.connect;

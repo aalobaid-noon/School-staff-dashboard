@@ -232,6 +232,25 @@
     .sidebar button{width:auto}
     .wrap{padding:16px 14px 60px}
   }
+
+  /* card comments */
+  .fb-btn{margin-inline-start:auto;align-self:flex-start;flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--mut);
+    font:inherit;font-size:11.5px;padding:3px 10px;border-radius:999px;cursor:pointer}
+  .fb-btn:hover{color:var(--brick-d);border-color:var(--brick)}
+  .srow>.fb-btn{display:block;margin-top:8px}
+  #fb-modal{position:fixed;inset:0;z-index:9999;background:rgb(40 35 25 / 45%);display:none;align-items:center;justify-content:center;padding:16px}
+  #fb-modal.open{display:flex}
+  #fb-modal .fb-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:18px}
+  #fb-modal h4{margin:0 0 10px;font-size:15px}
+  #fb-modal .fb-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.7;max-height:96px;overflow:auto;margin-bottom:10px}
+  #fb-modal textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13.5px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fffdf7;color:inherit;box-sizing:border-box}
+  #fb-modal .fb-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+  #fb-modal .fb-msg{font-size:12px;margin-inline-end:auto}
+  #fb-modal .fb-msg.err{color:var(--red)}
+  #fb-modal .fb-msg.ok{color:var(--green-t, var(--green))}
+  #fb-modal button{font:inherit;font-size:13px;padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer}
+  #fb-modal button.fb-send{background:var(--brick);border-color:var(--brick);color:var(--onprimary);font-weight:700}
+  #fb-modal button:disabled{opacity:.55;cursor:default}
 </style>
 
 <div id="root" dir="rtl">
@@ -278,10 +297,10 @@
    ========================================================================== */
 
 const M  = DATA.managers;
-const C  = DATA.campuses;
+let   C  = DATA.campuses;       /* metric fields follow state.range, see applyRange() */
 const EX = DATA.exams;
 const WK = DATA.weekly;
-const FA = DATA.facilitators;
+let   FA = DATA.facilitators;
 const LD = DATA.leads || [];
 const GR = DATA.grades || [], CO = DATA.cohorts || [], ST = DATA.students || [];
 const ORPH = DATA.orphanCohorts || [];
@@ -309,7 +328,26 @@ Object.defineProperty(FNAME, 0, {get: () => ar() ? 'غير مُسند' : 'unassi
 const S_NAME=0, S_CID=1, S_GR=2, S_CO=3, S_FID=4, S_X=5;
 const META = DATA.meta;
 
-const CBY  = Object.fromEntries(C.map(c => [c.id, c]));
+let   CBY  = Object.fromEntries(C.map(c => [c.id, c]));
+
+/* ---------- date range ----------
+   The extract carries the term-wide figures (DATA.campuses / DATA.facilitators) plus, per range, only
+   the fields that depend on the window. Switching range swaps those fields in; names, enrolment and the
+   manager mapping never change. Exams, the student gap lists and the weekly trends are NOT range-filtered. */
+const BASE_C = DATA.campuses, BASE_FA = DATA.facilitators;
+const RANGES = (META.ranges || []).filter(r => r.key === 'term' || (DATA.ranges || {})[r.key]);
+const RANGE_C = ['act','att','etc','etq','etn','etqs','tn','tr'];   /* 'never' stays term-wide: it means never attended this year */
+const RANGE_F = ['act','att','etq','etn','etqs','tn','tr'];
+function applyRange(){
+  if(!RANGES.some(r => r.key === state.range)) state.range = 'term';
+  const r = (DATA.ranges || {})[state.range];
+  if(!r){ C = BASE_C; FA = BASE_FA; }
+  else{
+    C  = BASE_C.map(c => { const v = r.c[c.id], o = Object.assign({}, c); RANGE_C.forEach((k, i) => { o[k] = v ? v[i] : null; }); return o; });
+    FA = BASE_FA.map(f => { const v = r.f[f.fid + ':' + f.cid], o = Object.assign({}, f); RANGE_F.forEach((k, i) => { o[k] = v ? v[i] : null; }); return o; });
+  }
+  CBY = Object.fromEntries(C.map(c => [c.id, c]));
+}
 const MNAME = Object.fromEntries(M.map(m => [m.id, m.name]));
 
 /* ==========================================================================
@@ -451,14 +489,15 @@ function wsum(rows, k){ return rows.reduce((a,r) => a + (r[k] || 0), 0); }
 
 /* ---------- state ---------- */
 let state = {
-  lang:'ar', manager:'ALL', tab:'exec', cmp:'week',
+  lang:'ar', manager:'ALL', tab:'exec', cmp:'week', range:'term',
   viewBy:'people', fType:'ALL', fLead:[], fCampus:[], fFac:[], openMS:null, msSearch:'',
   drill:null, cmRate:'neg', cmWeek:null, sortC:{k:'enr',d:-1}, sortF:{k:'n',d:-1}, trendMetric:'att', actExpand:false,
   simTy:'DIAGNOSTIC', simP:'all', simPr:'ALL', simHide:false
 };
-const PERSIST = ['lang','manager','cmp','trendMetric','fType','viewBy','simTy','simP','simPr','simHide'];
+const PERSIST = ['lang','manager','cmp','range','trendMetric','fType','viewBy','simTy','simP','simPr','simHide'];
 function save(){ try{ const o={}; PERSIST.forEach(k=>o[k]=state[k]); localStorage.setItem('noonMgrReal', JSON.stringify(o)); }catch(e){} }
 (function(){ try{ const o = JSON.parse(localStorage.getItem('noonMgrReal')||'{}'); PERSIST.forEach(k=>{ if(o[k]!=null) state[k]=o[k]; }); }catch(e){} })();
+applyRange();
 if (DATA.viewer?.userType === 'CLUSTER_MANAGER') state.manager = 'ALL';
 
 if (state.manager !== 'ALL' && !M.some(m => String(m.id) === String(state.manager))) state.manager = 'ALL';
@@ -538,11 +577,16 @@ function weeklyFor(mid, wk){
   };
 }
 /* Derived from the data so a refresh can roll the window forward on its own.
-   WEEKS is every week the extract actually carries; CUR_WK is the latest complete
+   WEEKS is every week the extract actually carries; CUR_WK is the latest (current, possibly partial)
    one, and the "start of term" baseline is the earliest. */
 const WEEKS  = [...new Set(WK.map(w => w.wk))].sort((a,b) => a-b);
 const CUR_WK = WEEKS.length ? WEEKS[WEEKS.length-1] : 1;
 const FST_WK = WEEKS.length ? WEEKS[0] : 1;
+// The latest week is the current one and may be partial (it ends after the extract's last day).
+function curTag(){
+  const w = META.weeks.find(x => x.wk === CUR_WK);
+  return w && w.to > META.window_end ? (ar() ? ' (جزئي حتى اليوم)' : ' (partial, to date)') : '';
+}
 function baseWk(){ return state.cmp === 'week' ? (WEEKS[WEEKS.indexOf(CUR_WK)-1] ?? FST_WK) : FST_WK; }
 /* deltas are only trustworthy when no campus/facilitator filter narrows the scope,
    because the weekly series is stored at manager grain */
@@ -619,6 +663,16 @@ const D = {
   school:['المدرسة','School'], schools:['مدرسة','schools'], facilitator:['المشرف','Facilitator'],
   facs:['مشرف','facilitators'], students:['طالب','students'], clear:['مسح الفلاتر','Clear filters'],
   search:['بحث…','Search…'], selected:['محددة','selected'],
+  range:['النطاق الزمني:','Date range:'],
+  rg_week:['هذا الأسبوع','This week'], rg_lastweek:['الأسبوع الماضي','Last week'],
+  rg_mtd:['منذ بداية الشهر','Month to date'], rg_lastmonth:['الشهر الماضي','Last month'], rg_term:['من بداية الفصل','Since term start'],
+  rangeNote:['الحضور والتذاكر والثقة محسوبة لهذه الفترة فقط، والحضور هو نسبة حصص من حضر مرة على الأقل فيها. «لم يحضروا أبدًا» والاختبارات وقوائم الطلاب واتجاهات الأسابيع تبقى للفصل كاملاً.','Attendance, exit tickets and trust cover this period only; attendance is the share of sessions among students who attended at least once in it. “Never attended”, exams, student lists and weekly trends stay term-wide.'],
+  fbAdd:['إضافة تعليق','Add comment'], fbTitle:['تعليق على هذا الكارد','Comment on this card'],
+  fbHolder:['اكتب ملاحظتك على هذا الكارد…','Write your note about this card…'],
+  fbSend:['إرسال','Send'], fbCancel:['إلغاء','Cancel'], fbThanks:['تم إرسال تعليقك للأدمن.','Your comment was sent to the admins.'],
+  fbErr:['تعذّر إرسال التعليق. حاول مرة أخرى.','Could not send the comment. Try again.'],
+  fbAuth:['انتهت الجلسة. سجّل الدخول مجددًا ثم أعد المحاولة.','Your session expired. Sign in again and retry.'],
+  fbWait:['تعليقات كثيرة، انتظر دقيقة.','Too many comments. Wait a minute.'],
   compare:['المقارنة مع:','Compare with:'], lastWeek:['الأسبوع الماضي','Last week'],
   semStart:['بداية الفصل','Start of term'],
   tExec:['نظرة تنفيذية','Executive'], tSchools:['المدارس','Schools'], tExams:['الاختبارات','Exams'],
@@ -1439,6 +1493,8 @@ function layerBlock(kind, limit){
    VIEWS
    ========================================================================== */
 function provenance(){
+  // Data lineage and rules-version detail is for admins only; the server sets viewer.userType.
+  if (DATA.viewer?.userType !== 'ADMIN') return '';
   const wk = META.weeks.map(w => bd(t('week') + ' ' + w.wk + ': ' + w.from + ' → ' + w.to)).join(' · ');
   return '<details class="note"><summary>' + esc(t('provT')) + '</summary>'
     + '<div style="margin-top:9px">' + (ar()
@@ -1477,8 +1533,8 @@ function execSummary(list){
     const d = cur.att - base.att;
     L.push({cls: d < -0.5 ? 'warn' : d > 0.5 ? 'good' : 'info', ic: d < -0.5 ? '🔻' : d > 0.5 ? '🔺' : '▪️',
       html: ar()
-        ? 'الحضور في الأسبوع ' + bd(CUR_WK) + ' <b>' + bd(pc1(cur.att)) + '</b>، بحركة <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' نقطة') + '</b> مقابل الأسبوع 2‏.'
-        : 'Week ' + bd(CUR_WK) + ' attendance is <b>' + bd(pc1(cur.att)) + '</b>, moving <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' pts') + '</b> against week 2.'});
+        ? 'الحضور في الأسبوع ' + bd(CUR_WK) + curTag() + ' <b>' + bd(pc1(cur.att)) + '</b>، بحركة <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' نقطة') + '</b> مقابل الأسبوع ' + bd(baseWk()) + '‏.'
+        : 'Week ' + bd(CUR_WK) + curTag() + ' attendance is <b>' + bd(pc1(cur.att)) + '</b>, moving <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' pts') + '</b> against week ' + bd(baseWk()) + '.'});
   }
 
   const nvPct = a.enr ? 100*a.never/a.enr : 0;
@@ -1706,7 +1762,7 @@ function moversCard(){
   const row = x => '<div class="moverow"><div><div class="nm">' + bd(esc(x.name)) + '</div><div class="sc">' + bd(esc(x.sub)) + ' · ' + bd(pc1(x.cur)) + '</div></div>'
     + '<span class="vv" style="color:' + (x.d>=0?'var(--green-t)':'var(--red-t)') + '">' + (x.d>=0?'▲ +':'▼ −') + bd(Math.abs(x.d).toFixed(1)) + '</span></div>';
   const down = rows.slice(-4).reverse(), anyDown = down.some(x => x.d < 0);
-  return '<div class="sectitle" style="margin-top:26px">' + (ar() ? 'أكبر التحركات — الحضور، الأسبوع ' + CUR_WK + ' مقابل ' + baseWk() : 'Biggest movers — attendance, week ' + CUR_WK + ' vs ' + baseWk()) + '</div>'
+  return '<div class="sectitle" style="margin-top:26px">' + (ar() ? 'أكبر التحركات — الحضور، الأسبوع ' + CUR_WK + curTag() + ' مقابل ' + baseWk() : 'Biggest movers — attendance, week ' + CUR_WK + curTag() + ' vs ' + baseWk()) + '</div>'
     + '<div class="secsub">' + (ar() ? 'على مستوى المدير، لأن السلسلة الأسبوعية متاحة بهذا التفصيل فقط.' : 'At manager grain, because that is the only grain the weekly series is stored at.') + '</div>'
     + '<div class="grid2">'
     + '<div class="card"><h3>🔺 ' + (ar()?'أكبر تحسّن':'Biggest improvement') + '</h3>' + rows.slice(0,4).map(row).join('') + '</div>'
@@ -2115,6 +2171,7 @@ function setManager(v){ state.manager = v; state.fLead = []; state.fCampus = [];
 function toggleLang(){ state.lang = ar() ? 'en' : 'ar'; save(); render(); }
 function setTab(v){ state.tab = v; state.actExpand = false; render(); }
 function setCmp(v){ state.cmp = v; save(); render(); }
+function setRange(v){ state.range = v; applyRange(); save(); render(); }
 
 function sidebar(){
   const list = scopedCampuses();
@@ -2193,7 +2250,17 @@ function filterBar(){
       + esc(lbl) + ' <span style="opacity:.7;font-weight:600">' + bd(cnt(v)) + '</span></button>';
   const vb = (v, lbl, ic) => '<button class="' + (state.viewBy === v ? 'on' : '') + '" onclick="setViewBy(\'' + v + '\')">'
       + ic + ' ' + esc(lbl) + '</button>';
-  return '<span class="flabel">' + esc(t('viewBy')) + '</span>'
+  const rg = RANGES.find(r => r.key === state.range);
+  const rangeBar = RANGES.length > 1
+    ? '<span class="flabel">' + esc(t('range')) + '</span>'
+      + '<div class="seg">' + RANGES.map(r => '<button class="' + (state.range === r.key ? 'on' : '') + '" onclick="setRange(\'' + r.key + '\')">'
+          + esc(t('rg_' + r.key)) + '</button>').join('') + '</div>'
+      + (rg ? '<span class="flabel" dir="ltr" style="opacity:.8">' + esc(rg.from + (rg.to !== rg.from ? ' → ' + rg.to : '')) + '</span>' : '')
+      + '<span style="flex-basis:100%;height:0"></span>'
+    : '';
+  const rangeNote = RANGES.length > 1 && state.range !== 'term'
+    ? '<span class="note2" style="flex-basis:100%;margin-top:2px">' + esc(t('rangeNote')) + '</span>' : '';
+  return rangeBar + '<span class="flabel">' + esc(t('viewBy')) + '</span>'
     + '<div class="seg">' + vb('people', t('byPeople'), '👥') + vb('school', t('bySchool'), '🏫') + '</div>'
     + '<span class="flabel" style="margin-inline-start:6px">' + esc(t('ctype')) + '</span>'
     + '<div class="seg">' + tbtn('ALL', t('tAll')) + tbtn('TRACKS', t('tTracks')) + tbtn('UFFUQ', t('tUffuq')) + '</div>'
@@ -2205,7 +2272,7 @@ function filterBar(){
     + '<div class="seg">'
     + '<button class="' + (state.cmp === 'week' ? 'on' : '') + '" onclick="setCmp(\'week\')">' + esc(t('lastWeek')) + '</button>'
     + '<button class="' + (state.cmp === 'sem' ? 'on' : '') + '" onclick="setCmp(\'sem\')">' + esc(t('semStart')) + '</button>'
-    + '</div></span>';
+    + '</div></span>' + rangeNote;
 }
 function crumb(){
   const list = scopedCampuses(), a = agg(list);
@@ -2241,6 +2308,83 @@ function render(){
   document.getElementById('app').innerHTML = personalNotice + (views[state.tab] || viewExec)();
   renderDrill();
   tipHide();
+  decorateCards();
+}
+
+/* ---------- card comments ----------
+   Server version only (it needs the signed-in viewer). Every .execline / .srow card gets a button;
+   the comment goes to the admins' "Cards Feedback" page together with a snapshot of the card. The
+   author, role and time are taken from the session on the server, not from this page. */
+const FB_ON = !!DATA.viewer;
+const FB_MAX = 2000;
+let fbCard = null;
+function cardSnapshot(el){
+  const c = el.cloneNode(true);
+  c.querySelectorAll('.fb-btn,script,style,iframe,object,embed,link,form,svg').forEach(n => n.remove());
+  [c].concat([...c.querySelectorAll('*')]).forEach(n => [...n.attributes].forEach(a => {
+    if(!['class','style','dir','lang'].includes(a.name)) n.removeAttribute(a.name);
+  }));
+  return {html: c.outerHTML, text: c.textContent.replace(/\s+/g, ' ').trim()};
+}
+function fbModal(){
+  let m = document.getElementById('fb-modal');
+  if(m) return m;
+  m = document.createElement('div'); m.id = 'fb-modal';
+  m.innerHTML = '<div class="fb-box" role="dialog" aria-modal="true"><h4></h4><div class="fb-card"></div>'
+    + '<textarea maxlength="' + FB_MAX + '"></textarea>'
+    + '<div class="fb-row"><span class="fb-msg"></span><button type="button" class="fb-cancel"></button>'
+    + '<button type="button" class="fb-send"></button></div></div>';
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if(e.target === m) closeFeedback(); });
+  m.querySelector('.fb-cancel').onclick = closeFeedback;
+  m.querySelector('.fb-send').onclick = sendFeedback;
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeFeedback(); });
+  return m;
+}
+function openFeedback(el){
+  const snap = cardSnapshot(el);
+  fbCard = {
+    kind: el.classList.contains('execline') ? 'insight' : el.classList.contains('win') ? 'win' : 'ticket',
+    cardText: snap.text, cardHtml: snap.html
+  };
+  const m = fbModal();
+  m.dir = ar() ? 'rtl' : 'ltr';
+  m.querySelector('h4').textContent = t('fbTitle');
+  m.querySelector('.fb-card').textContent = snap.text;
+  const ta = m.querySelector('textarea'); ta.value = ''; ta.placeholder = t('fbHolder');
+  m.querySelector('.fb-cancel').textContent = t('fbCancel');
+  const send = m.querySelector('.fb-send'); send.textContent = t('fbSend'); send.disabled = false;
+  const msg = m.querySelector('.fb-msg'); msg.textContent = ''; msg.className = 'fb-msg';
+  m.classList.add('open'); ta.focus();
+}
+function closeFeedback(){ const m = document.getElementById('fb-modal'); if(m) m.classList.remove('open'); fbCard = null; }
+async function sendFeedback(){
+  const m = fbModal(), ta = m.querySelector('textarea'), msg = m.querySelector('.fb-msg'), send = m.querySelector('.fb-send');
+  const comment = ta.value.trim();
+  if(!comment || !fbCard) return;
+  send.disabled = true; msg.className = 'fb-msg'; msg.textContent = '…';
+  try{
+    const r = await fetch('/api/dashboard/feedback', {
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json', 'X-Dashboard-Feedback':'1'},
+      body: JSON.stringify(Object.assign({}, fbCard, {comment: comment, context: {
+        tab: state.tab, manager: String(state.manager), range: state.range, lang: state.lang, dataThrough: META.window_end}}))
+    });
+    if(r.status === 201){ msg.className = 'fb-msg ok'; msg.textContent = t('fbThanks'); setTimeout(closeFeedback, 1200); return; }
+    msg.className = 'fb-msg err';
+    msg.textContent = r.status === 401 ? t('fbAuth') : r.status === 429 ? t('fbWait') : t('fbErr');
+  }catch(e){ msg.className = 'fb-msg err'; msg.textContent = t('fbErr'); }
+  send.disabled = false;
+}
+function decorateCards(){
+  if(!FB_ON) return;
+  document.querySelectorAll('#app .execline, #app .srow').forEach(el => {
+    if(el.querySelector('.fb-btn')) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'fb-btn'; b.textContent = '💬 ' + t('fbAdd');
+    b.onclick = e => { e.stopPropagation(); openFeedback(el); };
+    el.appendChild(b);
+  });
 }
 render();
 </script>

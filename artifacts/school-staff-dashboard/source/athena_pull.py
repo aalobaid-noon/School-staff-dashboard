@@ -17,12 +17,33 @@ csv.field_size_limit(sys.maxsize)
 def windows():
     today = dt.datetime.now(ZoneInfo("Asia/Riyadh")).date()
     end = today + dt.timedelta(days=1)                       # exclusive end = tomorrow
-    complete = max((today - TERM).days // 7, 0)              # whole weeks finished so far
-    end_wk = TERM + dt.timedelta(days=7 * complete)          # exclusive end of the last complete week
+    end_wk = end                                             # weekly series runs to today: the current week is included even if partial
     ts = lambda d: f"TIMESTAMP '{d:%Y-%m-%d} 00:00:00'"
     dtf = lambda d: int(f"{d:%Y%m%d}")
     return {"START": ts(TERM), "END": ts(end), "DT_FROM": dtf(TERM), "DT_TO": dtf(end), "TERM": f"DATE '{TERM}'",
             "END_WK": ts(end_wk), "DT_TO_WK": dtf(end_wk - dt.timedelta(days=1))}
+
+RANGE_KEYS = ["week", "lastweek", "mtd", "lastmonth"]   # "term" is the base extract itself
+
+def range_windows(today=None):
+    """Date ranges the dashboard can be switched between, inclusive of both ends. Term weeks run
+    Sunday-Saturday from TERM. A range that falls wholly before the term is dropped."""
+    today = today or dt.datetime.now(ZoneInfo("Asia/Riyadh")).date()
+    wk0 = TERM + dt.timedelta(days=7 * ((today - TERM).days // 7))
+    first = today.replace(day=1)
+    prev_last = first - dt.timedelta(days=1)
+    spans = {"week": (wk0, today),
+             "lastweek": (wk0 - dt.timedelta(days=7), wk0 - dt.timedelta(days=1)),
+             "mtd": (max(first, TERM), today),
+             "lastmonth": (max(prev_last.replace(day=1), TERM), prev_last),
+             "term": (TERM, today)}
+    return {k: (a, b) for k, (a, b) in spans.items() if a >= TERM and b >= a}
+
+def range_placeholders(w, a, b):
+    ts = lambda d: f"TIMESTAMP '{d:%Y-%m-%d} 00:00:00'"
+    end = b + dt.timedelta(days=1)
+    return {**w, "START": ts(a), "END": ts(end), "END_WK": ts(end),
+            "DT_FROM": int(f"{a:%Y%m%d}"), "DT_TO": int(f"{b:%Y%m%d}"), "DT_TO_WK": int(f"{b:%Y%m%d}")}
 
 def sql_for(name, common, w):
     body = (Q / name).read_text(encoding="utf-8")
@@ -81,7 +102,20 @@ def main():
         else:
             for c, out in outs.items():
                 (D / f"_raw_{out}.json").write_text(json.dumps(col(row, c), ensure_ascii=False), encoding="utf-8")
-    print("pulled", len(JOBS), "queries")
+    # The same campus / facilitator queries once per date range: exact figures for every range,
+    # including the distinct-student counts that cannot be added up from daily rows.
+    rw = range_windows()
+    (D / "_ranges.json").write_text(json.dumps(
+        {k: {"from": a.isoformat(), "to": b.isoformat()} for k, (a, b) in rw.items()}), encoding="utf-8")
+    for key in RANGE_KEYS:
+        if key not in rw:
+            continue
+        a, b = rw[key]
+        print("running ranges", key, a, "->", b, flush=True)
+        for name, column in (("01_campuses.sql", "campuses"), ("04_facilitators.sql", "facilitators")):
+            row = run(ath, s3, sql_for(name, common, range_placeholders(w, a, b)))
+            (D / f"_raw_{column}__{key}.json").write_text(json.dumps(col(row, column), ensure_ascii=False), encoding="utf-8")
+    print("pulled", len(JOBS), "queries +", len([k for k in RANGE_KEYS if k in rw]), "date ranges")
 
 if __name__ == "__main__":
     main()

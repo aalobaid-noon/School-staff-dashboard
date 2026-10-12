@@ -7,8 +7,12 @@ import { SynapseConnection } from '@/components/synapse-connection';
 import { SummaryPanel } from '@/components/summary-panel';
 import { NoonSignIn } from '@/components/noon-sign-in';
 import NotFound from '@/pages/not-found';
-import { Database, Languages } from 'lucide-react';
+import AdminPage from '@/pages/admin';
+import AdminFeedbackPage from '@/pages/admin-feedback';
+import { useGetDashboardSync, getGetDashboardSyncQueryKey } from '@workspace/api-client-react';
+import { Database, Languages, ShieldCheck } from 'lucide-react';
 import {
+  Link,
   Route,
   Switch,
   useLocation,
@@ -16,6 +20,17 @@ import {
 } from 'wouter';
 
 const queryClient = new QueryClient();
+
+function AdminLink({ isArabic }: { isArabic: boolean }) {
+  const sync = useGetDashboardSync({ query: { queryKey: getGetDashboardSyncQueryKey(), retry: false, staleTime: 60_000 } });
+  if (sync.data?.accessRole !== 'admin') return null;
+  return (
+    <Link className="copy-button" href="/admin" data-testid="link-admin-console">
+      <ShieldCheck size={14} />
+      {isArabic ? 'لوحة الأدمن' : 'Admin console'}
+    </Link>
+  );
+}
 
 function Home() {
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
@@ -38,6 +53,7 @@ function Home() {
           </div>
         </div>
         <div className="header-tools">
+          <AdminLink isArabic={isArabic} />
           <NoonSignIn isArabic={isArabic} compact />
           <button
             className="lang-toggle"
@@ -99,6 +115,8 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/admin" component={AdminPage} />
+        <Route path="/admin/feedback" component={AdminFeedbackPage} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
