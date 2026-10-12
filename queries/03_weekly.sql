@@ -1,6 +1,6 @@
--- weekly series at manager grain, complete weeks only: one JSON row.
--- Append after 00_common.sql. Uses its own dt-bounded CTEs so the partial
--- current week is excluded ({{DT_TO_WK}} = last day of the last complete week).
+-- weekly series at manager grain: one JSON row.
+-- Append after 00_common.sql. Runs through today, so the current week is included even when
+-- it is partial ({{DT_TO_WK}} = today, {{END_WK}} = tomorrow). The UI labels it partial.
 , ms AS (SELECT DISTINCT m.manager_id AS mid, s.user_id FROM stu s JOIN mgr m ON m.campus_id = s.campus_id),
 mn AS (SELECT DISTINCT cm.profile_id AS mid, p.name AS mname
        FROM noon2_core.campus_managers cm
