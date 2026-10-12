@@ -1,0 +1,26 @@
+# Quality gate for the TEMPLATE repo: run `npm run verify` (secret scan · typecheck ·
+# lint · tests) on every PR to main, so a regression can't merge into the template the
+# whole fleet clones from. The `if:` guard keeps it inert in clones that end up on GitHub
+# (they run `verify` themselves before every deploy); clones on Replit never run Actions.
+# Complements template-version.yml — that gate checks release discipline, this one checks
+# the code actually builds and passes.
+name: verify
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    if: github.repository == 'noonAcademy/synapse-starter'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      # Full install (dev deps included — verify needs tsc, biome, vitest). The vendored
+      # @noonacademy tarballs are file: deps, so this needs no registry token.
+      - run: npm install
+      - run: npm run verify

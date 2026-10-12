@@ -1,0 +1,39 @@
+#!/bin/sh
+# Pre-push release-discipline gate for the synapse-starter TEMPLATE repo.
+#
+# Blocks a push whose diff touches a synapse-owned path but forgot to bump
+# TEMPLATE_VERSION + append an UPGRADES.md entry — the same rule CI enforces
+# (.github/workflows/template-version.yml), moved earlier so you never push a
+# red PR. Activated by scripts/setup-hooks.mjs (npm `prepare`), which only sets
+# core.hooksPath for the template repo, so this file never runs in a clone.
+#
+# Belt-and-suspenders, not a lock: `git push --no-verify` bypasses it, and CI is
+# still the final backstop. Fails OPEN when the check tooling isn't installed
+# (so a fresh clone before `npm install` can still push); fails CLOSED only on a
+# real violation.
+
+# Identity gate: enforce only when origin is the template. Inert everywhere else.
+remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+case "$remote_url" in
+  *noonAcademy/synapse-starter*) ;;   # template — enforce below
+  *) exit 0 ;;                        # clone / fork / no origin — no-op
+esac
+
+# The check runs on tsx; if deps aren't installed yet, warn and let CI catch it.
+if [ ! -x node_modules/.bin/tsx ]; then
+  echo "[pre-push] tsx not installed (run 'npm install'); skipping local release check — CI still enforces." >&2
+  exit 0
+fi
+
+# The check diffs against origin/main; make sure we have it.
+git fetch -q origin main 2>/dev/null || true
+
+if ./node_modules/.bin/tsx scripts/check-template-version.ts origin/main; then
+  exit 0
+fi
+
+echo "" >&2
+echo "[pre-push] BLOCKED — this push ships template changes without telling the fleet." >&2
+echo "[pre-push] Bump TEMPLATE_VERSION and append the UPGRADES.md recipe (see RELEASING.md)," >&2
+echo "[pre-push] or re-run with 'git push --no-verify' if you truly mean to bypass it." >&2
+exit 1

@@ -1,0 +1,29 @@
+modules = ["nodejs-20"]
+entrypoint = "server/index.ts"
+
+# Re-running `npm install` on every Run keeps deps in sync after template updates and is
+# a fast no-op when node_modules is already up to date. The @noonacademy packages install
+# from the committed tarballs in vendor/ — no token or registry auth involved.
+# `--omit=dev` installs ONLY runtime + build deps (sdk, express, react, vite, tsx,
+# tailwind) and skips test/lint tooling (vitest, biome). Replit's package firewall
+# blocks CVE-flagged dev packages, and they aren't needed to build or run the app.
+run = "npm install --omit=dev && npm run build && npm run start"
+
+# Deployments are gated on the checks: build:deploy chains `npm run verify`
+# (secret scan + typecheck + lint + tests, fail fast) before the vite build, so broken code
+# fails the deployment build instead of shipping. Only the DEPLOYMENT build
+# pays this cost — the workspace Run command above stays verify-free and fast.
+# verify needs the dev deps (tsc, biome, vitest), hence the full npm install
+# here instead of --omit=dev.
+[deployment]
+build = ["sh", "-c", "npm install && npm run build:deploy"]
+run = ["sh", "-c", "npm run start"]
+
+[env]
+# SYNAPSE_APP_ID and SYNAPSE_APP_SECRET come from the Secrets pane.
+# SYNAPSE_BASE_URL defaults to staging in code; set it here only to override.
+
+# The server binds to process.env.PORT (Replit provides it), falling back to 3000.
+[[ports]]
+localPort = 3000
+externalPort = 80
