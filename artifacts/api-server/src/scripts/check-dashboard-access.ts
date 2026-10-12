@@ -9,6 +9,7 @@ import { dashboardPostLoginPath, verifiedCitadelUserType } from "../routes/dashb
 import { dashboardCookies } from "../lib/dashboard-cookies";
 import { checkDashboardSyncRoutes } from "./check-dashboard-sync";
 import { checkDashboardAuthRoles } from "./check-dashboard-auth-roles";
+import { checkDashboardAdmin } from "./check-dashboard-admin";
 
 const previewCookies = dashboardCookies(true);
 const template = resolveDashboardTemplate();
@@ -54,6 +55,7 @@ console.log("Dashboard cookie policy: PASS");
 await checkDashboardLogin();
 await checkDashboardAuthRoles();
 await checkDashboardSyncRoutes();
+await checkDashboardAdmin();
 checkDashboardScope();
 await checkDashboardSummary();
 console.log("Synthetic dashboard access checks: PASS");

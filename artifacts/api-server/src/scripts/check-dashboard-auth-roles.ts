@@ -28,6 +28,9 @@ export async function checkDashboardAuthRoles() {
   let stored: Stored | undefined;
   let upstreamRole: string | undefined;
   let upstreamEmail = "";
+  let upstreamProfileId = 999;
+  const adminOverrides = new Map<number, boolean>();
+  const usage: unknown[][] = [];
   const databaseQuery = async (sql: string, values: unknown[] = []) => {
     if (sql.startsWith("SELECT 1 FROM school_report_snapshots")) return { rows: [] };
     if (sql.startsWith("INSERT INTO dashboard_sessions")) {
@@ -43,6 +46,13 @@ export async function checkDashboardAuthRoles() {
       assert(sql.includes("user_type"));
       return { rows: stored ? [stored] : [] };
     }
+    if (sql.includes("FROM dashboard_admin_overrides WHERE profile_id")) {
+      const value = adminOverrides.get(Number(values[0]));
+      return { rows: value === undefined ? [] : [{ is_admin: value }] };
+    }
+    if (sql.startsWith("INSERT INTO dashboard_users") || sql.startsWith("INSERT INTO dashboard_login_events")) {
+      usage.push(values); return { rows: [] };
+    }
     if (["BEGIN", "COMMIT", "ROLLBACK"].includes(sql)) return { rows: [] };
     throw new Error("Unexpected authentication test SQL");
   };
@@ -52,12 +62,18 @@ export async function checkDashboardAuthRoles() {
     assert.equal(new URL(String(input)).hostname, "citadel.example.invalid");
     return new globalThis.Response(JSON.stringify({
       token: { accessToken: "synthetic-access", refreshToken: "synthetic-refresh", expiresIn: 3600 },
-      profile: { id: 999, userType: upstreamRole, account: { email: upstreamEmail } },
+      profile: { id: upstreamProfileId, userType: upstreamRole, account: { email: upstreamEmail } },
     }), { headers: { "Content-Type": "application/json" } });
   }) as typeof fetch;
   try {
-    for (const { role, email, fullAccess } of [
-      { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true },
+    // Admin comes from the admin list or a console override, not from the Citadel role: a Citadel
+    // ADMIN that is not listed loses its role, and a promoted non-admin gets the full report.
+    for (const { role, email, fullAccess, profileId = 999, override, expectedType = role ?? null } of [
+      { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true, profileId: 48392 },
+      { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: false, expectedType: null },
+      { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: false, profileId: 48392, override: false, expectedType: null },
+      { role: "ADMIN", email: "role-fixture@noon.edu.sa", fullAccess: true, override: true },
+      { role: "SCHOOL_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: true, override: true, expectedType: "ADMIN" },
       { role: "SCHOOL_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: "SCHOOL_LEAD", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: "CLUSTER_MANAGER", email: "role-fixture@noon.edu.sa", fullAccess: false },
@@ -65,11 +81,15 @@ export async function checkDashboardAuthRoles() {
       { role: undefined, email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: undefined, email: "domain-fixture@noonacademy.com", fullAccess: false },
       { role: "SCHOOL_MANAGER", email: "domain-fixture@noonacademy.com", fullAccess: false },
-      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: true },
+      { role: "ADMIN", email: "staff.one@noonacademy.com", fullAccess: true, profileId: 800302 },
       { role: undefined, email: "staff.two@noonacademy.com", fullAccess: false },
       { role: "STUDENT", email: "role-fixture@noon.edu.sa", fullAccess: false },
       { role: "TEACHER", email: "role-fixture@noon.edu.sa", fullAccess: false },
     ]) {
+      upstreamProfileId = profileId;
+      adminOverrides.clear();
+      if (override !== undefined) adminOverrides.set(profileId, override);
+      usage.length = 0;
       upstreamRole = role;
       upstreamEmail = email;
       stored = undefined;
@@ -103,13 +123,14 @@ export async function checkDashboardAuthRoles() {
       assert.equal(opaqueSession.length, 64);
       assert(stored);
       assert.equal((stored as Stored).user_type, role ?? null);
+      assert.equal(usage.length, 2, "each verified sign-in is recorded for the admin console");
       const sessionUser = await getDashboardUser({
         headers: { cookie: `${cookies.sessionName}=${opaqueSession}`, "x-role": "ADMIN" },
         query: { userType: "ADMIN", email: "forged@noonacademy.com" },
       } as unknown as Request);
       assert(sessionUser);
       assert.equal(sessionUser.email, email);
-      assert.equal(sessionUser.userType, role ?? null);
+      assert.equal(sessionUser.userType, expectedType);
       const scope = getDashboardScope(sessionUser, { campuses: [{ id: 101, mgr: "7" }, { id: 202, mgr: "8" }] });
       assert.equal(scope.isOps, fullAccess);
       assert.equal(isDashboardOps(sessionUser), fullAccess);

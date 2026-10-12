@@ -6,6 +6,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 import { resolveDashboardTemplate } from "../lib/dashboard-template";
 import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope";
+import { effectiveUserType, isProfileAdmin } from "../lib/admin-access";
 export { getDashboardScope } from "../lib/dashboard-scope";
 
 const router: IRouter = Router();
@@ -217,6 +218,18 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
       [digest(sessionId), email.toLowerCase(), profileId, userType, encrypt(cfg, issued.refreshToken),
         new Date(Date.now() + issued.expiresIn * 1000), new Date(Date.now() + sessionLifetimeMs)],
     );
+    // Usage record for the admin console. A failure here must never block sign-in.
+    try {
+      await pool.query(
+        "INSERT INTO dashboard_users (profile_id, email, last_user_type) VALUES ($1, $2, $3) " +
+        "ON CONFLICT (profile_id) DO UPDATE SET email = EXCLUDED.email, last_user_type = EXCLUDED.last_user_type, " +
+        "last_seen_at = now(), login_count = dashboard_users.login_count + 1",
+        [profileId, email.toLowerCase(), userType],
+      );
+      await pool.query("INSERT INTO dashboard_login_events (profile_id, user_type) VALUES ($1, $2)", [profileId, userType]);
+    } catch {
+      req.log.warn({ event: "dashboard_oauth", reason: "usage_record_failed", correlationId }, "Sign-in usage was not recorded");
+    }
     res.cookie(COOKIE, sessionId, { ...sessionCookie, maxAge: sessionLifetimeMs });
     req.log.info({ event: "dashboard_oauth", reason: "session_created", correlationId, profileId, userType }, "School Insights sign-in complete");
     res.setHeader("Cache-Control", "no-store");
@@ -271,8 +284,11 @@ async function currentUser(req: Request, cfg: Config): Promise<{ email: string; 
         throw error;
       }
     }
+    // Admin comes from the admin list plus console overrides, never from the Citadel role alone.
+    const profileId = Number(stored.profile_id);
+    const admin = await isProfileAdmin(client, profileId);
     await client.query("COMMIT");
-    return { email: stored.email, profileId: Number(stored.profile_id), userType: stored.user_type };
+    return { email: stored.email, profileId, userType: effectiveUserType(stored.user_type, admin) };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

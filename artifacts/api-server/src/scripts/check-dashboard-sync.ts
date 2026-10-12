@@ -2,11 +2,26 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { createDashboardSyncRouter } from "../routes/dashboard-sync";
+import { reportRangePlaceholders, reportRanges, reportTotalSteps } from "../lib/report-import";
 import { pool } from "@workspace/db";
 
 // An isolated in-memory SQL adapter: no real sessions, snapshots, or warehouse
 // data are created. Production never receives these authentication fixtures.
 export async function checkDashboardSyncRoutes() {
+  // Date ranges: term weeks run Sunday-Saturday from 2026-08-23, ranges before the term are dropped.
+  assert.deepEqual(reportRanges("2026-10-12"), {
+    week: { from: "2026-10-11", to: "2026-10-12" }, lastweek: { from: "2026-10-04", to: "2026-10-10" },
+    mtd: { from: "2026-10-01", to: "2026-10-12" }, lastmonth: { from: "2026-09-01", to: "2026-09-30" },
+    term: { from: "2026-08-23", to: "2026-10-12" },
+  });
+  assert.deepEqual(reportRanges("2026-08-25"), {
+    week: { from: "2026-08-23", to: "2026-08-25" }, mtd: { from: "2026-08-23", to: "2026-08-25" },
+    term: { from: "2026-08-23", to: "2026-08-25" },
+  });
+  const lastWeek = reportRangePlaceholders("2026-10-12", reportRanges("2026-10-12").lastweek);
+  assert.equal(lastWeek.DT_FROM, "20261004");
+  assert.equal(lastWeek.DT_TO, "20261010", "dt filters are inclusive, so they stop on the last day");
+  assert.equal(lastWeek.END, "TIMESTAMP '2026-10-11 00:00:00'", "timestamp filters are exclusive");
   type Run = { id: string; state: string; next_step: number; window_end: string;
     raw: Record<string, unknown>; error: string | null; updated_at: Date };
   const runs: Run[] = [];
@@ -128,10 +143,10 @@ export async function checkDashboardSyncRoutes() {
     failRead = false;
     runs.at(-1)!.updated_at = new Date(0);
     run = (await call("", "POST", "ops")).data;
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < reportTotalSteps; i++) {
       const result = await call("/advance", "POST", "ops", { runId: run.runId });
       assert.equal(result.status, 200); run = result.data;
-      if (i < 7) assert.equal(snapshots.length, 0);
+      if (i < reportTotalSteps - 1) assert.equal(snapshots.length, 0);
     }
     assert.equal(run.state, "succeeded");
     assert.equal(snapshots.length, 1);
@@ -140,7 +155,7 @@ export async function checkDashboardSyncRoutes() {
     assert.equal(snapshots.length, 1, "A retried completed step must not publish twice");
     runs.at(-1)!.updated_at = new Date(0);
     run = (await call("", "POST", "ops")).data;
-    for (let i = 0; i < 7; i++) await call("/advance", "POST", "ops", { runId: run.runId });
+    for (let i = 0; i < reportTotalSteps - 1; i++) await call("/advance", "POST", "ops", { runId: run.runId });
     failValidation = true;
     assert.equal((await call("/advance", "POST", "ops", { runId: run.runId })).status, 503);
     assert.equal(snapshots.length, 1, "Validation failure preserves the previous report");

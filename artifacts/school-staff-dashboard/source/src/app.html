@@ -278,10 +278,10 @@
    ========================================================================== */
 
 const M  = DATA.managers;
-const C  = DATA.campuses;
+let   C  = DATA.campuses;       /* metric fields follow state.range, see applyRange() */
 const EX = DATA.exams;
 const WK = DATA.weekly;
-const FA = DATA.facilitators;
+let   FA = DATA.facilitators;
 const LD = DATA.leads || [];
 const GR = DATA.grades || [], CO = DATA.cohorts || [], ST = DATA.students || [];
 const ORPH = DATA.orphanCohorts || [];
@@ -309,7 +309,26 @@ Object.defineProperty(FNAME, 0, {get: () => ar() ? 'غير مُسند' : 'unassi
 const S_NAME=0, S_CID=1, S_GR=2, S_CO=3, S_FID=4, S_X=5;
 const META = DATA.meta;
 
-const CBY  = Object.fromEntries(C.map(c => [c.id, c]));
+let   CBY  = Object.fromEntries(C.map(c => [c.id, c]));
+
+/* ---------- date range ----------
+   The extract carries the term-wide figures (DATA.campuses / DATA.facilitators) plus, per range, only
+   the fields that depend on the window. Switching range swaps those fields in; names, enrolment and the
+   manager mapping never change. Exams, the student gap lists and the weekly trends are NOT range-filtered. */
+const BASE_C = DATA.campuses, BASE_FA = DATA.facilitators;
+const RANGES = (META.ranges || []).filter(r => r.key === 'term' || (DATA.ranges || {})[r.key]);
+const RANGE_C = ['act','att','etc','etq','etn','etqs','tn','tr'];   /* 'never' stays term-wide: it means never attended this year */
+const RANGE_F = ['act','att','etq','etn','etqs','tn','tr'];
+function applyRange(){
+  if(!RANGES.some(r => r.key === state.range)) state.range = 'term';
+  const r = (DATA.ranges || {})[state.range];
+  if(!r){ C = BASE_C; FA = BASE_FA; }
+  else{
+    C  = BASE_C.map(c => { const v = r.c[c.id], o = Object.assign({}, c); RANGE_C.forEach((k, i) => { o[k] = v ? v[i] : null; }); return o; });
+    FA = BASE_FA.map(f => { const v = r.f[f.fid + ':' + f.cid], o = Object.assign({}, f); RANGE_F.forEach((k, i) => { o[k] = v ? v[i] : null; }); return o; });
+  }
+  CBY = Object.fromEntries(C.map(c => [c.id, c]));
+}
 const MNAME = Object.fromEntries(M.map(m => [m.id, m.name]));
 
 /* ==========================================================================
@@ -451,14 +470,15 @@ function wsum(rows, k){ return rows.reduce((a,r) => a + (r[k] || 0), 0); }
 
 /* ---------- state ---------- */
 let state = {
-  lang:'ar', manager:'ALL', tab:'exec', cmp:'week',
+  lang:'ar', manager:'ALL', tab:'exec', cmp:'week', range:'term',
   viewBy:'people', fType:'ALL', fLead:[], fCampus:[], fFac:[], openMS:null, msSearch:'',
   drill:null, cmRate:'neg', cmWeek:null, sortC:{k:'enr',d:-1}, sortF:{k:'n',d:-1}, trendMetric:'att', actExpand:false,
   simTy:'DIAGNOSTIC', simP:'all', simPr:'ALL', simHide:false
 };
-const PERSIST = ['lang','manager','cmp','trendMetric','fType','viewBy','simTy','simP','simPr','simHide'];
+const PERSIST = ['lang','manager','cmp','range','trendMetric','fType','viewBy','simTy','simP','simPr','simHide'];
 function save(){ try{ const o={}; PERSIST.forEach(k=>o[k]=state[k]); localStorage.setItem('noonMgrReal', JSON.stringify(o)); }catch(e){} }
 (function(){ try{ const o = JSON.parse(localStorage.getItem('noonMgrReal')||'{}'); PERSIST.forEach(k=>{ if(o[k]!=null) state[k]=o[k]; }); }catch(e){} })();
+applyRange();
 if (DATA.viewer?.userType === 'CLUSTER_MANAGER') state.manager = 'ALL';
 
 if (state.manager !== 'ALL' && !M.some(m => String(m.id) === String(state.manager))) state.manager = 'ALL';
@@ -538,11 +558,16 @@ function weeklyFor(mid, wk){
   };
 }
 /* Derived from the data so a refresh can roll the window forward on its own.
-   WEEKS is every week the extract actually carries; CUR_WK is the latest complete
+   WEEKS is every week the extract actually carries; CUR_WK is the latest (current, possibly partial)
    one, and the "start of term" baseline is the earliest. */
 const WEEKS  = [...new Set(WK.map(w => w.wk))].sort((a,b) => a-b);
 const CUR_WK = WEEKS.length ? WEEKS[WEEKS.length-1] : 1;
 const FST_WK = WEEKS.length ? WEEKS[0] : 1;
+// The latest week is the current one and may be partial (it ends after the extract's last day).
+function curTag(){
+  const w = META.weeks.find(x => x.wk === CUR_WK);
+  return w && w.to > META.window_end ? (ar() ? ' (جزئي حتى اليوم)' : ' (partial, to date)') : '';
+}
 function baseWk(){ return state.cmp === 'week' ? (WEEKS[WEEKS.indexOf(CUR_WK)-1] ?? FST_WK) : FST_WK; }
 /* deltas are only trustworthy when no campus/facilitator filter narrows the scope,
    because the weekly series is stored at manager grain */
@@ -619,6 +644,10 @@ const D = {
   school:['المدرسة','School'], schools:['مدرسة','schools'], facilitator:['المشرف','Facilitator'],
   facs:['مشرف','facilitators'], students:['طالب','students'], clear:['مسح الفلاتر','Clear filters'],
   search:['بحث…','Search…'], selected:['محددة','selected'],
+  range:['النطاق الزمني:','Date range:'],
+  rg_week:['هذا الأسبوع','This week'], rg_lastweek:['الأسبوع الماضي','Last week'],
+  rg_mtd:['منذ بداية الشهر','Month to date'], rg_lastmonth:['الشهر الماضي','Last month'], rg_term:['من بداية الفصل','Since term start'],
+  rangeNote:['الحضور والتذاكر والثقة محسوبة لهذه الفترة فقط، والحضور هو نسبة حصص من حضر مرة على الأقل فيها. «لم يحضروا أبدًا» والاختبارات وقوائم الطلاب واتجاهات الأسابيع تبقى للفصل كاملاً.','Attendance, exit tickets and trust cover this period only; attendance is the share of sessions among students who attended at least once in it. “Never attended”, exams, student lists and weekly trends stay term-wide.'],
   compare:['المقارنة مع:','Compare with:'], lastWeek:['الأسبوع الماضي','Last week'],
   semStart:['بداية الفصل','Start of term'],
   tExec:['نظرة تنفيذية','Executive'], tSchools:['المدارس','Schools'], tExams:['الاختبارات','Exams'],
@@ -1439,6 +1468,8 @@ function layerBlock(kind, limit){
    VIEWS
    ========================================================================== */
 function provenance(){
+  // Data lineage and rules-version detail is for admins only; the server sets viewer.userType.
+  if (DATA.viewer?.userType !== 'ADMIN') return '';
   const wk = META.weeks.map(w => bd(t('week') + ' ' + w.wk + ': ' + w.from + ' → ' + w.to)).join(' · ');
   return '<details class="note"><summary>' + esc(t('provT')) + '</summary>'
     + '<div style="margin-top:9px">' + (ar()
@@ -1477,8 +1508,8 @@ function execSummary(list){
     const d = cur.att - base.att;
     L.push({cls: d < -0.5 ? 'warn' : d > 0.5 ? 'good' : 'info', ic: d < -0.5 ? '🔻' : d > 0.5 ? '🔺' : '▪️',
       html: ar()
-        ? 'الحضور في الأسبوع ' + bd(CUR_WK) + ' <b>' + bd(pc1(cur.att)) + '</b>، بحركة <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' نقطة') + '</b> مقابل الأسبوع 2‏.'
-        : 'Week ' + bd(CUR_WK) + ' attendance is <b>' + bd(pc1(cur.att)) + '</b>, moving <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' pts') + '</b> against week 2.'});
+        ? 'الحضور في الأسبوع ' + bd(CUR_WK) + curTag() + ' <b>' + bd(pc1(cur.att)) + '</b>، بحركة <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' نقطة') + '</b> مقابل الأسبوع ' + bd(baseWk()) + '‏.'
+        : 'Week ' + bd(CUR_WK) + curTag() + ' attendance is <b>' + bd(pc1(cur.att)) + '</b>, moving <b>' + bd((d>=0?'+':'−') + Math.abs(d).toFixed(1) + ' pts') + '</b> against week ' + bd(baseWk()) + '.'});
   }
 
   const nvPct = a.enr ? 100*a.never/a.enr : 0;
@@ -1706,7 +1737,7 @@ function moversCard(){
   const row = x => '<div class="moverow"><div><div class="nm">' + bd(esc(x.name)) + '</div><div class="sc">' + bd(esc(x.sub)) + ' · ' + bd(pc1(x.cur)) + '</div></div>'
     + '<span class="vv" style="color:' + (x.d>=0?'var(--green-t)':'var(--red-t)') + '">' + (x.d>=0?'▲ +':'▼ −') + bd(Math.abs(x.d).toFixed(1)) + '</span></div>';
   const down = rows.slice(-4).reverse(), anyDown = down.some(x => x.d < 0);
-  return '<div class="sectitle" style="margin-top:26px">' + (ar() ? 'أكبر التحركات — الحضور، الأسبوع ' + CUR_WK + ' مقابل ' + baseWk() : 'Biggest movers — attendance, week ' + CUR_WK + ' vs ' + baseWk()) + '</div>'
+  return '<div class="sectitle" style="margin-top:26px">' + (ar() ? 'أكبر التحركات — الحضور، الأسبوع ' + CUR_WK + curTag() + ' مقابل ' + baseWk() : 'Biggest movers — attendance, week ' + CUR_WK + curTag() + ' vs ' + baseWk()) + '</div>'
     + '<div class="secsub">' + (ar() ? 'على مستوى المدير، لأن السلسلة الأسبوعية متاحة بهذا التفصيل فقط.' : 'At manager grain, because that is the only grain the weekly series is stored at.') + '</div>'
     + '<div class="grid2">'
     + '<div class="card"><h3>🔺 ' + (ar()?'أكبر تحسّن':'Biggest improvement') + '</h3>' + rows.slice(0,4).map(row).join('') + '</div>'
@@ -2115,6 +2146,7 @@ function setManager(v){ state.manager = v; state.fLead = []; state.fCampus = [];
 function toggleLang(){ state.lang = ar() ? 'en' : 'ar'; save(); render(); }
 function setTab(v){ state.tab = v; state.actExpand = false; render(); }
 function setCmp(v){ state.cmp = v; save(); render(); }
+function setRange(v){ state.range = v; applyRange(); save(); render(); }
 
 function sidebar(){
   const list = scopedCampuses();
@@ -2193,7 +2225,17 @@ function filterBar(){
       + esc(lbl) + ' <span style="opacity:.7;font-weight:600">' + bd(cnt(v)) + '</span></button>';
   const vb = (v, lbl, ic) => '<button class="' + (state.viewBy === v ? 'on' : '') + '" onclick="setViewBy(\'' + v + '\')">'
       + ic + ' ' + esc(lbl) + '</button>';
-  return '<span class="flabel">' + esc(t('viewBy')) + '</span>'
+  const rg = RANGES.find(r => r.key === state.range);
+  const rangeBar = RANGES.length > 1
+    ? '<span class="flabel">' + esc(t('range')) + '</span>'
+      + '<div class="seg">' + RANGES.map(r => '<button class="' + (state.range === r.key ? 'on' : '') + '" onclick="setRange(\'' + r.key + '\')">'
+          + esc(t('rg_' + r.key)) + '</button>').join('') + '</div>'
+      + (rg ? '<span class="flabel" dir="ltr" style="opacity:.8">' + esc(rg.from + (rg.to !== rg.from ? ' → ' + rg.to : '')) + '</span>' : '')
+      + '<span style="flex-basis:100%;height:0"></span>'
+    : '';
+  const rangeNote = RANGES.length > 1 && state.range !== 'term'
+    ? '<span class="note2" style="flex-basis:100%;margin-top:2px">' + esc(t('rangeNote')) + '</span>' : '';
+  return rangeBar + '<span class="flabel">' + esc(t('viewBy')) + '</span>'
     + '<div class="seg">' + vb('people', t('byPeople'), '👥') + vb('school', t('bySchool'), '🏫') + '</div>'
     + '<span class="flabel" style="margin-inline-start:6px">' + esc(t('ctype')) + '</span>'
     + '<div class="seg">' + tbtn('ALL', t('tAll')) + tbtn('TRACKS', t('tTracks')) + tbtn('UFFUQ', t('tUffuq')) + '</div>'
@@ -2205,7 +2247,7 @@ function filterBar(){
     + '<div class="seg">'
     + '<button class="' + (state.cmp === 'week' ? 'on' : '') + '" onclick="setCmp(\'week\')">' + esc(t('lastWeek')) + '</button>'
     + '<button class="' + (state.cmp === 'sem' ? 'on' : '') + '" onclick="setCmp(\'sem\')">' + esc(t('semStart')) + '</button>'
-    + '</div></span>';
+    + '</div></span>' + rangeNote;
 }
 function crumb(){
   const list = scopedCampuses(), a = agg(list);
