@@ -553,9 +553,6 @@ function agg(list){
     att:      wmean(list, 'att', 'act'),
     etc:      wmean(list, 'etc', 'enr'),
     etq:      wmean(list, 'etq', 'enr'),
-    /* per-STUDENT correctness among the students who actually closed a ticket:
-       every closer counts once, however many tickets they answered */
-    etqs:     wmean(list, 'etqs', 'etn'),
     etn:      wsum(list, 'etn'),
     tr:       wmean(list, 'tr',  'tn'),
     tn:       wsum(list, 'tn')
@@ -584,7 +581,6 @@ function weeklyFor(mid, wk){
     act: wsum(rows,'act'),
     att: wmean(rows,'att','act'),
     etq: wmean(rows,'etq','act'),
-    etqs: wmean(rows,'etqs','etn'),
     etn: wsum(rows,'etn'),
     tr:  wmean(rows,'tr','tn'),
     tn:  wsum(rows,'tn')
@@ -672,7 +668,6 @@ const D = {
   leadsSub:['الطبقة بين المدير والمشرف. القائد يقود مدرسة أو أكثر، وقد تشترك مدرستان في قائد واحد.',
             'The layer between manager and facilitator. A lead runs one or more schools, and two schools can share a lead.'],
   noLead:['بلا قائد','No lead assigned'],
-  etqs:['صحة التذاكر لكل طالب','Per-student ticket correctness'],
   etn:['الطلاب المغلقون للتذاكر','Students who closed tickets'],
   school:['المدرسة','School'], schools:['مدرسة','schools'], facilitator:['المشرف','Facilitator'],
   facs:['مشرف','facilitators'], students:['طالب','students'], clear:['مسح الفلاتر','Clear filters'],
@@ -754,7 +749,6 @@ const MET = {
   act:  {ic:'✅', fmt:num,  lbl:'active'},
   never:{ic:'🚫', fmt:num,  lbl:'never', invert:true},
   etc:  {ic:'📮', fmt:pc,   lbl:'etc'},
-  etqs: {ic:'🎯', fmt:pc,   lbl:'etqs', wkKey:'etqs'},
   etn:  {ic:'📨', fmt:num,  lbl:'etn'},
   campuses:{ic:'🏫', fmt:num, lbl:'campuses'},
   facs: {ic:'🎓', fmt:num,  lbl:'facsK'}
@@ -1199,7 +1193,7 @@ function layerWins(kind){
       const w = [], school = (CBY[f.cid]||{}).name || '';
       const mine = studentsOf(r => r[S_FID] === f.fid && r[S_CID] === f.cid);
       if(f.att  != null && f.att  >= TOP.fAtt)  w.push({k:'att', sev:2.0, txt:(ar()?'الحضور ':'Attendance ') + pc1(f.att)});
-      if(f.etqs != null && f.etqs >= TOP.fEtq)  w.push({k:'etq', sev:1.6, txt:(ar()?'صحة التذاكر لكل طالب ':'Per-student correctness ') + pc1(f.etqs)});
+      if(f.etq  != null && f.etq  >= TOP.fEtq)  w.push({k:'etq', sev:1.6, txt:(ar()?'صحة تذاكر الخروج ':'Exit-ticket correctness ') + pc1(f.etq)});
       if(f.tn >= TOP.minTn && f.tr != null && f.tr >= TOP.fTrust) w.push({k:'trust', sev:1.5,
         txt:(ar()?'الثقة ':'Trust ') + pc1(f.tr) + ' (' + bd(f.tn) + ')'});
       /* zero absence is only remarkable in a big class — 71 of 115 facilitators cleared
@@ -1446,8 +1440,8 @@ function layerRows(kind){
       if(f.att != null && f.att < TH.att) iss.push({k:'att', sev:2.0,
         names:[school + (clsAll.length ? ' · ' + clsAll[0] : '')],
         pre:(ar()?'الحضور ':'Attendance ') + pc1(f.att) + (ar()?' في':' at')});
-      if(f.etqs != null && f.etqs < TH.etq) iss.push({k:'etq', sev:1.5, names:[school],
-        pre:(ar()?'صحة التذاكر لكل طالب ':'Per-student correctness ') + pc1(f.etqs) + (ar()?' في':' at')});
+      if(f.etq != null && f.etq < TH.etq) iss.push({k:'etq', sev:1.5, names:[school],
+        pre:(ar()?'صحة تذاكر الخروج ':'Exit-ticket correctness ') + pc1(f.etq) + (ar()?' في':' at')});
       if(never > 0) iss.push({k:'never', sev:1.4*Math.min(3,never/3),
         names:cls(nvRows).length ? cls(nvRows) : [school],
         pre:never + (ar()?' لم يحضروا أبدًا في':' never attended in'), drill:'never', q:f.fname});
@@ -1682,9 +1676,7 @@ function kpiCard(k, a, hero){
       : (ar() ? 'غير مُعيَّن في هذا النطاق' : 'Not assigned in this scope')) + '</div>';
   if(k === 'att')  note = '<div class="note2">' + (ar() ? 'من حصص مقرراتهم الفعلية · متوسط الفترة' : 'of their real timetable · window average') + '</div>';
   if(k === 'etq')  note = '<div class="note2">' + (ar() ? 'الإغلاق ' : 'closure ') + bd(pc(a.etc))
-                        + ' · ' + (ar() ? 'لكل طالب مغلِق ' : 'per closer ') + '<b style="color:var(--txt)">' + bd(pc(a.etqs)) + '</b>'
                         + ' (' + bd(num(a.etn)) + ')</div>';
-  if(k === 'etqs') note = '<div class="note2">' + bd(num(a.etn)) + ' ' + (ar() ? 'طالبًا أغلقوا تذكرة واحدة على الأقل' : 'students closed at least one ticket') + '</div>';
   const nCm = k === KPI_CM ? commentsInScope().length : 0;
   if(k === KPI_CM && nCm > 0){
     return '<div class="kpi' + (hero ? ' hero' : '') + ' clk" onclick="openComments()">'
@@ -1873,7 +1865,7 @@ function viewExec(){
     +  '<div class="kpis">' + ['enr','qs','att','etq','tr'].map(k => kpiCard(k, a, true)).join('') + '</div>'
     +  '<div class="sectitle" style="margin-top:20px">' + esc(t('rest')) + '</div>'
     +  '<div class="secsub">' + (ar() ? 'كل اختبار مُعيَّن في هذا النطاق بنسبة من دخله من مُعيَّنيه، ثم نطاق المحفظة.' : 'Each exam assigned in this scope, as the share of its assigned students who opened it, then portfolio size.') + '</div>'
-    +  '<div class="kpis sm">' + ['etqs'].concat(EXM.filter(e => a['n_' + e.k] > 0).map(e => e.o), ['never','campuses','facs']).map(k => kpiCard(k, a, false)).join('') + '</div>';
+    +  '<div class="kpis sm">' + [].concat(EXM.filter(e => a['n_' + e.k] > 0).map(e => e.o), ['never','campuses','facs']).map(k => kpiCard(k, a, false)).join('') + '</div>';
 
   /* manager comparison at network level */
   if(state.manager === 'ALL'){
@@ -1948,7 +1940,7 @@ function moversCard(){
 /* ---------- schools ---------- */
 const CCOLS = [
   ['enr',  num,  'enrolled'], ['act', num, 'active'], ['never', num, 'never'],
-  ['att',  pc1,  'att'], ['etq', pc1, 'etq'], ['etqs', pc1, 'etqs'], ['etn', num, 'etn'], ['etc', pc1, 'etc'], ['tr', pc1, 'trust'],
+  ['att',  pc1,  'att'], ['etq', pc1, 'etq'], ['etn', num, 'etn'], ['etc', pc1, 'etc'], ['tr', pc1, 'trust'],
 ].concat(EXM.map(e => [e.o, pc, 'open_' + e.k]), [['facs', num, 'facsK']]);
 /* an exam column reads "—" unless the exam is assigned to that school */
 function campusRow(c){
@@ -2208,7 +2200,7 @@ function viewLeads(){
   const orphan = list.filter(c => !leadsOfCampus(c.id).length);
 
   const cols = [['enr',num,'enrolled'],['act',num,'active'],['never',num,'never'],
-                ['att',pc1,'att'],['etq',pc1,'etq'],['etqs',pc1,'etqs'],['etn',num,'etn'],
+                ['att',pc1,'att'],['etq',pc1,'etq'],['etn',num,'etn'],
                 ['tr',pc1,'trust']].concat(EXM.filter(e => list.some(c => xr(c.id, e.k).n > 0)).map(e => [e.o, pc, 'open_' + e.k]));
   const head = '<tr><th>' + esc(t('rank')) + '</th><th>' + esc(t('lead')) + '</th>'
     + cols.map(c => '<th class="num">' + esc(t(c[2])) + '</th>').join('') + '</tr>';
@@ -2241,7 +2233,7 @@ function viewFacs(){
     if(va == null) return 1; if(vb == null) return -1;
     return (va - vb) * state.sortF.d;
   });
-  const cols = [['n',num,'students'],['act',num,'active'],['att',pc1,'att'],['etq',pc1,'etq'],['etqs',pc1,'etqs'],['etn',num,'etn'],['tr',pc1,'trust'],['tn',num,'']];
+  const cols = [['n',num,'students'],['act',num,'active'],['att',pc1,'att'],['etq',pc1,'etq'],['etn',num,'etn'],['tr',pc1,'trust'],['tn',num,'']];
   const head = '<tr><th>' + esc(t('rank')) + '</th><th>' + esc(t('facilitator')) + '</th>'
     + cols.map(c => '<th class="num ' + (state.sortF.k === c[0] ? 'sorted' : '') + '" onclick="sortF(\'' + c[0] + '\')">'
         + esc(c[2] ? t(c[2]) : (ar() ? 'مستجيبو الثقة' : 'Trust n')) + (state.sortF.k === c[0] ? (state.sortF.d < 0 ? ' ▼' : ' ▲') : '') + '</th>').join('') + '</tr>';
