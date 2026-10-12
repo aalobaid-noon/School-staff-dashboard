@@ -36,6 +36,14 @@ Exams, student gap lists, "never attended" and weekly trends are not range-filte
 attendance is over students who attended at least once in it.
 `athena_pull.py` (`range_windows`) and `report-import.ts` (`reportRanges`) define the same windows.
 
+## Daily series
+
+`queries/08_daily.sql` returns one row per campus per day with additive counts (expected and attended
+attendance slots, exit tickets seen / answered / correct / gradable). The executive tab sums them
+over the campuses in view and divides once, so the line charts follow every filter. A "school day"
+is any day with at least 10% of the busiest day's expected slots; weekends and orientation days
+are left out. Saved as `_raw_daily.json`.
+
 ## Steps
 
 1. `get_business_rules` → keep `rules_version`. If it differs from the one in

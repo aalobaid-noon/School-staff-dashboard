@@ -19,6 +19,7 @@ export const reportJobs: readonly ReportJob[] = [
   ["05_students_leads", ["students", "leads", "orphans", "internal_facilitators", "cluster_managers"]],
   ["06_comments", ["comments"]],
   ["07_sim_grades", ["simgrades"]],
+  ["08_daily", ["daily"]],
   ...reportRangeKeys.flatMap((range): ReportJob[] => [
     ["01_campuses", ["campuses"], range],
     ["04_facilitators", ["facilitators"], range],
