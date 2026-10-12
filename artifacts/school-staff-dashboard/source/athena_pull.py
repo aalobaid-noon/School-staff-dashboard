@@ -85,6 +85,7 @@ JOBS = [
     ("05_students_leads.sql", {"*": "students_leads"}),
     ("06_comments.sql",       {"comments": "comments"}),
     ("07_sim_grades.sql",     {"simgrades": "simgrades"}),
+    ("08_daily.sql",          {"daily": "daily"}),
 ]
 
 def main():

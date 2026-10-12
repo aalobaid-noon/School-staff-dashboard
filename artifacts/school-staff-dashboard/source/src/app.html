@@ -251,6 +251,19 @@
   #fb-modal button{font:inherit;font-size:13px;padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer}
   #fb-modal button.fb-send{background:var(--brick);border-color:var(--brick);color:var(--onprimary);font-weight:700}
   #fb-modal button:disabled{opacity:.55;cursor:default}
+
+  /* daily trend charts */
+  .trgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;margin-bottom:6px}
+  .trcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 8px}
+  .trhead{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+  .trname{font-size:13px;font-weight:800}
+  .trbig{font-size:26px;font-weight:700;line-height:1.2;margin-top:4px;font-variant-numeric:tabular-nums}
+  .trsub{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.6}
+  .trsub b{font-weight:700}
+  .trsvg{width:100%;height:auto;display:block;margin-top:6px;direction:ltr}
+  .trhit{fill:transparent;cursor:crosshair}
+  .trhit:hover{fill:rgb(110 110 100 / 12%)}
+  .trlegend{font-size:11.5px;color:var(--mut);margin:2px 0 14px;line-height:1.7}
 </style>
 
 <div id="root" dir="rtl">
@@ -676,7 +689,7 @@ const D = {
   fbWait:['تعليقات كثيرة، انتظر دقيقة.','Too many comments. Wait a minute.'],
   compare:['المقارنة مع:','Compare with:'], lastWeek:['الأسبوع الماضي','Last week'],
   semStart:['بداية الفصل','Start of term'],
-  tExec:['نظرة تنفيذية','Executive'], tSchools:['المدارس','Schools'], tExams:['الاختبارات','Exams'],
+  tExec:['نظرة تنفيذية','Executive'], tDaily:['الأداء اليومي','Daily performance'], tSchools:['المدارس','Schools'], tExams:['الاختبارات','Exams'],
   tFacs:['المشرفون','Facilitators'], tAction:['يحتاج متابعة','Needs follow-up'],
   headline:['المؤشرات الأساسية','Headline metrics'],
   headlineSub:['المقاييس الخمسة التي يُحاسب عليها المدير.','The five metrics the manager is accountable for.'],
@@ -1690,6 +1703,167 @@ function kpiCard(k, a, hero){
     + '<div class="val">' + bd(m.fmt(v)) + '</div>' + note + dl + sp + foot + '</div>';
 }
 
+
+/* ---------- daily trend charts (executive tab) ----------
+   DATA.daily = [campus, yyyymmdd, expected, attended, seen, answered, correct, gradable] per campus per day,
+   all additive, so any set of campuses is summed and divided once. A school day is a day with at least 10%
+   of the busiest day's expected slots (weekends and orientation days drop out). */
+const DY = DATA.daily || [];
+const DY_BY_DAY = {};
+DY.forEach(r => { (DY_BY_DAY[r[1]] = DY_BY_DAY[r[1]] || []).push(r); });
+const DY_DAYS = (function(){
+  const tot = Object.keys(DY_BY_DAY).map(d => [Number(d), DY_BY_DAY[d].reduce((s, r) => s + r[2], 0)]);
+  const top = Math.max(0, ...tot.map(x => x[1]));
+  return tot.filter(x => x[1] >= top * 0.1).map(x => x[0]).sort((a, b) => a - b);
+})();
+function dailyTotals(ids){
+  return DY_DAYS.map(d => {
+    const s = [0,0,0,0,0,0];
+    DY_BY_DAY[d].forEach(r => { if(ids && !ids.has(r[0])) return; for(let i = 0; i < 6; i++) s[i] += r[i + 2]; });
+    return {d:d, exp:s[0], att:s[1], seen:s[2], ans:s[3], cor:s[4], gra:s[5]};
+  });
+}
+const pool = (rows, f) => rows.reduce((s, r) => s + r[f], 0);
+const TREND = [
+  {k:'cnt', ar:'إجمالي عدد الحضور', en:'Total attendances', pct:false, col:'var(--blue)',
+   val:t => t.att},
+  {k:'att', ar:'نسبة الحضور', en:'Attendance rate', pct:true, col:'var(--brick)', bands:[45,55,70],
+   val:t => t.exp ? 100 * t.att / t.exp : null},
+  {k:'cls', ar:'نسبة إغلاق تذاكر الخروج', en:'Exit-ticket closure rate', pct:true, col:'var(--green)', bands:[80,90,95],
+   val:t => t.seen ? 100 * t.ans / t.seen : null},
+  {k:'cor', ar:'نسبة صحة تذاكر الخروج', en:'Exit-ticket correctness', pct:true, col:'var(--amber)', bands:[52,60,70],
+   val:t => t.gra ? 100 * t.cor / t.gra : null}
+];
+const attrEsc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+let trTipOn = false;
+document.addEventListener('mousemove', e => {
+  const h = e.target.closest ? e.target.closest('.trhit') : null;
+  if(h){ tipShow(e, h.getAttribute('data-tip')); trTipOn = true; }
+  else if(trTipOn){ tipHide(); trTipOn = false; }
+});
+const dFmt = d => String(Math.floor(d / 100) % 100).padStart(2, '0') + '/' + String(d % 100).padStart(2, '0');
+function verdict(m, v){
+  if(v == null || !m.bands) return null;
+  const b = m.bands;
+  return v < b[0] ? [ar() ? 'ضعيف' : 'Weak', 'p-red']
+       : v < b[1] ? [ar() ? 'يحتاج تحسين' : 'Needs work', 'p-amber']
+       : v < b[2] ? [ar() ? 'جيد' : 'Good', 'p-blue']
+       :            [ar() ? 'ممتاز' : 'Excellent', 'p-green'];
+}
+function lineSvg(m, pts, overlay){
+  const W = 560, H = 176, pl = 40, pr = 12, pt = 12, pb = 24, n = pts.length;
+  const all = pts.concat(overlay || []).filter(p => p.v != null).map(p => p.v);
+  if(!all.length) return '';
+  let lo, hi;
+  if(m.pct){
+    lo = Math.min(...all, m.bands[0]); hi = Math.max(...all, m.bands[2]);
+    lo = Math.max(0, Math.floor((lo - 4) / 10) * 10); hi = Math.min(100, Math.ceil((hi + 3) / 10) * 10);
+  }else{ lo = 0; const mx = Math.max(...all); const p10 = Math.pow(10, Math.floor(Math.log10(mx || 1))); hi = Math.ceil(mx * 1.05 / p10) * p10; }
+  if(hi === lo) hi = lo + 1;
+  const x = i => n < 2 ? (pl + W - pr) / 2 : pl + i * (W - pl - pr) / (n - 1);
+  const y = v => pt + (hi - v) / (hi - lo) * (H - pt - pb);
+  const yl = v => m.pct ? Math.round(v) + '%' : (v >= 1000 ? (v / 1000 % 1 ? (v / 1000).toFixed(1) : v / 1000) + 'k' : String(Math.round(v)));
+  const path = series => {
+    let d = '', pen = false;
+    series.forEach((p, i) => { if(p.v == null){ pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1); pen = true; });
+    return d;
+  };
+  let g = '';
+  for(let i = 0; i <= 4; i++){
+    const v = lo + (hi - lo) * i / 4;
+    g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>'
+       + '<text x="' + (pl - 6) + '" y="' + (y(v) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--mut)">' + yl(v) + '</text>';
+  }
+  if(m.pct){
+    [[m.bands[0], 'var(--red)', ar() ? 'حد الضعف' : 'weak below'], [m.bands[2], 'var(--green)', ar() ? 'ممتاز' : 'excellent']].forEach(r => {
+      if(r[0] <= lo || r[0] >= hi) return;
+      g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(r[0]).toFixed(1) + '" y2="' + y(r[0]).toFixed(1)
+         + '" stroke="' + r[1] + '" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>'
+         + '<text x="' + (W - pr - 2) + '" y="' + (y(r[0]) - 3).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="' + r[1] + '" opacity=".9">' + r[2] + ' ' + r[0] + '%</text>';
+    });
+  }
+  const step = Math.max(1, Math.round((n - 1) / 5));
+  for(let i = 0; i < n; i += step) g += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="var(--mut)">' + dFmt(pts[i].d) + '</text>';
+  if((n - 1) % step) g += '<text x="' + x(n - 1).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="end" font-size="10" fill="var(--mut)">' + dFmt(pts[n - 1].d) + '</text>';
+  if(overlay) g += '<path d="' + path(overlay) + '" fill="none" stroke="var(--mut)" stroke-width="1.6" stroke-dasharray="5 4" opacity=".8"/>';
+  g += '<path d="' + path(pts) + '" fill="none" stroke="' + m.col + '" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+  pts.forEach((p, i) => {
+    if(p.v == null) return;
+    const last = i === n - 1;
+    g += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.v).toFixed(1) + '" r="' + (last ? 4.2 : 2.6) + '" fill="' + (last ? m.col : 'var(--panel)') + '" stroke="' + m.col + '" stroke-width="1.6" style="pointer-events:none"/>';
+  });
+  /* one hover column per day: the tooltip shows up anywhere near the point, instantly */
+  const colW = n < 2 ? W - pl - pr : (W - pl - pr) / (n - 1);
+  pts.forEach((p, i) => {
+    if(p.v == null || !p.tip) return;
+    const x0 = Math.max(pl, x(i) - colW / 2), x1 = Math.min(W - pr, x(i) + colW / 2);
+    g += '<rect class="trhit" x="' + x0.toFixed(1) + '" y="' + pt + '" width="' + (x1 - x0).toFixed(1) + '" height="' + (H - pt - pb) + '" data-tip="' + attrEsc(p.tip) + '"/>';
+  });
+  return '<svg class="trsvg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(ar() ? m.ar : m.en) + '">' + g + '</svg>';
+}
+function trendCard(m, rows, netRows){
+  const A = ar();
+  const fmtV = v => v == null ? '—' : m.pct ? v.toFixed(1) + '%' : Math.round(v).toLocaleString('en-US');
+  const detail = t => m.k === 'att' ? [t.att, t.exp, A ? 'حضر' : 'attended'] : m.k === 'cls' ? [t.ans, t.seen, A ? 'أُغلقت' : 'closed']
+                    : m.k === 'cor' ? [t.cor, t.gra, A ? 'صحيحة' : 'correct'] : null;
+  const dayName = d => { try{ return new Date(Math.floor(d / 10000), Math.floor(d / 100) % 100 - 1, d % 100)
+      .toLocaleDateString(A ? 'ar-SA-u-nu-latn' : 'en-US', {weekday:'long'}); }catch(e){ return ''; } };
+  const series = rows.map((t, i) => {
+    const v = m.val(t), det = detail(t), net = netRows ? m.val(netRows[i]) : null;
+    return {d:t.d, v:v, tip:'<b>' + dayName(t.d) + ' ' + String(t.d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3') + '</b><br>'
+      + (A ? m.ar : m.en) + ': <b>' + fmtV(v) + '</b>'
+      + (det ? '<br>' + (A ? det[2] + ' ' + num(det[0]) + ' من ' + num(det[1]) : num(det[0]) + ' of ' + num(det[1]) + ' ' + det[2]) : '')
+      + (netRows && m.pct ? '<br><span style="opacity:.8">' + (A ? 'كل المدارس: ' : 'All schools: ') + fmtV(net) + '</span>' : '')};
+  });
+  const overlay = netRows ? netRows.map(t => ({d:t.d, v:m.val(t)})) : null;
+  /* The headline is the latest school day that has data, so opening the page on a Friday or Saturday
+     shows Thursday. Today counts too while it is still filling in (marked partial). */
+  const lastRow = rows[rows.length - 1], prevRow = rows[rows.length - 2];
+  const partial = lastRow && String(lastRow.d) === String(META.window_end).replace(/-/g, '');
+  const dayLbl = r => dayName(r.d) + ' ' + dFmt(r.d);
+  const lv = lastRow ? m.val(lastRow) : null, pv = prevRow ? m.val(prevRow) : null;
+  const big = lv == null ? '—' : bd(m.pct ? pc1(lv) : num(Math.round(lv)));
+  let chg = '';
+  if(lv != null && pv != null){
+    const d = m.pct ? lv - pv : (pv ? 100 * (lv - pv) / pv : null);
+    if(d != null) chg = '<br><b style="color:' + (d >= 0 ? 'var(--green-t, var(--green))' : 'var(--red)') + '">' + (d >= 0 ? '▲ +' : '▼ −')
+      + bd(Math.abs(d).toFixed(m.pct ? 1 : 0)) + (m.pct ? (A ? ' نقطة' : ' pts') : '%') + '</b> '
+      + (A ? 'عن ' : 'vs ') + esc(dayLbl(prevRow));
+  }
+  /* a half-finished day cannot be compared with a full one on a count */
+  if(m.k === 'cnt' && partial) chg = '';
+  const sub = lastRow ? esc((A ? 'آخر يوم دراسي: ' : 'Latest school day: ') + dayLbl(lastRow)
+      + (partial ? (A ? ' (جزئي حتى الآن)' : ' (partial so far)') : '')) + chg : '';
+  const vd = m.pct ? verdict(m, lv) : null;
+  return '<div class="trcard"><div class="trhead"><div><div class="trname">' + esc(A ? m.ar : m.en) + '</div>'
+    + '<div class="trbig">' + big + '</div></div>'
+    + (vd ? '<span class="pill ' + vd[1] + '">' + esc(vd[0]) + '</span>' : '') + '</div>'
+    + '<div class="trsub">' + sub + '</div>' + lineSvg(m, series, overlay) + '</div>';
+}
+function dailyTrendSection(list){
+  if(!DY_DAYS.length) return '';
+  const ids = new Set(list.map(c => c.id));
+  const rows = dailyTotals(ids);
+  const scoped = list.length < C.length;
+  const net = scoped ? dailyTotals(null) : null;
+  const A = ar();
+  return '<div class="sectitle">📈 ' + esc(A ? 'الأداء اليومي منذ أول يوم دراسي' : 'Daily performance since the first school day') + '</div>'
+    + '<div class="secsub">' + esc(A
+        ? 'كل نقطة يوم دراسي فعلي. الألوان والحدود المرجعية تقول لك مباشرة إن كان الأداء جيدًا أم ضعيفًا، وتتبع الرسوم الفلاتر الحالية. لا يؤثر عليها النطاق الزمني.'
+        : 'Each point is an actual school day. The colours and reference lines tell you at a glance whether performance is good or weak, and the charts follow the current filters. The date range does not affect them.') + '</div>'
+    + '<div class="trgrid">' + TREND.map(m => trendCard(m, rows, m.pct ? net : null)).join('') + '</div>'
+    + '<div class="trlegend">' + esc(A
+        ? 'الخط الملوّن: الاختيار الحالي' + (scoped ? ' · الخط المتقطع الرمادي: كل المدارس المتاحة لك' : '') + ' · الخط الدائري الكبير: آخر يوم. الحدود: ضعيف / ممتاز.'
+        : 'Coloured line: current selection' + (scoped ? ' · dashed grey: every school you can see' : '') + ' · large dot: the latest day. Thresholds: weak / excellent.') + '</div>';
+}
+
+function viewDaily(){
+  const list = scopedCampuses();
+  if(!list.length) return emptyState();
+  return dailyTrendSection(list) || '<div class="card"><div class="empty"><span class="big">📈</span>'
+    + esc(ar() ? 'لا توجد بيانات يومية بعد — تظهر بعد مزامنة التقارير.' : 'No daily data yet — it appears after the next report sync.') + '</div></div>';
+}
+
 function viewExec(){
   const list = scopedCampuses();
   if(!list.length) return emptyState();
@@ -2178,10 +2352,11 @@ function sidebar(){
   const list = scopedCampuses();
   const tabs = [
     ['exec','📊',t('tExec'),null],
+    ['daily','📈',t('tDaily'),null],
     ['schools','🏫',t('tSchools'),list.length],
     ['leads','🎖️',t('tLeads'),uniq(LD.filter(l => list.some(c => c.id === l.cid)).map(l => l.lid)).length],
-    ['exams','🩺',t('tExams'),null],
     ['facs','🎓',t('tFacs'),uniq(scopedFacs().map(f => f.fid)).length],
+    ['exams','🩺',t('tExams'),null],
     ['action','⚠️',t('tAction'),rankedIssues(list).length]
   ];
   return '<div class="sblabel">' + (ar() ? 'الأقسام' : 'Sections') + '</div>'
@@ -2301,7 +2476,7 @@ function render(){
   document.getElementById('sidebar').innerHTML = sidebar();
   renderBar();
   document.getElementById('crumb').innerHTML = crumb();
-  const views = {exec:viewExec, schools:viewSchools, leads:viewLeads, exams:viewExams, facs:viewFacs, action:viewAction};
+  const views = {exec:viewExec, daily:viewDaily, schools:viewSchools, leads:viewLeads, exams:viewExams, facs:viewFacs, action:viewAction};
   const personalNotice = DATA.viewer?.userType === 'FACILITATOR'
     ? '<div class="card"><div class="secsub">' + (ar()
       ? 'تعرض هذه الصفحة بيانات طلابك فقط. إجماليات اختبارات المدرسة والمؤشرات الأسبوعية للمدير غير متاحة في هذا العرض. استخدم تغيير الملف الشخصي لعرض بيانات حساب آخر تملكه.'

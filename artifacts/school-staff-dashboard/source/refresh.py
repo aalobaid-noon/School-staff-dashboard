@@ -72,6 +72,7 @@ def main():
     facs     = load("facilitators")
     sl       = load("students_leads")
     comments_raw = load("comments") if (D / "_raw_comments.json").exists() else []
+    daily_raw = load("daily") if (D / "_raw_daily.json").exists() else []
     windows_raw = load("windows")
     bygrade_raw = load("bygrade")
     simgrades_raw = load("simgrades")
@@ -251,6 +252,9 @@ def main():
         "weekly": [{k: w[k] for k in ("mid", "wk", "act", "att", "etq", "etn", "tn", "tr")} for w in weekly],
         "facilitators": facs, "leads": leads,
         "ranges": ranges,
+        # per campus per day, additive counts: [campus, yyyymmdd, expected, attended, seen, answered, correct, gradable]
+        "daily": [[x["cid"], x["d"], x["exp_n"], x["att_n"], x["seen"], x["ans"], x["cor"], x["gra"]]
+                  for x in sorted(daily_raw, key=lambda r: (r["d"], r["cid"])) if x["cid"] in live],
         "clusterManagers": [{"profileId": row["profile_id"], "campusId": row["campus_id"]}
                             for row in (sl.get("cluster_managers") or []) if row["campus_id"] in live],
         "bygrade": bygrade,
