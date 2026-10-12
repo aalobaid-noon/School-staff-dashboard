@@ -18,6 +18,7 @@ export async function checkDashboardSummary() {
     campuses: [{ id: 1, mgr: "7", enr: 50 }, { id: 2, mgr: "8", enr: 70 }],
     facilitators: [{ cid: 1, fid: 7, n: 10, act: 8 }, { cid: 1, fid: 8, n: 40, act: 35 },
       { cid: 2, fid: 9, n: 70, act: 60 }],
+    clusterManagers: [{ profileId: 7, campusId: 1 }],
     leads: [{ lid: 7, cid: 1 }, { lid: 8, cid: 1 }, { lid: 9, cid: 2 }], managers: [{ id: 7 }, { id: 8 }] };
   pool.query = (async () => ({ rows: [{ document, synced_at: new Date("2026-10-07") }] })) as unknown as typeof pool.query;
   pool.connect = (async () => ({ release() {}, query: async (sql: string) => ({ rows: sql.startsWith("SELECT")
@@ -37,6 +38,7 @@ export async function checkDashboardSummary() {
     for (const [userType, expected] of [
       ["ADMIN", { schools: 2, enrolledStudents: 120, managers: 2, schoolLeads: 3, facilitators: 3 }],
       ["SCHOOL_MANAGER", { schools: 1, enrolledStudents: 50, managers: 1, schoolLeads: 2, facilitators: 2 }],
+      ["CLUSTER_MANAGER", { schools: 1, enrolledStudents: 50, managers: 0, schoolLeads: 2, facilitators: 2 }],
       ["SCHOOL_LEAD", { schools: 1, enrolledStudents: 50, managers: 0, schoolLeads: 1, facilitators: 2 }],
       ["FACILITATOR", { schools: 1, enrolledStudents: 10, managers: 0, schoolLeads: 0, facilitators: 1 }],
       [null, null], ["TEACHER", null],
@@ -79,7 +81,7 @@ export async function checkDashboardSummary() {
     assert.equal(new URL(redirect.headers.get("location")!).searchParams.get("userType"), null);
     assert(redirect.headers.get("set-cookie")?.includes("SameSite=Lax"));
     assert(redirect.headers.get("x-dashboard-auth-id"));
-    console.log("Summary HTTP endpoint enforces all four role scopes and denies unknown roles: PASS");
+    console.log("Summary HTTP endpoint enforces all five role scopes and denies unknown roles: PASS");
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     pool.query = previousQuery;

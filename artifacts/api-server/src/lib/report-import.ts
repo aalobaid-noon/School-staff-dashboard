@@ -12,7 +12,7 @@ export const reportJobs = [
   ["02_exams", ["exams", "windows", "bygrade"]],
   ["03_weekly", ["weekly"]],
   ["04_facilitators", ["facilitators"]],
-  ["05_students_leads", ["students", "leads", "orphans", "internal_facilitators"]],
+  ["05_students_leads", ["students", "leads", "orphans", "internal_facilitators", "cluster_managers"]],
   ["06_comments", ["comments"]],
   ["07_sim_grades", ["simgrades"]],
 ] as const;
