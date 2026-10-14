@@ -9,10 +9,13 @@ import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope
 import { effectiveUserType, isProfileAdmin } from "../lib/admin-access";
 export { getDashboardScope } from "../lib/dashboard-scope";
 
+import { embedContext, readEmbedContext, workspaceOrigin, embedMessage } from "../lib/dashboard-embed";
+
 const router: IRouter = Router();
 const cookies = dashboardCookies(process.env.NODE_ENV === "development");
 const COOKIE = cookies.sessionName;
 const STATE = cookies.stateName;
+const EMBED = `${STATE}_embed`;
 const sessionLifetimeMs = 7 * 24 * 60 * 60 * 1000;
 const templatePath = resolveDashboardTemplate();
 
@@ -105,16 +108,18 @@ export function dashboardPostLoginPath(hasSnapshot: boolean) {
   return hasSnapshot ? "/api/dashboard/report" : "/";
 }
 
-function loginPage(res: Response, message = "Open Insights in a new tab to sign in with Noon.") {
+function loginPage(res: Response, message = "Open Insights in a new tab to sign in with Noon.", origin: string | null = null, retry: { origin: string; attempt: string } | null = null) {
+  const nonce = randomBytes(16).toString("hex");
+  const loginUrl = "/api/dashboard/login?start=1" + (retry ? `&workspace=${encodeURIComponent(retry.origin)}&attempt=${retry.attempt}` : "");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Referrer-Policy", "no-referrer");
-  res.setHeader("Content-Security-Policy", "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://replit.com https://*.replit.com https://school.noonacademy.com https://school.staging.noonedu.io");
+  res.setHeader("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://replit.com https://*.replit.com https://school.noonacademy.com https://school.staging.noonedu.io`);
   res.type("html").send(
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>School Insights sign-in</title></head><body>' +
     `<h1>School Insights</h1><p>${escapeHtml(message)}</p>` +
-    '<p><a href="/api/dashboard/login?start=1" target="_blank" rel="noopener noreferrer">Open Insights in a new tab</a></p>' +
-    '<p>Choose your staff profile in Citadel. Keep the report open in the new tab.</p></body></html>',
+    (origin ? "" : `<p><a href="${escapeHtml(loginUrl)}" target="${retry ? "_self" : "_blank"}" rel="noopener noreferrer">${retry ? "Try sign-in again" : "Open Insights in a new tab"}</a></p>`) +
+    '<p>Choose your staff profile in Citadel.</p>' + (origin ? embedMessage(origin, 'login-required', nonce) : '') + '</body></html>',
   );
 }
 
@@ -132,7 +137,8 @@ router.get("/dashboard/login", (req, res): void => {
   }
   // Start OAuth only after leaving an embedded page, before setting its state cookie.
   if (req.query.start !== "1" || req.headers["sec-fetch-dest"] === "iframe" || req.headers["sec-fetch-dest"] === "frame") {
-    loginPage(res);
+    const origin = workspaceOrigin(req.query.workspace);
+    loginPage(res, origin ? "Use the sign-in button in your school workspace to continue here." : undefined, origin);
     return;
   }
   res.setHeader("Cache-Control", "no-store");
@@ -143,6 +149,9 @@ router.get("/dashboard/login", (req, res): void => {
   res.setHeader("X-Dashboard-Auth-Id", correlationId);
   res.clearCookie(STATE, { ...csrfCookie, path: "/api/dashboard/oauth/callback" });
   res.cookie(STATE, state, { ...csrfCookie, maxAge: 10 * 60_000 });
+  res.clearCookie(EMBED, csrfCookie);
+  const context = embedContext(req.query.workspace, req.query.attempt, state, cfg.sessionSecret);
+  if (context) res.cookie(EMBED, context, { ...csrfCookie, maxAge: 10 * 60_000 });
   const url = new URL("/portal/oauth/authorize", cfg.baseUrl);
   url.search = new URLSearchParams({
     app_id: cfg.appId, redirect_uri: cfg.redirectUri, response_type: "code", state,
@@ -164,7 +173,8 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
   const reject = (status: number, reason: string, message: string) => {
     req.log.warn({ event: "dashboard_oauth", reason, correlationId, profileId: verifiedProfileId, userType: verifiedRole }, "School Insights sign-in rejected");
     res.status(status);
-    loginPage(res, `${message} Reference: ${correlationId}.`);
+    loginPage(res, `${message} Reference: ${correlationId}.`, null,
+      cfg ? readEmbedContext(cookie(req, EMBED), expected ?? "", cfg.sessionSecret) : null);
   };
   if (!cfg) {
     reject(400, "configuration_missing", "Sign-in is unavailable. Ask your school administrator to check the Insights configuration.");
@@ -236,6 +246,14 @@ export async function dashboardOAuthCallback(req: Request, res: Response): Promi
     res.setHeader("Cache-Control", "no-store");
     // Authentication must work before the first reporting import. The landing
     // page can show the verified session's readiness state instead of a 503.
+    const context = readEmbedContext(cookie(req, EMBED), String(req.query.state), cfg.sessionSecret);
+    res.clearCookie(EMBED, csrfCookie);
+    if (context) {
+      const nonce = randomBytes(16).toString("hex");
+      res.setHeader("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'; base-uri 'none'; frame-ancestors 'none'`);
+      res.type("html").send(`<!doctype html><html><head><meta name="referrer" content="no-referrer"><title>Insights sign-in complete</title></head><body><p>Sign-in is complete. Return to your school workspace to view Insights.</p><a href="${context.origin}/dashboard/school-insights?insightsLogin=complete">Return to school workspace</a><script nonce="${nonce}">if(window.opener){window.opener.postMessage({type:"school-insights:authenticated",attempt:${JSON.stringify(context.attempt)}},${JSON.stringify(context.origin)});window.close();}</script></body></html>`);
+      return;
+    }
     res.redirect(302, dashboardPostLoginPath(snapshot.rows.length > 0));
   } catch {
     reject(502, `${stage}_failed`, "Sign-in is temporarily unavailable. Start sign-in again.");
@@ -325,7 +343,8 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
   try {
     const user = await currentUser(req, cfg);
     if (!user) {
-      res.redirect(302, "/api/dashboard/login");
+      const origin = workspaceOrigin(req.query.workspace);
+      res.redirect(302, "/api/dashboard/login" + (origin ? "?workspace=" + encodeURIComponent(origin) : ""));
       return;
     }
     const snapshot = await pool.query<{ document: unknown }>(
@@ -339,7 +358,8 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
     const { campuses } = getDashboardScope(user, document);
     if (!campuses.length) {
       res.status(403).type("html").send(
-        signInMessage(`Signed in as ${user.email} (${user.userType}). No schools are assigned to this profile in the latest report. Ask your school administrator to check your assignments, or switch profile.`),
+        signInMessage(`Signed in as ${user.email} (${user.userType}). No schools are assigned to this profile in the latest report. Ask your school administrator to check your assignments, or switch profile.`) +
+        (workspaceOrigin(req.query.workspace) ? embedMessage(workspaceOrigin(req.query.workspace)!, "ready") : ""),
       );
       return;
     }
@@ -356,7 +376,7 @@ router.get("/dashboard/report", async (req, res): Promise<void> => {
     res.type("html").send(
       `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" ` +
       `content="width=device-width, initial-scale=1"><title>${title}</title></head><body>` +
-      original.replace("/*__DATA__*/", payload) + "</body></html>",
+      original.replace("/*__DATA__*/", payload) + (workspaceOrigin(req.query.workspace) ? embedMessage(workspaceOrigin(req.query.workspace)!, "ready") : "") + "</body></html>",
     );
   } catch {
     req.log.error("Protected dashboard could not load; no private data was logged");
