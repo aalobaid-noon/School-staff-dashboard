@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import type { Request, Response } from "express";
 import { pool } from "@workspace/db";
 import { dashboardOAuthCallback, getDashboardUser, getDashboardScope, isDashboardOps } from "../routes/dashboard-auth";
+import { embedContext } from "../lib/dashboard-embed";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 
 // Exercise the actual OAuth callback and session reader without connecting to
@@ -136,6 +137,27 @@ export async function checkDashboardAuthRoles() {
       assert.equal(isDashboardOps(sessionUser), fullAccess);
       assert.equal(scope.campuses.length, fullAccess ? 2 : 0);
     }
+    upstreamRole = "SCHOOL_MANAGER";
+    upstreamEmail = "role-fixture@noon.edu.sa";
+    const attempt = "c".repeat(32);
+    const origin = "https://school.staging.noonedu.io";
+    const context = embedContext(origin, attempt, state, fixtureEnv.SESSION_SECRET)!;
+    let completion = "";
+    await dashboardOAuthCallback({
+      headers: { cookie: `${cookies.stateName}=${state}; ${cookies.stateName}_embed=${context}` },
+      query: { state, code: "synthetic-code" }, log: { info() {}, warn() {} },
+    } as unknown as Request, {
+      clearCookie() {}, cookie() {}, setHeader() {}, type() { return this; },
+      send(html: string) { completion = html; },
+      redirect() { throw new Error("Embedded login must return to its workspace"); },
+      status() { throw new Error("Expected successful embedded login"); },
+    } as unknown as Response);
+    assert(completion.includes("school-insights:authenticated"));
+    assert(completion.includes(attempt));
+    assert(completion.includes(`${origin}/dashboard/school-insights`));
+    assert(!completion.includes("synthetic-access"));
+    assert(!completion.includes("synthetic-refresh"));
+    assert(!completion.includes(state));
     for (const role of [null, "", "   ", "STUDENT", "TEACHER"]) {
       stored = { email: "role-fixture@noon.edu.sa", profile_id: "999", user_type: role,
         refresh_token: "must-not-refresh", access_expires_at: new Date(0), expires_at: new Date(Date.now() + 60000) };

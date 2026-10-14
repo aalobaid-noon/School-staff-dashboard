@@ -4,6 +4,8 @@ import { pool } from "@workspace/db";
 import dashboardRouter, { dashboardOAuthCallback } from "../routes/dashboard-auth";
 import { dashboardCookies } from "../lib/dashboard-cookies";
 
+import { embedContext, readEmbedContext, workspaceOrigin } from "../lib/dashboard-embed";
+
 export async function checkDashboardLogin() {
   const settings = {
     SYNAPSE_APP_ID: "login-fixture",
@@ -31,6 +33,24 @@ export async function checkDashboardLogin() {
     const address = server.address();
     assert(address && typeof address !== "string");
     const baseUrl = `http://127.0.0.1:${address.port}`;
+    const origin = "https://school.noonacademy.com";
+    const attempt = "c".repeat(32);
+    const fixtureState = "d".repeat(64);
+    const context = embedContext(origin, attempt, fixtureState, settings.SESSION_SECRET)!;
+    assert.deepEqual(readEmbedContext(context, fixtureState, settings.SESSION_SECRET), { origin, attempt });
+    assert.equal(readEmbedContext(context, "e".repeat(64), settings.SESSION_SECRET), null);
+    assert.equal(readEmbedContext(context + "x", fixtureState, settings.SESSION_SECRET), null);
+    for (const invalid of ["https://school.noonacademy.com.evil.test", "https://evil.test", "javascript:alert(1)", origin + "/path"]) {
+      assert.equal(workspaceOrigin(invalid), null);
+      assert.equal(embedContext(invalid, attempt, fixtureState, settings.SESSION_SECRET), null);
+    }
+    const embedded = await fetch(`${baseUrl}/api/dashboard/login?workspace=${encodeURIComponent(origin)}`, {
+      headers: { "sec-fetch-dest": "iframe" },
+    });
+    const embeddedHtml = await embedded.text();
+    assert(embeddedHtml.includes("school-insights:login-required"));
+    assert(!embeddedHtml.includes('target="_blank"'));
+    assert(embedded.headers.get("content-security-policy")?.includes("script-src 'nonce-"));
     const login = await fetch(`${baseUrl}/api/dashboard/login?start=1`, { redirect: "manual" });
     assert.equal(login.status, 302);
     const authorization = new URL(login.headers.get("location")!);
