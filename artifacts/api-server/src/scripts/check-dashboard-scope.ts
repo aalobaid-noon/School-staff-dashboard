@@ -3,7 +3,12 @@ import { filterDashboardReport, getDashboardScope } from "../lib/dashboard-scope
 
 export function checkDashboardScope() {
   const document = {
-    meta: { window_start: "2026-08-23", window_end: "2026-10-07", privateSummary: "hidden-meta" },
+    meta: { window_start: "2026-08-23", window_end: "2026-10-07", privateSummary: "hidden-meta",
+      ranges: [{ key: "week", from: "2026-10-04", to: "2026-10-07" }, { key: "term", from: "2026-08-23", to: "2026-10-07" }] },
+    ranges: { week: {
+      c: { "101": [40, 55, 90, 60, 30, 58, 5, 70], "202": [50, 45, 92, 61, 31, 59, 6, 71], "303": [60, 65, 99, 70, 40, 69, 7, 81] },
+      f: { "20:101": [8, 80, 60, 7, 61, 2, 70], "21:101": [32, 70, 62, 25, 63, 3, 71], "20:202": [1, 50, 40, 1, 41, 1, 50], "22:303": [60, 90, 70, 40, 69, 7, 81] },
+    } },
     campuses: [{ id: 101, name: "School A", type: "TRACKS", mgr: "7,8", enr: 50, act: 40 },
       { id: 202, name: "School B", type: "TRACKS", mgr: "7", enr: 60, act: 50 },
       { id: 303, name: "School C", type: "TRACKS", mgr: "9", enr: 70, act: 60 }],
@@ -38,6 +43,9 @@ export function checkDashboardScope() {
   assert.deepEqual(manager.weekly.map((row: any) => row.mid), [7]);
   assert.deepEqual(manager.exams.map((row: any) => row.id), [101, 202]);
   assert.deepEqual(manager.daily.map((row: any) => row[0]), [101, 202], "daily counts follow the manager's schools");
+  assert.deepEqual(manager.meta.ranges.map((range: any) => range.key), ["week", "term"], "the range list reaches scoped viewers");
+  assert.deepEqual(Object.keys(manager.ranges.week.c).sort(), ["101", "202"], "range metrics follow the manager's schools");
+  assert.deepEqual(Object.keys(manager.ranges.week.f).sort(), ["20:101", "20:202", "21:101"]);
   const cluster = filterDashboardReport(user("CLUSTER_MANAGER", 30), document);
   assert.deepEqual(cluster.campuses.map((row: any) => row.id), [101, 202]);
   assert.deepEqual(cluster.leads.map((row: any) => row.lid), [10, 11, 10]);
@@ -63,6 +71,10 @@ export function checkDashboardScope() {
     assert.deepEqual(facilitator[key], [], `Facilitator must not receive ${key}`);
   }
   assert.deepEqual(facilitator.daily, [], "campus-wide daily counts include other staff's students");
+  assert.deepEqual(Object.keys(facilitator.ranges.week.f).sort(), ["20:101", "20:202"], "a facilitator keeps only their own range rows");
+  assert.deepEqual(facilitator.ranges.week.c["101"], [8, 80, null, 60, 7, 61, 2, 70], "personal campus row is built from the facilitator's own figures");
+  assert.equal(facilitator.ranges.week.c["303"], undefined);
+  assert(!JSON.stringify(facilitator.ranges).includes("40,55,90"), "campus-wide range figures never reach a facilitator");
   const secondFacilitator = filterDashboardReport(user("FACILITATOR", 21), document);
   assert.deepEqual(secondFacilitator.grades, ["Grade B"]);
   assert.deepEqual(secondFacilitator.cohorts, ["Class B"]);

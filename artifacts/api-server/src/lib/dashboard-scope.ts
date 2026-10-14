@@ -33,6 +33,30 @@ export function getDashboardScope(user: DashboardUser, document: Row) {
   };
 }
 
+// Per-date-range metrics (campus and facilitator figures re-pulled for each range). They follow the same
+// scoping as the term-wide figures: a manager / lead gets only their campuses, and a facilitator gets a
+// personal campus row built from their own facilitator figures, never the campus-wide ones.
+type RangeBlock = { c?: Record<string, unknown[]>; f?: Record<string, unknown[]> };
+function scopedRanges(document: Row, atCampus: (id: unknown) => boolean, personal: boolean, profileId: number): Row {
+  const source = document.ranges && typeof document.ranges === "object" && !Array.isArray(document.ranges)
+    ? document.ranges as Record<string, RangeBlock> : {};
+  const out: Row = {};
+  for (const [key, block] of Object.entries(source)) {
+    const c: Record<string, unknown[]> = {};
+    const f: Record<string, unknown[]> = {};
+    for (const [facKey, values] of Object.entries(block.f ?? {})) {
+      const [fid, cid] = facKey.split(":");
+      if (!atCampus(cid) || (personal && Number(fid) !== profileId)) continue;
+      f[facKey] = values;
+      // [act, att, etq, etn, etqs, tn, tr] -> campus order [act, att, etc, etq, etn, etqs, tn, tr]
+      if (personal && Array.isArray(values)) c[cid] = [values[0], values[1], null, values[2], values[3], values[4], values[5], values[6]];
+    }
+    if (!personal) for (const [cid, values] of Object.entries(block.c ?? {})) if (atCampus(cid)) c[cid] = values;
+    out[key] = { c, f };
+  }
+  return out;
+}
+
 export function filterDashboardReport(user: DashboardUser, document: Row): Row {
   const { isOps, campuses } = getDashboardScope(user, document);
   if (isOps) return document;
@@ -74,7 +98,7 @@ export function filterDashboardReport(user: DashboardUser, document: Row): Row {
   // Use an explicit document shape so new snapshot fields do not bypass access checks.
   return {
     meta: pick(document.meta ?? {}, ["source", "rules_version", "pulled_at", "window_start", "window_end",
-      "school_year", "term_start", "weeks", "exam_windows"]),
+      "school_year", "term_start", "weeks", "exam_windows", "ranges"]),
     managers: manager ? rows(document, "managers").filter((row) => Number(row.id) === user.profileId) : [],
     campuses: scopedCampuses,
     exams: personal ? [] : rows(document, "exams").filter((row) => atCampus(row.id)),
@@ -83,6 +107,7 @@ export function filterDashboardReport(user: DashboardUser, document: Row): Row {
     leads: personal ? [] : rows(document, "leads").filter((row) => atCampus(row.cid) &&
       (manager || user.userType === "CLUSTER_MANAGER" || Number(row.lid) === user.profileId)),
     bygrade, simgrades: [], grades, cohorts, students, comments,
+    ranges: scopedRanges(document, atCampus, personal, user.profileId),
     // Campus-wide daily counts include other staff's students, so a facilitator never receives them.
     daily: personal ? [] : tuples(document, "daily").filter((row) => atCampus(row[0])),
     orphanCohorts: personal ? [] : rows(document, "orphanCohorts").filter((row) => atCampus(row.c)),
